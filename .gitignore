@@ -1,0 +1,14 @@
+# Godot 4
+.godot/
+.import/
+
+# Mono/CS
+.mono/
+mono_crash.*.json
+
+# OS/IDE noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.user
