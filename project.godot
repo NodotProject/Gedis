@@ -1,8 +1,20 @@
-; Minimal project for running tests with Godot 4.x
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
 [application]
+
 config/name="Gedis"
+config/description="Redis-like in-memory key-value store for Godot, implemented in GDScript."
+config/features=PackedStringArray("4.5")
+config/icon="uid://e8pq1st2w4gh"
 
 [rendering]
+
 renderer/rendering_method="mobile"
