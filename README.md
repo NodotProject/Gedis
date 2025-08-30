@@ -1,5 +1,7 @@
 # Gedis
 
+<img src="res://addons/gedis/icon.png" alt="Gedis logo" width="128" height="128" />
+
 Redis-like in-memory key-value store for Godot 4.5, implemented in GDScript.
 
 Gedis is a lightweight plugin that provides a convenient, Redis-inspired API for storing and retrieving data at runtime. It ships as an autoloaded singleton so you can access it anywhere: `Gedis.set("score", 10)`.
