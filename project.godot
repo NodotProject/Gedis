@@ -1,0 +1,8 @@
+; Minimal project for running tests with Godot 4.x
+config_version=5
+
+[application]
+config/name="Gedis"
+
+[rendering]
+renderer/rendering_method="mobile"
