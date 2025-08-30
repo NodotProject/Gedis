@@ -1,6 +1,6 @@
 # Gedis
 
-<img src="addons/gedis/icon.png" alt="Gedis logo" width="128" height="128" />
+![](addons/gedis/icon.png)
 
 Redis-like in-memory key-value store for Godot 4.5, implemented in GDScript.
 
