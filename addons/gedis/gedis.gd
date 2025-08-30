@@ -262,7 +262,7 @@ func ttl(key: String) -> int:
 		return -2
 	if not _expiry.has(key):
 		return -1
-	return maxi(0, int(ceil(_expiry[key] - _now())))
+	return max(0, int(ceil(_expiry[key] - _now())))
 
 func persist(key: String) -> bool:
 	if not exists(key):
