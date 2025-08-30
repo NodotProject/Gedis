@@ -48,11 +48,11 @@ func _touch_type(key: String, type_bucket: Dictionary) -> void:
 # -----------------
 # String/number API
 # -----------------
-func set(key: String, value) -> void:
+func set_value(key: String, value) -> void:
 	_touch_type(key, _store)
 	_store[key] = value
 
-func get(key: String, default_value := null):
+func get_value(key: String, default_value: Variant = null):
 	if _is_expired(key):
 		return default_value
 	return _store.get(key, default_value)
@@ -68,8 +68,8 @@ func exists(key: String) -> bool:
 	return _store.has(key) or _hashes.has(key) or _lists.has(key) or _sets.has(key)
 
 func incr(key: String, amount: int = 1) -> int:
-	var v: int = int(get(key, 0)) + amount
-	set(key, v)
+	var v: int = int(get_value(key, 0)) + amount
+	set_value(key, v)
 	return v
 
 func decr(key: String, amount: int = 1) -> int:
@@ -88,7 +88,7 @@ func keys(pattern: String = "*") -> Array[String]:
 	var rx := _glob_to_regex(pattern)
 	var out: Array[String] = []
 	for k in all.keys():
-		if not _is_expired(k) and rx.search(k) != -1:
+		if not _is_expired(k) and rx.search(k) != null:
 			out.append(k)
 	return out
 
@@ -135,7 +135,7 @@ func hset(key: String, field: String, value) -> void:
 	d[field] = value
 	_hashes[key] = d
 
-func hget(key: String, field: String, default_value := null):
+func hget(key: String, field: String, default_value: Variant = null):
 	if _is_expired(key):
 		return default_value
 	var d: Dictionary = _hashes.get(key, {})
