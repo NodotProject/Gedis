@@ -1,0 +1,20 @@
+[configuration]
+entry_symbol = "gedis_library_init"
+compatibility_minimum = "4.4"
+
+[libraries]
+# Generic fallbacks
+linux = "res://addons/Gedis/bin/libgedis.so"
+linux.debug = "res://addons/Gedis/bin/libgedis.so"
+linux.release = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.debug = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.release = "res://addons/Gedis/bin/libgedis.so"
+
+# Architecture-specific entries
+linux.x86_64 = "res://addons/Gedis/bin/libgedis.so"
+linux.x86_64.debug = "res://addons/Gedis/bin/libgedis.so"
+linux.x86_64.release = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.x86_64 = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.x86_64.debug = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.x86_64.release = "res://addons/Gedis/bin/libgedis.so"

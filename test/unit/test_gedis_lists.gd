@@ -1,6 +1,6 @@
 extends GutTest
 
-const GEDIS := preload("res://addons/gedis/gedis.gd")
+const GEDIS := preload("res://addons/Gedis/gedis.gd")
 
 var g: Gedis
 func before_each():
