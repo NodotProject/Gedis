@@ -81,6 +81,7 @@ jobs:
           scons platform=${{ matrix.platform }} generate_bindings=yes target=template_release
           scons platform=${{ matrix.platform }} generate_bindings=yes target=template_debug
       - name: Build with SCons
+        shell: bash
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
             scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }} use_mingw=yes
