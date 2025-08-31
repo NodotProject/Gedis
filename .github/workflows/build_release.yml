@@ -78,8 +78,8 @@ jobs:
         if: steps.cache-godotcpp.outputs.cache-hit != 'true'
         run: |
           cd godot-cpp
-          scons platform=${{ matrix.platform }} generate_bindings=yes
-          scons platform=${{ matrix.platform }} target=template_release
+          scons platform=${{ matrix.platform }} generate_bindings=yes target=template_release
+          scons platform=${{ matrix.platform }} generate_bindings=yes target=template_debug
       - name: Build with SCons
         run: scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
 
