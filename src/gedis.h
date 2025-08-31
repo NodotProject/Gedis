@@ -1,22 +1,21 @@
 #ifndef GEDIS_H
 #define GEDIS_H
 
-#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/core/object.hpp>
 #include "gedis_store.h"
 
 namespace godot {
 
-class Gedis : public Node {
-    GDCLASS(Gedis, Node)
+class Gedis : public Object {
+    GDCLASS(Gedis, Object)
 
 private:
     GedisStore store;
 
 protected:
-    static void _bind_methods();
+    void _bind_methods();
 
 public:
-    void _process(double delta);
     Gedis();
     ~Gedis();
 

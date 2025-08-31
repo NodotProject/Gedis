@@ -6,7 +6,6 @@
 using namespace godot;
 
 void Gedis::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("_process", "delta"), &Gedis::_process);
     ClassDB::bind_method(D_METHOD("set", "key", "value"), &Gedis::set);
     ClassDB::bind_method(D_METHOD("get", "key"), &Gedis::get);
     ClassDB::bind_method(D_METHOD("del", "keys"), &Gedis::del);
@@ -68,9 +67,6 @@ Gedis::Gedis() {
 Gedis::~Gedis() {
 }
 
-void Gedis::_process(double delta) {
-    store.remove_expired_keys();
-}
 
 void Gedis::set(const String &key, const Variant &value) {
     store.set(key, value);
