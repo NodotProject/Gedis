@@ -22,6 +22,7 @@ jobs:
 
     - name: Cache godot-cpp build
       uses: actions/cache@v4
+      id: cache-godot-cpp
       with:
         path: |
           godot-cpp/bin
@@ -33,6 +34,7 @@ jobs:
           ${{ runner.os }}-godot-cpp-
 
     - name: Build godot-cpp bindings
+      if: steps.cache-godot-cpp.outputs.cache-hit != 'true'
       run: |
         cd godot-cpp
         scons platform=linux generate_bindings=yes target=template_release
