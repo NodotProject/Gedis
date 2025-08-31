@@ -6,18 +6,22 @@ on:
     tags:
       - 'v*.*.*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_windows:
     name: Build for Windows (MSVC, x86_64)
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
       - name: Cache SCons build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             .sconsign.dblite
@@ -27,7 +31,7 @@ jobs:
             ${{ runner.os }}-scons-
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install SCons
@@ -36,6 +40,16 @@ jobs:
       - name: Set up MSVC developer command prompt
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot-cpp/bin
+            godot-cpp/gen
+            godot-cpp/.sconsign.dblite
+          key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/api.json') }}
+          restore-keys: |
+            ${{ runner.os }}-godot-cpp-
       - name: Build godot-cpp
         run: |
           cd godot-cpp
@@ -63,12 +77,12 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
       - name: Cache SCons build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             .sconsign.dblite
@@ -78,12 +92,22 @@ jobs:
             ${{ runner.os }}-scons-
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install SCons
-        run: brew install scons
+        run: pip install scons
 
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot-cpp/bin
+            godot-cpp/gen
+            godot-cpp/.sconsign.dblite
+          key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/api.json') }}
+          restore-keys: |
+            ${{ runner.os }}-godot-cpp-
       - name: Build godot-cpp
         run: |
           cd godot-cpp
@@ -111,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
@@ -121,7 +145,7 @@ jobs:
           sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
 
       - name: Cache SCons build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             .sconsign.dblite
@@ -130,6 +154,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-scons-
 
+      - name: Cache godot-cpp build
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot-cpp/bin
+            godot-cpp/gen
+            godot-cpp/.sconsign.dblite
+          key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/api.json') }}
+          restore-keys: |
+            ${{ runner.os }}-godot-cpp-
       - name: Build godot-cpp
         run: |
           cd godot-cpp
@@ -159,7 +193,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
