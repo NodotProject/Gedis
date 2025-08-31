@@ -1,10 +1,9 @@
 extends GutTest
 
-const GEDIS := preload("res://addons/gedis/gedis.gd")
-
 var g
+
 func before_each():
-	self.g = GEDIS.new()
+	self.g = Gedis.new()
 
 func test_sadd_srem_smembers_sismember():
 	assert_eq(g.sadd("s", "a"), 1)
@@ -15,3 +14,24 @@ func test_sadd_srem_smembers_sismember():
 	assert_eq(g.srem("s", "a"), 1)
 	assert_false(g.sismember("s", "a"))
 	assert_eq(g.srem("s", "a"), 0)
+
+
+func test_scard():
+	g.sadd("s", "a")
+	g.sadd("s", "b")
+	assert_eq(g.scard("s"), 2)
+
+func test_spop():
+	g.sadd("s", "a")
+	g.sadd("s", "b")
+	var popped = g.spop("s")
+	assert_true(popped == "a" or popped == "b")
+	assert_eq(g.scard("s"), 1)
+
+func test_smove():
+	g.sadd("s1", "a")
+	g.sadd("s1", "b")
+	g.sadd("s2", "c")
+	assert_true(g.smove("s1", "s2", "a"))
+	assert_false(g.sismember("s1", "a"))
+	assert_true(g.sismember("s2", "a"))

@@ -1,26 +1,42 @@
 extends GutTest
 
-const GEDIS := preload("res://addons/gedis/gedis.gd")
-
 var g
+
 func before_each():
-	self.g = GEDIS.new()
+	g = Gedis.new()
+	add_child(g)
 
-func test_expire_ttl_and_eviction():
-	g.set_value("k", "v")
-	assert_true(g.expire("k", 1))
-	var t = g.ttl("k")
-	assert_true(t == 0 || t == 1, "ttl should be 0 or 1 just after setting 1s expiry")
-	OS.delay_msec(1200) # wait for expiry
-	assert_false(g.exists("k"))
-	assert_eq(g.get_value("k", "missing"), "missing")
+func after_each():
+	g.free()
 
-func test_persist_and_flushall():
-	g.set_value("a", 1)
-	g.set_value("b", 2)
-	g.expire("a", 10)
-	assert_true(g.persist("a"))
-	assert_eq(g.ttl("a"), -1)
-	g.flushall()
-	assert_false(g.exists("a"))
-	assert_false(g.exists("b"))
+func test_expire():
+	g.set("key", "value")
+	assert_true(g.expire("key", 1), "Expire should return true for an existing key")
+	await get_tree().create_timer(1.2).timeout
+	assert_false(g.key_exists("key"), "Key should not exist after expiry")
+
+func test_ttl_with_expiry():
+	g.set("key", "value")
+	g.expire("key", 2)
+	var ttl = g.ttl("key")
+	assert_true(ttl > 0 and ttl <= 2, "TTL should be between 0 and 2")
+
+func test_ttl_without_expiry():
+	g.set("key", "value")
+	assert_eq(g.ttl("key"), -1, "TTL should be -1 for a key with no expiry")
+
+func test_ttl_for_nonexistent_key():
+	assert_eq(g.ttl("nonexistent"), -2, "TTL should be -2 for a nonexistent key")
+
+func test_persist():
+	g.set("key", "value")
+	g.expire("key", 5)
+	assert_true(g.persist("key"), "Persist should return true for a key with an expiry")
+	assert_eq(g.ttl("key"), -1, "TTL should be -1 after persist")
+
+func test_persist_on_non_expiring_key():
+	g.set("key", "value")
+	assert_false(g.persist("key"), "Persist should return false for a key without an expiry")
+
+func test_persist_on_nonexistent_key():
+	assert_false(g.persist("nonexistent"), "Persist should return false for a nonexistent key")
