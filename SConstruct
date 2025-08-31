@@ -1,4 +1,4 @@
-from SCons.Script import ARGUMENTS, Environment, Mkdir, Default, File
+from SCons.Script import ARGUMENTS, Environment, Mkdir, Default, File, CacheDir
 import os
 import sys
 
@@ -23,6 +23,10 @@ if platform == 'windows':
 else:
     # Use the default compiler on other platforms
     env = Environment()
+# Optional: enable SCons cache if SCONS_CACHE_DIR is provided (local or CI)
+cache_dir = os.environ.get('SCONS_CACHE_DIR')
+if cache_dir:
+    CacheDir(cache_dir)
 env.Append(CPPPATH=['src', '.', 'godot-cpp/include', 'godot-cpp/gen/include'])
 env.Append(LIBPATH=['godot-cpp/bin'])
 

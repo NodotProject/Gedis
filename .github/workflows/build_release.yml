@@ -64,16 +64,18 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Cache godot-cpp build
+        id: cache-godotcpp
         uses: actions/cache@v4
         with:
           path: |
             godot-cpp/bin
             godot-cpp/gen
             godot-cpp/.sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/api.json') }}
+          key: ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json') }}
           restore-keys: |
-            ${{ runner.os }}-godot-cpp-
-      - name: Build godot-cpp
+            ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-
+      - name: Build godot-cpp (cache miss)
+        if: steps.cache-godotcpp.outputs.cache-hit != 'true'
         run: |
           cd godot-cpp
           scons platform=${{ matrix.platform }} generate_bindings=yes
