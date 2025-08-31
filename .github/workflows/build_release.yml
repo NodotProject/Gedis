@@ -128,10 +128,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-scons-
 
-      - name: Build godot-cpp bindings
+      - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=linux generate_bindings=yes
+          scons platform=linux generate_bindings=yes target=template_release
       - name: Build with SCons
         run: scons platform=linux target=template_release arch=x86_64
 
