@@ -21,6 +21,5 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y scons
 
     - name: Compile GDExtension
-      run: |
-        cd addons/Gedis
-        scons
+      run: scons
+      working-directory: ${{ github.workspace }}/addons/Gedis
