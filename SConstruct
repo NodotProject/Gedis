@@ -17,6 +17,7 @@ env.Append(LIBS=['godot-cpp.linux.template_debug.x86_64'])
 
 # Ensure position-independent code for shared library
 env.Append(CCFLAGS=['-fPIC'])
+env.Append(CXXFLAGS=['-std=c++17'])
 
 src_files = [
     'src/gedis.cpp',
