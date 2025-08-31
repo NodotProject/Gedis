@@ -13,3 +13,4 @@ Thumbs.db
 .vscode/
 *.user
 addons/gut/
+*.dblite

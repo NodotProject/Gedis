@@ -1,0 +1,32 @@
+name: Build and Test GDExtension
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+
+    - name: Download Godot 4 Headless
+      run: |
+        wget https://github.com/godotengine/godot/releases/download/4.1.1-stable/Godot_v4.1.1-stable_linux.x86_64.zip
+        unzip Godot_v4.1.1-stable_linux.x86_64.zip
+        mv Godot_v4.1.1-stable_linux.x86_64 godot
+        chmod +x godot
+
+    - name: Compile GDExtension
+      run: |
+        cd addons/Gedis
+        scons
+
+    - name: Run tests
+      run: ./run_tests.sh
