@@ -1,0 +1,18 @@
+from SCons.Script import *
+import os
+
+env = Environment()
+
+# Include src directory for headers
+env.Append(CPPPATH=['#src'])
+
+# Ensure position-independent code on Linux
+if str(env['PLATFORM']) in ('posix', 'linux'):
+    env.Append(CFLAGS=['-fPIC'])
+
+src_files = Glob('src/*.c')
+
+# Produces: bin/libgedis.so on Linux
+library = env.SharedLibrary(target='bin/gedis', source=src_files)
+
+Default(library)

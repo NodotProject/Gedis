@@ -15,7 +15,7 @@ Gedis is a lightweight plugin that provides a convenient, Redis-inspired API for
 - In-memory only; no external dependencies
 
 ## Installation
-1. Copy the `addons/gedis` folder into your Godot project, or add this repository as a submodule.
+1. Copy the `addons/Gedis` folder into your Godot project, or add this repository as a submodule.
 2. In Godot, go to Project -> Project Settings -> Plugins and enable the "Gedis" plugin.
 3. The plugin will register an autoloaded singleton called `Gedis`.
 
