@@ -20,6 +20,14 @@ jobs:
     - name: Install scons
       run: sudo apt-get update && sudo apt-get install -y scons
 
+    - name: Cache godot-cpp build
+      uses: actions/cache@v3
+      with:
+        path: godot-cpp/bin
+        key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/**.cpp', 'godot-cpp/**.h') }}
+        restore-keys: |
+          ${{ runner.os }}-godot-cpp-
+
     - name: Build godot-cpp bindings
       run: |
         cd godot-cpp
