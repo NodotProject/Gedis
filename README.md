@@ -6,7 +6,7 @@ An in-memory, Redis-like datastore for Godot, implemented as a GDExtension.
 
 ## Overview
 
-Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands, accessible directly from GDScript. As a GDExtension, it runs with native C++ speed, making it suitable for performance-critical applications. Gedis is designed as an easy-to-use, autoloaded singleton, so you can access it from anywhere in your project: `Gedis.set_value("score", 10)`.
+Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands, accessible directly from GDScript. As a GDExtension, it runs with native C++ speed, making it suitable for performance-critical applications. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set("score", 10)`.
 
 ## Features
 
@@ -25,74 +25,81 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 
 ## Usage Examples
 
+First, create an instance of Gedis in your script:
+
+```gdscript
+# Create a Gedis instance
+var gedis = Gedis.new()
+```
+
 ### Strings
 
 ```gdscript
 # Set and get a value
-Gedis.set_value("player_name", "Alice")
-var name = Gedis.get_value("player_name") # "Alice"
+gedis.set("player_name", "Alice")
+var name = gedis.get("player_name") # "Alice"
 
 # Increment/decrement a numeric value
-Gedis.set_value("score", 100)
-Gedis.incr("score") # 101
-Gedis.decrby("score", 10) # 91
+gedis.set("score", 100)
+gedis.incr("score") # 101
+gedis.decr("score") # 99
 ```
 
 ### Hashes
 
 ```gdscript
 # Store player data in a hash
-Gedis.hset("player:1", "name", "Bob")
-Gedis.hset("player:1", "hp", 100)
-Gedis.hset("player:1", "mana", 50)
+gedis.hset("player:1", "name", "Bob")
+gedis.hset("player:1", "hp", 100)
+gedis.hset("player:1", "mana", 50)
 
 # Get a single field
-var player_name = Gedis.hget("player:1", "name") # "Bob"
+var player_name = gedis.hget("player:1", "name") # "Bob"
 
 # Get all fields as a Dictionary
-var player_data = Gedis.hgetall("player:1") # {"name": "Bob", "hp": 100, "mana": 50}
+var player_data = gedis.hgetall("player:1") # {"name": "Bob", "hp": 100, "mana": 50}
 ```
 
 ### Lists
 
 ```gdscript
 # Use a list as a queue for game events
-Gedis.rpush("events", "player_spawned")
-Gedis.rpush("events", "enemy_appeared")
+gedis.rpush("events", "player_spawned")
+gedis.rpush("events", "enemy_appeared")
 
 # Process the first event in the queue
-var event = Gedis.lpop("events") # "player_spawned"
-var queue_length = Gedis.llen("events") # 1
+var event = gedis.lpop("events") # "player_spawned"
+var queue_length = gedis.llen("events") # 1
 ```
 
 ### Sets
 
 ```gdscript
 # Store unique items a player has collected
-Gedis.sadd("inventory", "sword")
-Gedis.sadd("inventory", "shield")
-Gedis.sadd("inventory", "sword") # This will be ignored
+gedis.sadd("inventory", "sword")
+gedis.sadd("inventory", "shield")
+gedis.sadd("inventory", "sword") # This will be ignored
 
 # Check if an item exists
-var has_shield = Gedis.sismember("inventory", "shield") # true
+var has_shield = gedis.sismember("inventory", "shield") # true
 
 # Get all items
-var all_items = Gedis.smembers("inventory") # ["sword", "shield"] or ["shield", "sword"]
+var all_items = gedis.smembers("inventory") # ["sword", "shield"] or ["shield", "sword"]
 ```
 
 ### Key Expiry
 
 ```gdscript
 # Create a temporary key
-Gedis.set_value("session_token", "xyz123")
-Gedis.expire("session_token", 60) # Expires in 60 seconds
+gedis.set("session_token", "xyz123")
+gedis.expire("session_token", 60) # Expires in 60 seconds
 
 # Check the remaining time
-var time_left = Gedis.ttl("session_token") # e.g., 59
+var time_left = gedis.ttl("session_token") # e.g., 59
 
 # Make the key permanent again
-Gedis.persist("session_token")
-var time_left_after_persist = Gedis.ttl("session_token") # -1 (no expiry)
+gedis.persist("session_token")
+var time_left_after_persist = gedis.ttl("session_token") # -1 (no expiry)
 ```
 
 ### Pub/Sub System
@@ -101,17 +108,22 @@ The Pub/Sub system allows for decoupled communication using signals.
 
 ```gdscript
 # Subscriber script
+var gedis = Gedis.new()
+
 func _ready():
     # Subscribe to the 'game_events' channel and connect to a local method
-    Gedis.subscribe("game_events", _on_game_event)
+    gedis.subscribe("game_events", self)
+    gedis.connect("pubsub_message", _on_game_event)
 
 func _on_game_event(channel, message):
     print("Received message on channel '%s': %s" % [channel, message])
 
 # Publisher script (can be anywhere else)
+var gedis = Gedis.new()
+
 func _on_button_pressed():
     # Publish a message to the 'game_events' channel
-    Gedis.publish("game_events", "Player pressed the button!")
+    gedis.publish("game_events", "Player pressed the button!")
 ```
 
 ## API Reference
@@ -119,43 +131,51 @@ func _on_button_pressed():
 | Method                           | Description                                                |
 | -------------------------------- | ---------------------------------------------------------- |
 | **Strings**                      |                                                            |
-| `set_value(key, value)`          | Sets the string value of a key.                            |
-| `get_value(key)`                 | Gets the string value of a key.                            |
-| `del(key)`                       | Deletes a key.                                             |
-| `exists(key)`                    | Checks if a key exists.                                    |
+| `set(key, value)`                | Sets the string value of a key.                            |
+| `get(key)`                       | Gets the string value of a key.                            |
+| `del(keys)`                      | Deletes one or more keys (accepts Array).                  |
+| `exists(keys)`                   | Checks if keys exist (accepts Array).                      |
+| `key_exists(key)`                | Checks if a single key exists.                             |
 | `incr(key)`                      | Increments the integer value of a key by one.              |
-| `incrby(key, amount)`            | Increments the integer value of a key by the given amount. |
 | `decr(key)`                      | Decrements the integer value of a key by one.              |
-| `decrby(key, amount)`            | Decrements the integer value of a key by the given amount. |
+| `keys(pattern)`                  | Gets all keys matching a pattern.                          |
 | **Hashes**                       |                                                            |
 | `hset(key, field, value)`        | Sets the string value of a hash field.                     |
-| `hget(key, field)`               | Gets the value of a hash field.                            |
+| `hget(key, field, default)`      | Gets the value of a hash field with optional default.      |
 | `hgetall(key)`                   | Gets all the fields and values in a hash as a Dictionary.  |
-| `hdel(key, field)`               | Deletes a hash field.                                      |
+| `hdel(key, fields)`              | Deletes hash fields (accepts single field or Array).       |
+| `hexists(key, field)`            | Checks if a hash field exists.                             |
 | `hkeys(key)`                     | Gets all the fields in a hash.                             |
 | `hvals(key)`                     | Gets all the values in a hash.                             |
 | `hlen(key)`                      | Gets the number of fields in a hash.                       |
 | **Lists**                        |                                                            |
-| `lpush(key, value)`              | Prepends one value to a list.                              |
-| `rpush(key, value)`              | Appends one value to a list.                               |
+| `lpush(key, values)`             | Prepends values to a list (accepts single value or Array). |
+| `rpush(key, values)`             | Appends values to a list (accepts single value or Array).  |
 | `lpop(key)`                      | Removes and gets the first element in a list.              |
 | `rpop(key)`                      | Removes and gets the last element in a list.               |
 | `llen(key)`                      | Gets the length of a list.                                 |
 | `lrange(key, start, stop)`       | Gets a range of elements from a list.                      |
+| `lindex(key, index)`             | Gets an element from a list by index.                      |
+| `lset(key, index, value)`        | Sets the value of a list element by index.                 |
+| `lrem(key, count, value)`        | Removes elements from a list.                              |
 | **Sets**                         |                                                            |
-| `sadd(key, member)`              | Adds one member to a set.                                  |
-| `srem(key, member)`              | Removes one member from a set.                             |
+| `sadd(key, members)`             | Adds members to a set (accepts single member or Array).    |
+| `srem(key, members)`             | Removes members from a set (accepts single member or Array).|
 | `smembers(key)`                  | Gets all the members in a set.                             |
 | `sismember(key, member)`         | Checks if a member is in a set.                            |
 | `scard(key)`                     | Gets the number of members in a set.                       |
+| `spop(key)`                      | Removes and returns a random member from a set.            |
+| `smove(source, dest, member)`    | Moves a member from one set to another.                    |
 | **Expiry**                       |                                                            |
 | `expire(key, seconds)`           | Sets a key's time to live in seconds.                      |
 | `ttl(key)`                       | Gets the remaining time to live of a key.                  |
 | `persist(key)`                   | Removes the expiration from a key.                         |
 | **Pub/Sub**                      |                                                            |
 | `publish(channel, message)`      | Posts a message to a channel.                              |
-| `subscribe(channel, callable)`   | Subscribes the client to the given channel.                |
-| `unsubscribe(channel, callable)` | Unsubscribes the client from the given channel.            |
+| `subscribe(channel, subscriber)` | Subscribes an object to the given channel.                 |
+| `unsubscribe(channel, subscriber)` | Unsubscribes an object from the given channel.           |
+| `psubscribe(pattern, subscriber)` | Subscribes to channels matching a pattern.                |
+| `punsubscribe(pattern, subscriber)` | Unsubscribes from channels matching a pattern.          |
 
 ## Contribution Instructions
 

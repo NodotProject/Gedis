@@ -4,7 +4,6 @@ var g
 
 func before_each():
 	g = Gedis.new()
-	add_child(g)
 
 func after_each():
 	g.free()

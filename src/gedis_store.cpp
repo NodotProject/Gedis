@@ -50,6 +50,12 @@ godot::Variant GedisStore::get(const godot::String& key) {
     std::string std_key = key.utf8().get_data();
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
+        // Check if key has expired
+        if (obj->expiration != -1 && obj->expiration <= time(0)) {
+            delete obj;
+            store.erase(std_key);
+            return godot::Variant(); // Key expired, return null
+        }
         if (obj && obj->type == STRING && obj->data) {
             std::string* str_data = static_cast<std::string*>(obj->data);
             return godot::String(str_data->c_str());
@@ -86,7 +92,17 @@ int64_t GedisStore::exists(const godot::Array& keys) {
 
 bool GedisStore::exists(const godot::String& key) {
     std::string std_key = key.utf8().get_data();
-    return store.count(std_key) > 0;
+    if (store.count(std_key)) {
+        GedisObject* obj = store[std_key];
+        // Check if key has expired
+        if (obj->expiration != -1 && obj->expiration <= time(0)) {
+            delete obj;
+            store.erase(std_key);
+            return false; // Key expired
+        }
+        return true;
+    }
+    return false;
 }
 
 godot::Variant GedisStore::incr(const godot::String& key) {

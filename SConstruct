@@ -27,7 +27,7 @@ else:
 cache_dir = os.environ.get('SCONS_CACHE_DIR')
 if cache_dir:
     CacheDir(cache_dir)
-env.Append(CPPPATH=['src', '.', 'godot-cpp/include', 'godot-cpp/gen/include'])
+env.Append(CPPPATH=['src', '.', 'godot-cpp/include', 'godot-cpp/gen/include', 'godot-cpp/gdextension'])
 env.Append(LIBPATH=['godot-cpp/bin'])
 
 is_windows = platform == 'windows'
