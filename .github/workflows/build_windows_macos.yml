@@ -39,7 +39,9 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build with SCons
-        run: cd addons/Gedis && scons platform=windows target=template_release arch=x86_64
+        run: |
+          cd addons/Gedis
+          python -m SCons platform=windows target=template_release arch=x86_64
 
       - name: Package addon
         run: |
@@ -84,7 +86,9 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Build with SCons
-        run: cd addons/Gedis && scons platform=macos target=template_release arch=universal
+        run: |
+          cd addons/Gedis
+          python -m SCons platform=macos target=template_release arch=universal
 
       - name: Package addon
         run: |
