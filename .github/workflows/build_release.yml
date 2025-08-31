@@ -36,10 +36,10 @@ jobs:
       - name: Set up MSVC developer command prompt
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build godot-cpp bindings
+      - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=windows generate_bindings=yes
+          scons platform=windows generate_bindings=yes target=template_release
       - name: Build with SCons
         run: scons platform=windows target=template_release arch=x86_64
 
@@ -83,10 +83,10 @@ jobs:
       - name: Install SCons
         run: brew install scons
 
-      - name: Build godot-cpp bindings
+      - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=macos generate_bindings=yes
+          scons platform=macos generate_bindings=yes target=template_release
       - name: Build with SCons
         run: scons platform=macos target=template_release arch=universal
 
