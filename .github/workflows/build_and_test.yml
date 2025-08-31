@@ -31,7 +31,8 @@ jobs:
     - name: Build godot-cpp bindings
       run: |
         cd godot-cpp
-        scons platform=linux generate_bindings=yes
+        scons platform=linux generate_bindings=yes target=release
+        scons platform=linux generate_bindings=yes target=debug
 
     - name: Compile GDExtension
       run: scons
