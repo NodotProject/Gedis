@@ -17,30 +17,6 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 - **Key Expiry**: Set a time-to-live (TTL) on keys for automatic deletion (`expire`, `ttl`).
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
 
-## Build Instructions
-
-To compile the Gedis GDExtension from source, follow these steps:
-
-1.  **Clone the repository**:
-
-    ```sh
-    git clone --recursive https://github.com/your-username/gedis.git
-    cd gedis
-    ```
-
-    _Note: If you cloned without `--recursive`, you can initialize the submodule separately:_
-
-    ```sh
-    git submodule update --init --recursive
-    ```
-
-2.  **Compile with SCons**:
-    You will need SCons and a C++ compiler (like GCC, Clang, or MSVC) installed.
-    ```sh
-    scons
-    ```
-    This will build the GDExtension and place the compiled library in the `addons/Gedis/bin/` directory.
-
 ## Installation
 
 1.  Copy the entire `addons/Gedis` folder into your Godot project's `addons` directory.
@@ -180,6 +156,30 @@ func _on_button_pressed():
 | `publish(channel, message)`      | Posts a message to a channel.                              |
 | `subscribe(channel, callable)`   | Subscribes the client to the given channel.                |
 | `unsubscribe(channel, callable)` | Unsubscribes the client from the given channel.            |
+
+## Contribution Instructions
+
+To compile the Gedis GDExtension from source, follow these steps:
+
+1.  **Clone the repository**:
+
+    ```sh
+    git clone --recursive https://github.com/your-username/gedis.git
+    cd gedis
+    ```
+
+    _Note: If you cloned without `--recursive`, you can initialize the submodule separately:_
+
+    ```sh
+    git submodule update --init --recursive
+    ```
+
+2.  **Compile with SCons**:
+    You will need SCons and a C++ compiler (like GCC, Clang, or MSVC) installed.
+    ```sh
+    scons
+    ```
+    This will build the GDExtension and place the compiled library in the `addons/Gedis/bin/` directory.
 
 ## License
 

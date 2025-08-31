@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install SCons
-        run: choco install scons
+        run: pip install scons
 
       - name: Set up MSVC developer command prompt
         uses: ilammy/msvc-dev-cmd@v1
