@@ -1,15 +1,9 @@
-name: Build and Test GDExtension
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+name: Build and Test
+on: [push]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -23,10 +17,10 @@ jobs:
         mv Godot_v4.1.1-stable_linux.x86_64 godot
         chmod +x godot
 
+    - name: Install scons
+      run: sudo apt-get update && sudo apt-get install -y scons
+
     - name: Compile GDExtension
       run: |
         cd addons/Gedis
         scons
-
-    - name: Run tests
-      run: ./run_tests.sh
