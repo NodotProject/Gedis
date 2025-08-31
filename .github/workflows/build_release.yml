@@ -39,7 +39,8 @@ jobs:
       - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=windows generate_bindings=yes target=template_release
+          scons platform=windows generate_bindings=yes
+          scons platform=windows target=template_release
       - name: Build with SCons
         run: scons platform=windows target=template_release arch=x86_64
 
@@ -86,7 +87,8 @@ jobs:
       - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=macos generate_bindings=yes target=template_release
+          scons platform=macos generate_bindings=yes
+          scons platform=macos target=template_release
       - name: Build with SCons
         run: scons platform=macos target=template_release arch=universal
 
@@ -131,7 +133,8 @@ jobs:
       - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=linux generate_bindings=yes target=template_release
+          scons platform=linux generate_bindings=yes
+          scons platform=linux target=template_release
       - name: Build with SCons
         run: scons platform=linux target=template_release arch=x86_64
 
