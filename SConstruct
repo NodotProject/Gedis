@@ -1,23 +1,40 @@
-from SCons.Script import *
+from SCons.Script import ARGUMENTS, Environment, Mkdir, Default, File
 import os
+import sys
 
-env = Environment(tools=['g++', 'ar', 'link'], CPPPATH=['src'])
-env.Append(CPPPATH=['#src'])
+# Resolve platform/target/arch from args (matches CI defaults)
+platform = ARGUMENTS.get('platform')
+if not platform:
+    p = sys.platform
+    if p.startswith('win'):
+        platform = 'windows'
+    elif p == 'darwin':
+        platform = 'macos'
+    else:
+        platform = 'linux'
 
-# Add godot-cpp headers
-env.Append(CPPPATH=['godot-cpp/include'])
-env.Append(CPPPATH=['godot-cpp/gen/include'])
+target = ARGUMENTS.get('target', 'template_release')
+arch = ARGUMENTS.get('arch', 'x86_64')
 
-# Add gdextension_interface.h from root directory
-env.Append(CPPPATH=['.'])
-
-# Add godot-cpp library
+# Set up the environment based on the platform
+if platform == 'windows':
+    # Use the MSVC compiler on Windows
+    env = Environment(tools=['default', 'msvc'])
+else:
+    # Use the default compiler on other platforms
+    env = Environment()
+env.Append(CPPPATH=['src', '.', 'godot-cpp/include', 'godot-cpp/gen/include'])
 env.Append(LIBPATH=['godot-cpp/bin'])
-env.Append(LIBS=['godot-cpp.linux.template_debug.x86_64'])
 
-# Ensure position-independent code for shared library
-env.Append(CCFLAGS=['-fPIC'])
-env.Append(CXXFLAGS=['-std=c++17'])
+is_windows = platform == 'windows'
+if not is_windows:
+    env.Append(CCFLAGS=['-fPIC'])
+    env.Append(CXXFLAGS=['-std=c++17'])
+
+lib_ext = '.lib' if is_windows else '.a'
+lib_prefix = '' if is_windows else 'lib'
+godot_cpp_lib = f"{lib_prefix}godot-cpp.{platform}.{target}.{arch}{lib_ext}"
+env.Append(LIBS=[File(os.path.join('godot-cpp', 'bin', godot_cpp_lib))])
 
 src_files = [
     'src/gedis.cpp',
@@ -26,10 +43,6 @@ src_files = [
     'src/register_types.cpp',
 ]
 
-# Create the target directory
 env.Execute(Mkdir('addons/Gedis/bin'))
-
-# Build to the correct location expected by the .gdextension file
 library = env.SharedLibrary(target='addons/Gedis/bin/libgedis', source=src_files)
-
 Default(library)
