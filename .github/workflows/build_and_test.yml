@@ -22,4 +22,3 @@ jobs:
 
     - name: Compile GDExtension
       run: scons
-      working-directory: ${{ github.workspace }}/addons/Gedis
