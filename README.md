@@ -174,3 +174,12 @@ func _on_button_pressed():
 
 ## License
 MIT — see LICENSE for details.
+
+
+## Continuous Integration
+
+This project uses GitHub Actions to automatically build the GDExtension for Windows and macOS. You can download the latest builds from the [Actions tab](https://github.com/krazy/Gedis/actions).
+
+A single zip file containing the `Gedis` addon for Windows, and macOS is produced.
+
+To install the addon, download the zip file from the latest release, extract it, and move the `Gedis` folder into your Godot project's `addons` directory.
