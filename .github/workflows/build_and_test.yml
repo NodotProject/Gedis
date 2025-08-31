@@ -20,5 +20,10 @@ jobs:
     - name: Install scons
       run: sudo apt-get update && sudo apt-get install -y scons
 
+    - name: Build godot-cpp bindings
+      run: |
+        cd godot-cpp
+        scons platform=linux generate_bindings=yes
+
     - name: Compile GDExtension
       run: scons
