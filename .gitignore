@@ -14,8 +14,14 @@ Thumbs.db
 *.user
 addons/gut/
 *.dblite
+*.log
 
 # Build artifacts
 *.os
 *.so
+*.dylib
+*.a
+*.dll
+*.lib
+*.exe
 addons/Gedis/bin/
