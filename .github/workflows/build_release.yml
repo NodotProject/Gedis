@@ -59,9 +59,9 @@ jobs:
       - name: Install SCons
         run: pip install scons
 
-      - name: Set up MSVC developer command prompt
+      - name: Set up MinGW
         if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+        run: choco install mingw --version=11.2.0
 
       - name: Cache godot-cpp build
         id: cache-godotcpp
@@ -81,7 +81,12 @@ jobs:
           scons platform=${{ matrix.platform }} generate_bindings=yes target=template_release
           scons platform=${{ matrix.platform }} generate_bindings=yes target=template_debug
       - name: Build with SCons
-        run: scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }} use_mingw=yes
+          else
+            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
+          fi
 
       - name: Package addon
         run: |
