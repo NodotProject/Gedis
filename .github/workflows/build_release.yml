@@ -11,14 +11,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_windows:
-    name: Build for Windows (MSVC, x86_64)
-    runs-on: windows-latest
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x86_64
+            artifact_name: gedis-windows-x86_64
+          - os: macos-latest
+            platform: macos
+            arch: universal
+            artifact_name: gedis-macos-universal
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            artifact_name: gedis-linux-x86_64
+    name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+
+      - name: Set up dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
 
       - name: Cache SCons build
         uses: actions/cache@v4
@@ -38,6 +60,7 @@ jobs:
         run: pip install scons
 
       - name: Set up MSVC developer command prompt
+        if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Cache godot-cpp build
@@ -53,143 +76,29 @@ jobs:
       - name: Build godot-cpp
         run: |
           cd godot-cpp
-          scons platform=windows generate_bindings=yes
-          scons platform=windows target=template_release
+          scons platform=${{ matrix.platform }} generate_bindings=yes
+          scons platform=${{ matrix.platform }} target=template_release
       - name: Build with SCons
-        run: scons platform=windows target=template_release arch=x86_64
+        run: scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
 
       - name: Package addon
         run: |
           mkdir -p package/addons
           cp -r addons/Gedis package/addons/
           cd package
-          zip -r ../gedis-windows-x86_64.zip .
+          zip -r ../${{ matrix.artifact_name }}.zip .
           cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gedis-windows-x86_64
-          path: gedis-windows-x86_64.zip
-
-  build_macos:
-    name: Build for macOS (universal)
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Cache SCons build
-        uses: actions/cache@v4
-        with:
-          path: |
-            .sconsign.dblite
-            addons/Gedis/bin
-          key: ${{ runner.os }}-scons-${{ hashFiles('**/SConstruct') }}
-          restore-keys: |
-            ${{ runner.os }}-scons-
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Install SCons
-        run: pip install scons
-
-      - name: Cache godot-cpp build
-        uses: actions/cache@v4
-        with:
-          path: |
-            godot-cpp/bin
-            godot-cpp/gen
-            godot-cpp/.sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/api.json') }}
-          restore-keys: |
-            ${{ runner.os }}-godot-cpp-
-      - name: Build godot-cpp
-        run: |
-          cd godot-cpp
-          scons platform=macos generate_bindings=yes
-          scons platform=macos target=template_release
-      - name: Build with SCons
-        run: scons platform=macos target=template_release arch=universal
-
-      - name: Package addon
-        run: |
-          mkdir -p package/addons
-          cp -r addons/Gedis package/addons/
-          cd package
-          zip -r ../gedis-macos-universal.zip .
-          cd ..
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gedis-macos-universal
-          path: gedis-macos-universal.zip
-
-  build_linux:
-    name: Build for Linux (GCC, x86_64)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - name: Set up dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
-
-      - name: Cache SCons build
-        uses: actions/cache@v4
-        with:
-          path: |
-            .sconsign.dblite
-            addons/Gedis/bin
-          key: ${{ runner.os }}-scons-${{ hashFiles('**/SConstruct') }}
-          restore-keys: |
-            ${{ runner.os }}-scons-
-
-      - name: Cache godot-cpp build
-        uses: actions/cache@v4
-        with:
-          path: |
-            godot-cpp/bin
-            godot-cpp/gen
-            godot-cpp/.sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/api.json') }}
-          restore-keys: |
-            ${{ runner.os }}-godot-cpp-
-      - name: Build godot-cpp
-        run: |
-          cd godot-cpp
-          scons platform=linux generate_bindings=yes
-          scons platform=linux target=template_release
-      - name: Build with SCons
-        run: scons platform=linux target=template_release arch=x86_64
-
-      - name: Package addon
-        run: |
-          mkdir -p package/addons
-          cp -r addons/Gedis package/addons/
-          cd package
-          zip -r ../gedis-linux-x86_64.zip .
-          cd ..
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gedis-linux-x86_64
-          path: gedis-linux-x86_64.zip
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
 
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build_windows, build_macos, build_linux]
+    needs: build
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download all artifacts
@@ -209,23 +118,8 @@ jobs:
           zip -r ../gedis-release.zip .
           cd ..
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./gedis-release.zip
+          files: gedis-release.zip
           asset_name: gedis-${{ github.ref_name }}.zip
-          asset_content_type: application/zip
