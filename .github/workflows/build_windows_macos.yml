@@ -31,17 +31,16 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install SCons
-        run: |
-          pip install scons
-          echo "%APPDATA%\Python\Scripts" >> $GITHUB_PATH
+        run: pip install scons
 
       - name: Set up MSVC developer command prompt
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build with SCons
+        shell: bash
         run: |
           cd addons/Gedis
-          python -m SCons platform=windows target=template_release arch=x86_64
+          scons platform=windows target=template_release arch=x86_64
 
       - name: Package addon
         run: |
@@ -81,14 +80,13 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install SCons
-        run: |
-          pip install scons
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        run: pip install scons
 
       - name: Build with SCons
+        shell: bash
         run: |
           cd addons/Gedis
-          python -m SCons platform=macos target=template_release arch=universal
+          scons platform=macos target=template_release arch=universal
 
       - name: Package addon
         run: |
