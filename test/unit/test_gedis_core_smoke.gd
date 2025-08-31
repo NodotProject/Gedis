@@ -1,16 +1,20 @@
 extends GutTest
 
-# Smoke test for native class GedisCore exposed via GDExtension.
-# Validates method add(a, b) for simple cases. No Redis dependency.
+# Smoke test for native Gedis class exposed via GDExtension.
+# Validates basic functionality. No Redis dependency.
 
-var gc
+var gedis
 
 func before_each():
 	# Fresh instance per test
-	gc = GedisCore.new()
+	gedis = Gedis.new()
 
-func test_add_two_positive_integers():
-	assert_eq(gc.add(2, 3), 5, "2 + 3 should equal 5")
+func test_basic_set_get():
+	gedis.set("key1", "value1")
+	assert_eq(gedis.get("key1"), "value1", "Should get what was set")
 
-func test_add_two_negative_integers():
-	assert_eq(gc.add(-4, -6), -10, "-4 + -6 should equal -10")
+func test_keys_pattern():
+	gedis.set("test:1", "a")
+	gedis.set("test:2", "b")
+	var keys = gedis.keys("test:*")
+	assert_eq(keys.size(), 2, "Should find 2 keys matching pattern")

@@ -1,30 +1,29 @@
 extends GutTest
 
-const GEDIS := preload("res://addons/Gedis/gedis.gd")
+var gedis
 
-var g
 func before_each():
 	# Fresh instance per test
-	self.g = GEDIS.new()
+	gedis = Gedis.new()
 
-func test_set_get_and_default():
-	g.set_value("a", 1)
-	assert_eq(g.get_value("a"), 1, "get should return what was set")
-	assert_eq(g.get_value("missing", 42), 42, "get should return default when missing")
+func test_set_get():
+	gedis.set("a", "1")
+	assert_eq(gedis.get("a"), "1", "get should return what was set")
+	assert_eq(gedis.get("missing"), null, "get should return null when missing")
 
 func test_incr_decr():
-	assert_eq(g.incr("n"), 1)
-	assert_eq(g.incr("n", 2), 3)
-	assert_eq(g.decr("n", 4), -1)
+	assert_eq(gedis.incr("n"), 1, "incr on non-existent key should return 1")
+	assert_eq(gedis.incr("n"), 2, "incr should increment existing value")
+	assert_eq(gedis.decr("n"), 1, "decr should decrement existing value")
 
-func test_del_exists_and_keys_glob():
-	g.set_value("user:1", "ok")
-	g.set_value("user:2", "ok")
-	g.set_value("foo", 123)
-	assert_true(g.exists("user:1"))
-	assert_true(g.exists("foo"))
-	assert_false(g.exists("nope"))
-	var ks = g.keys("user:?")
-	assert_true(ks.has("user:1") && ks.has("user:2") && ks.size() == 2, "glob should match exactly two user keys")
-	assert_eq(g.del("foo"), 1)
-	assert_false(g.exists("foo"))
+func test_del_exists_and_keys():
+	gedis.set("user:1", "ok")
+	gedis.set("user:2", "ok")
+	gedis.set("foo", "123")
+	assert_eq(gedis.exists(["user:1"]), 1, "user:1 should exist")
+	assert_eq(gedis.exists(["foo"]), 1, "foo should exist")
+	assert_eq(gedis.exists(["nope"]), 0, "nope should not exist")
+	var ks = gedis.keys("*")
+	assert_eq(ks.size(), 3, "should have 3 keys total")
+	assert_eq(gedis.del(["foo"]), 1, "should delete 1 key")
+	assert_eq(gedis.exists(["foo"]), 0, "foo should not exist after delete")

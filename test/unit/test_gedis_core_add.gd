@@ -1,22 +1,27 @@
 extends GutTest
 
-# Unit test for GedisCore.add method
-# Tests the basic addition functionality with various integer inputs
+# Unit test for Gedis basic functionality
+# Tests the basic string operations
 
-var gedis_core
+var gedis
 
 func before_each():
-	# Create a fresh GedisCore instance for each test
-	gedis_core = GedisCore.new()
+	# Create a fresh Gedis instance for each test
+	gedis = Gedis.new()
 
-func test_add_positive_integers():
-	# Test: add(1, 2) == 3
-	assert_eq(gedis_core.add(1, 2), 3, "1 + 2 should equal 3")
+func test_set_get_basic():
+	# Test: set/get basic functionality
+	gedis.set("test", "value")
+	assert_eq(gedis.get("test"), "value", "Should retrieve set value")
 
-func test_add_negative_and_positive():
-	# Test: add(-5, 5) == 0
-	assert_eq(gedis_core.add(-5, 5), 0, "-5 + 5 should equal 0")
+func test_incr_basic():
+	# Test: incr functionality
+	gedis.set("counter", 5)
+	var result = gedis.incr("counter")
+	assert_eq(result, 6, "Incr should increment by 1")
 
-func test_add_zeros():
-	# Test: add(0, 0) == 0
-	assert_eq(gedis_core.add(0, 0), 0, "0 + 0 should equal 0")
+func test_decr_basic():
+	# Test: decr functionality
+	gedis.set("counter", 10)
+	var result = gedis.decr("counter")
+	assert_eq(result, 9, "Decr should decrement by 1")
