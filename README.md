@@ -22,11 +22,14 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 To compile the Gedis GDExtension from source, follow these steps:
 
 1.  **Clone the repository**:
+
     ```sh
     git clone --recursive https://github.com/your-username/gedis.git
     cd gedis
     ```
-    *Note: If you cloned without `--recursive`, you can initialize the submodule separately:*
+
+    _Note: If you cloned without `--recursive`, you can initialize the submodule separately:_
+
     ```sh
     git submodule update --init --recursive
     ```
@@ -47,6 +50,7 @@ To compile the Gedis GDExtension from source, follow these steps:
 ## Usage Examples
 
 ### Strings
+
 ```gdscript
 # Set and get a value
 Gedis.set_value("player_name", "Alice")
@@ -59,6 +63,7 @@ Gedis.decrby("score", 10) # 91
 ```
 
 ### Hashes
+
 ```gdscript
 # Store player data in a hash
 Gedis.hset("player:1", "name", "Bob")
@@ -73,6 +78,7 @@ var player_data = Gedis.hgetall("player:1") # {"name": "Bob", "hp": 100, "mana":
 ```
 
 ### Lists
+
 ```gdscript
 # Use a list as a queue for game events
 Gedis.rpush("events", "player_spawned")
@@ -84,6 +90,7 @@ var queue_length = Gedis.llen("events") # 1
 ```
 
 ### Sets
+
 ```gdscript
 # Store unique items a player has collected
 Gedis.sadd("inventory", "sword")
@@ -98,6 +105,7 @@ var all_items = Gedis.smembers("inventory") # ["sword", "shield"] or ["shield", 
 ```
 
 ### Key Expiry
+
 ```gdscript
 # Create a temporary key
 Gedis.set_value("session_token", "xyz123")
@@ -112,6 +120,7 @@ var time_left_after_persist = Gedis.ttl("session_token") # -1 (no expiry)
 ```
 
 ### Pub/Sub System
+
 The Pub/Sub system allows for decoupled communication using signals.
 
 ```gdscript
@@ -131,55 +140,47 @@ func _on_button_pressed():
 
 ## API Reference
 
-| Method | Description |
-| --- | --- |
-| **Strings** | |
-| `set_value(key, value)` | Sets the string value of a key. |
-| `get_value(key)` | Gets the string value of a key. |
-| `del(key)` | Deletes a key. |
-| `exists(key)` | Checks if a key exists. |
-| `incr(key)` | Increments the integer value of a key by one. |
-| `incrby(key, amount)` | Increments the integer value of a key by the given amount. |
-| `decr(key)` | Decrements the integer value of a key by one. |
-| `decrby(key, amount)` | Decrements the integer value of a key by the given amount. |
-| **Hashes** | |
-| `hset(key, field, value)` | Sets the string value of a hash field. |
-| `hget(key, field)` | Gets the value of a hash field. |
-| `hgetall(key)` | Gets all the fields and values in a hash as a Dictionary. |
-| `hdel(key, field)` | Deletes a hash field. |
-| `hkeys(key)` | Gets all the fields in a hash. |
-| `hvals(key)` | Gets all the values in a hash. |
-| `hlen(key)` | Gets the number of fields in a hash. |
-| **Lists** | |
-| `lpush(key, value)` | Prepends one value to a list. |
-| `rpush(key, value)` | Appends one value to a list. |
-| `lpop(key)` | Removes and gets the first element in a list. |
-| `rpop(key)` | Removes and gets the last element in a list. |
-| `llen(key)` | Gets the length of a list. |
-| `lrange(key, start, stop)` | Gets a range of elements from a list. |
-| **Sets** | |
-| `sadd(key, member)` | Adds one member to a set. |
-| `srem(key, member)` | Removes one member from a set. |
-| `smembers(key)` | Gets all the members in a set. |
-| `sismember(key, member)` | Checks if a member is in a set. |
-| `scard(key)` | Gets the number of members in a set. |
-| **Expiry** | |
-| `expire(key, seconds)` | Sets a key's time to live in seconds. |
-| `ttl(key)` | Gets the remaining time to live of a key. |
-| `persist(key)` | Removes the expiration from a key. |
-| **Pub/Sub** | |
-| `publish(channel, message)` | Posts a message to a channel. |
-| `subscribe(channel, callable)` | Subscribes the client to the given channel. |
-| `unsubscribe(channel, callable)` | Unsubscribes the client from the given channel. |
+| Method                           | Description                                                |
+| -------------------------------- | ---------------------------------------------------------- |
+| **Strings**                      |                                                            |
+| `set_value(key, value)`          | Sets the string value of a key.                            |
+| `get_value(key)`                 | Gets the string value of a key.                            |
+| `del(key)`                       | Deletes a key.                                             |
+| `exists(key)`                    | Checks if a key exists.                                    |
+| `incr(key)`                      | Increments the integer value of a key by one.              |
+| `incrby(key, amount)`            | Increments the integer value of a key by the given amount. |
+| `decr(key)`                      | Decrements the integer value of a key by one.              |
+| `decrby(key, amount)`            | Decrements the integer value of a key by the given amount. |
+| **Hashes**                       |                                                            |
+| `hset(key, field, value)`        | Sets the string value of a hash field.                     |
+| `hget(key, field)`               | Gets the value of a hash field.                            |
+| `hgetall(key)`                   | Gets all the fields and values in a hash as a Dictionary.  |
+| `hdel(key, field)`               | Deletes a hash field.                                      |
+| `hkeys(key)`                     | Gets all the fields in a hash.                             |
+| `hvals(key)`                     | Gets all the values in a hash.                             |
+| `hlen(key)`                      | Gets the number of fields in a hash.                       |
+| **Lists**                        |                                                            |
+| `lpush(key, value)`              | Prepends one value to a list.                              |
+| `rpush(key, value)`              | Appends one value to a list.                               |
+| `lpop(key)`                      | Removes and gets the first element in a list.              |
+| `rpop(key)`                      | Removes and gets the last element in a list.               |
+| `llen(key)`                      | Gets the length of a list.                                 |
+| `lrange(key, start, stop)`       | Gets a range of elements from a list.                      |
+| **Sets**                         |                                                            |
+| `sadd(key, member)`              | Adds one member to a set.                                  |
+| `srem(key, member)`              | Removes one member from a set.                             |
+| `smembers(key)`                  | Gets all the members in a set.                             |
+| `sismember(key, member)`         | Checks if a member is in a set.                            |
+| `scard(key)`                     | Gets the number of members in a set.                       |
+| **Expiry**                       |                                                            |
+| `expire(key, seconds)`           | Sets a key's time to live in seconds.                      |
+| `ttl(key)`                       | Gets the remaining time to live of a key.                  |
+| `persist(key)`                   | Removes the expiration from a key.                         |
+| **Pub/Sub**                      |                                                            |
+| `publish(channel, message)`      | Posts a message to a channel.                              |
+| `subscribe(channel, callable)`   | Subscribes the client to the given channel.                |
+| `unsubscribe(channel, callable)` | Unsubscribes the client from the given channel.            |
 
 ## License
+
 MIT — see LICENSE for details.
-
-
-## Continuous Integration
-
-This project uses GitHub Actions to automatically build the GDExtension for Windows and macOS. You can download the latest builds from the [Actions tab](https://github.com/krazy/Gedis/actions).
-
-A single zip file containing the `Gedis` addon for Windows, and macOS is produced.
-
-To install the addon, download the zip file from the latest release, extract it, and move the `Gedis` folder into your Godot project's `addons` directory.
