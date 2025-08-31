@@ -27,7 +27,9 @@ env.Append(CPPPATH=['src', '.', 'godot-cpp/include', 'godot-cpp/gen/include'])
 env.Append(LIBPATH=['godot-cpp/bin'])
 
 is_windows = platform == 'windows'
-if not is_windows:
+if is_windows:
+    env.Append(CXXFLAGS=['/std:c++17'])
+else:
     env.Append(CCFLAGS=['-fPIC'])
     env.Append(CXXFLAGS=['-std=c++17'])
 
