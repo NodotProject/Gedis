@@ -125,13 +125,17 @@ jobs:
         shell: msys2 {0}
         run: |
           export PATH="/mingw64/bin:$PATH"
-          export CC=x86_64-w64-mingw32-gcc
-          export CXX=x86_64-w64-mingw32-g++
+          
+          # Set full paths to compilers (similar to build_local.sh approach)
+          export CC=/mingw64/bin/x86_64-w64-mingw32-gcc
+          export CXX=/mingw64/bin/x86_64-w64-mingw32-g++
           
           # Debug: Show environment and compiler availability
           echo "PATH: $PATH"
           echo "CC: $CC"
           echo "CXX: $CXX"
+          echo "CC exists: $(test -f $CC && echo 'yes' || echo 'no')"
+          echo "CXX exists: $(test -f $CXX && echo 'yes' || echo 'no')"
           which x86_64-w64-mingw32-gcc || echo "gcc not found in PATH"
           which x86_64-w64-mingw32-g++ || echo "g++ not found in PATH"
           x86_64-w64-mingw32-g++ --version
