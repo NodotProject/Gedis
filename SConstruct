@@ -26,86 +26,30 @@ if platform == 'windows' and not use_mingw:
     # Use the MSVC compiler on Windows (native build)
     env = Environment(tools=['default', 'msvc'])
 elif platform == 'windows' and use_mingw:
-    # Use MinGW for Windows cross-compilation
-    # Explicitly use GCC-style tools and avoid MSVC detection
+    # Use MinGW for Windows cross-compilation (simplified)
+    # Prefer CC/CXX environment variables, otherwise fall back to common cross-compiler names.
     env = Environment(tools=['gcc', 'g++', 'gnulink', 'ar', 'gas'])
-    
-    
-    # For MSYS2 environment, we need to use full paths to the compilers
-    # because SCons executes them in a different shell context
-    if 'CC' in os.environ and 'CXX' in os.environ:
-        # Use environment variables if they're set (from CI)
-        cc_cmd = os.environ['CC']
-        cxx_cmd = os.environ['CXX']
-        
-        # Convert Windows-style paths to MSYS2 paths if needed
-        # In MSYS2, /mingw64/bin is the standard location
-        if not os.path.isabs(cc_cmd):
-            # Try to find the full path
-            potential_paths = [
-                f'/mingw64/bin/{cc_cmd}',
-                f'/usr/bin/{cc_cmd}',
-                cc_cmd  # Keep original as fallback
-            ]
-            
-            for path in potential_paths:
-                if os.path.exists(path):
-                    cc_cmd = path
-                    break
-            
-            # Do the same for CXX
-            potential_paths = [
-                f'/mingw64/bin/{cxx_cmd}',
-                f'/usr/bin/{cxx_cmd}',
-                cxx_cmd  # Keep original as fallback
-            ]
-            
-            for path in potential_paths:
-                if os.path.exists(path):
-                    cxx_cmd = path
-                    break
-        
-        env['CC'] = cc_cmd
-        env['CXX'] = cxx_cmd
-    else:
-        # Fallback: try to find MinGW compilers in standard locations
-        mingw_locations = [
-            '/mingw64/bin/x86_64-w64-mingw32-gcc',
-            '/usr/bin/x86_64-w64-mingw32-gcc',
-            'x86_64-w64-mingw32-gcc'  # Last resort: hope it's in PATH
-        ]
-        
-        for gcc_path in mingw_locations:
-            gxx_path = gcc_path.replace('-gcc', '-g++')
-            if os.path.exists(gcc_path) and os.path.exists(gxx_path):
-                env['CC'] = gcc_path
-                env['CXX'] = gxx_path
+
+    # Determine compiler commands (allow CI to override via CC/CXX)
+    cc_cmd = os.environ.get('CC', 'x86_64-w64-mingw32-gcc')
+    cxx_cmd = os.environ.get('CXX', 'x86_64-w64-mingw32-g++')
+
+    # Verify compiler is available; try common locations if not found in PATH
+    import shutil
+    if not shutil.which(cc_cmd):
+        for p in ['/usr/bin/x86_64-w64-mingw32-gcc', '/usr/local/bin/x86_64-w64-mingw32-gcc', '/mingw64/bin/x86_64-w64-mingw32-gcc']:
+            if os.path.exists(p):
+                cc_cmd = p
+                cxx_cmd = p.replace('gcc', 'g++')
                 break
-        else:
-            # Use default names and hope for the best
-            env['CC'] = 'x86_64-w64-mingw32-gcc'
-            env['CXX'] = 'x86_64-w64-mingw32-g++'
-            # Check if the compiler exists
-            import shutil
-            compiler_path = shutil.which(env['CC'])
-            if not compiler_path:
-                # Search in common locations
-                common_paths = [
-                    '/usr/bin',
-                    '/usr/local/bin',
-                    '/mingw64/bin'
-                ]
-                for path in common_paths:
-                    compiler_path = shutil.which(env['CC'], path=path)
-                    if compiler_path:
-                        env['CC'] = compiler_path
-                        env['CXX'] = compiler_path.replace('gcc', 'g++')
-                        break
-            
-            if not compiler_path:
-                print("ERROR: MinGW compiler not found. Please install MinGW and add it to your PATH.")
-                Exit(1)
-    
+
+    if not shutil.which(cc_cmd) and not os.path.exists(cc_cmd):
+        print("ERROR: MinGW cross-compiler not found. Install mingw-w64 (e.g. apt-get install mingw-w64) or set CC/CXX to the cross-compiler paths.")
+        Exit(1)
+
+    env['CC'] = cc_cmd
+    env['CXX'] = cxx_cmd
+
 else:
     # Use the default compiler on other platforms
     env = Environment()
