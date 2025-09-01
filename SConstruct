@@ -24,8 +24,8 @@ if platform == 'windows' and not use_mingw:
     env = Environment(tools=['default', 'msvc'])
 elif platform == 'windows' and use_mingw:
     # Use MinGW for Windows cross-compilation
-    # Don't use the 'mingw' tool as it may interfere with our custom setup
-    env = Environment(tools=['default'])
+    # Explicitly use GCC-style tools and avoid MSVC detection
+    env = Environment(tools=['gcc', 'g++', 'gnulink', 'ar', 'gas'])
     
     # Debug: Show what we're working with
     print(f"DEBUG: Environment CC={os.environ.get('CC', 'not set')}")
