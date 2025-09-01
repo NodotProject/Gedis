@@ -25,29 +25,58 @@ if platform == 'windows' and not use_mingw:
 elif platform == 'windows' and use_mingw:
     # Use MinGW for Windows cross-compilation
     env = Environment(tools=['default', 'mingw'])
-    # Ensure we use the cross-compiler if CC/CXX are set
-    if 'CC' in os.environ:
-        env['CC'] = os.environ['CC']
-    if 'CXX' in os.environ:
-        env['CXX'] = os.environ['CXX']
     
-    # For MSYS2 environment, explicitly set the compiler paths
-    # This ensures SCons can find the MinGW compilers
-    if not env['CC'] and not env['CXX']:
-        # Try to find the MinGW compilers in common locations
-        import subprocess
-        try:
-            # Use 'which' to find the compiler in PATH
-            cc_path = subprocess.check_output(['which', 'x86_64-w64-mingw32-gcc'], universal_newlines=True).strip()
-            cxx_path = subprocess.check_output(['which', 'x86_64-w64-mingw32-g++'], universal_newlines=True).strip()
-            env['CC'] = cc_path
-            env['CXX'] = cxx_path
-            print(f"Found MinGW compilers: CC={cc_path}, CXX={cxx_path}")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            # Fallback to default names if 'which' fails
+    # For MSYS2 environment, we need to use full paths to the compilers
+    # because SCons executes them in a different shell context
+    if 'CC' in os.environ and 'CXX' in os.environ:
+        # Use environment variables if they're set (from CI)
+        cc_cmd = os.environ['CC']
+        cxx_cmd = os.environ['CXX']
+        
+        # If they're just command names, try to find full paths
+        if not os.path.isabs(cc_cmd):
+            # Try common MSYS2 locations first
+            msys2_paths = ['/mingw64/bin', '/usr/bin']
+            for path in msys2_paths:
+                full_cc_path = os.path.join(path, cc_cmd)
+                full_cxx_path = os.path.join(path, cxx_cmd)
+                if os.path.exists(full_cc_path) and os.path.exists(full_cxx_path):
+                    cc_cmd = full_cc_path
+                    cxx_cmd = full_cxx_path
+                    break
+            else:
+                # Try using 'which' as fallback
+                import subprocess
+                try:
+                    cc_cmd = subprocess.check_output(['which', cc_cmd], universal_newlines=True).strip()
+                    cxx_cmd = subprocess.check_output(['which', cxx_cmd], universal_newlines=True).strip()
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    # Keep the original command names as last resort
+                    pass
+        
+        env['CC'] = cc_cmd
+        env['CXX'] = cxx_cmd
+        print(f"Using MinGW compilers: CC={cc_cmd}, CXX={cxx_cmd}")
+    else:
+        # Fallback: try to find MinGW compilers in standard locations
+        mingw_locations = [
+            '/mingw64/bin/x86_64-w64-mingw32-gcc',
+            '/usr/bin/x86_64-w64-mingw32-gcc',
+            'x86_64-w64-mingw32-gcc'  # Last resort: hope it's in PATH
+        ]
+        
+        for gcc_path in mingw_locations:
+            gxx_path = gcc_path.replace('-gcc', '-g++')
+            if os.path.exists(gcc_path) and os.path.exists(gxx_path):
+                env['CC'] = gcc_path
+                env['CXX'] = gxx_path
+                print(f"Found MinGW compilers: CC={gcc_path}, CXX={gxx_path}")
+                break
+        else:
+            # Use default names and hope for the best
             env['CC'] = 'x86_64-w64-mingw32-gcc'
             env['CXX'] = 'x86_64-w64-mingw32-g++'
-            print("Using default MinGW compiler names")
+            print("Using default MinGW compiler names (fallback)")
 else:
     # Use the default compiler on other platforms
     env = Environment()
