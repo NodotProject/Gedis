@@ -47,6 +47,10 @@ jobs:
           scons platform=linux arch=x86_64 target=template_debug
           
           # Build for Windows
+        - name: Install MinGW (for Windows cross-compiling)
+          if: runner.os == 'Linux'
+          run: sudo apt-get update && sudo apt-get install -y mingw-w64
+          
           scons platform=windows arch=x86_64 generate_bindings=yes target=template_release
           scons platform=windows arch=x86_64 target=template_debug
           
