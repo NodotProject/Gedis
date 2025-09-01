@@ -124,28 +124,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
-          export PATH="/mingw64/bin:$PATH"
-          
-          # Set full paths to compilers (similar to build_local.sh approach)
-          export CC=/mingw64/bin/x86_64-w64-mingw32-gcc
-          export CXX=/mingw64/bin/x86_64-w64-mingw32-g++
-          
-          # Debug: Show environment and compiler availability
-          echo "PATH: $PATH"
-          echo "CC: $CC"
-          echo "CXX: $CXX"
-          echo "CC exists: $(test -f $CC && echo 'yes' || echo 'no')"
-          echo "CXX exists: $(test -f $CXX && echo 'yes' || echo 'no')"
-          which x86_64-w64-mingw32-gcc || echo "gcc not found in PATH"
-          which x86_64-w64-mingw32-g++ || echo "g++ not found in PATH"
-          x86_64-w64-mingw32-g++ --version
-          
-          # Show SCons version and Python version
-          python --version
-          scons --version
-          
-          # Build with verbose output to see what SCons is doing
-          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes -j1 --debug=explain -v
+          ./build.sh ${{ matrix.arch }}
 
       - name: Build project (Unix)
         if: runner.os != 'Windows'
@@ -154,6 +133,7 @@ jobs:
           scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
 
       - name: Package addon
+        if: runner.os == 'Windows'
         shell: bash
         run: |
           mkdir -p package/addons/Gedis/bin
