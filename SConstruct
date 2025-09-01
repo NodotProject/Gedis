@@ -15,6 +15,9 @@ if not platform:
 
 target = ARGUMENTS.get('target', 'template_release')
 arch = ARGUMENTS.get('arch', 'x86_64')
+if arch not in ['x86_64', 'x86_32', 'arm64', 'universal']:
+    print(f"ERROR: Invalid architecture '{arch}'. Supported architectures are: x86_64, x86_32, arm64, universal.")
+    Exit(1)
 
 # Set up the environment based on the platform
 use_mingw = ARGUMENTS.get('use_mingw', 'no') == 'yes'
@@ -27,10 +30,6 @@ elif platform == 'windows' and use_mingw:
     # Explicitly use GCC-style tools and avoid MSVC detection
     env = Environment(tools=['gcc', 'g++', 'gnulink', 'ar', 'gas'])
     
-    # Debug: Show what we're working with
-    print(f"DEBUG: Environment CC={os.environ.get('CC', 'not set')}")
-    print(f"DEBUG: Environment CXX={os.environ.get('CXX', 'not set')}")
-    print(f"DEBUG: Current working directory: {os.getcwd()}")
     
     # For MSYS2 environment, we need to use full paths to the compilers
     # because SCons executes them in a different shell context
@@ -68,13 +67,8 @@ elif platform == 'windows' and use_mingw:
         
         env['CC'] = cc_cmd
         env['CXX'] = cxx_cmd
-        print(f"DEBUG: Set CC={cc_cmd}")
-        print(f"DEBUG: Set CXX={cxx_cmd}")
-        print(f"DEBUG: CC exists: {os.path.exists(cc_cmd) if os.path.isabs(cc_cmd) else 'unknown (relative path)'}")
-        print(f"DEBUG: CXX exists: {os.path.exists(cxx_cmd) if os.path.isabs(cxx_cmd) else 'unknown (relative path)'}")
     else:
         # Fallback: try to find MinGW compilers in standard locations
-        print("DEBUG: CC/CXX environment variables not set, trying fallback")
         mingw_locations = [
             '/mingw64/bin/x86_64-w64-mingw32-gcc',
             '/usr/bin/x86_64-w64-mingw32-gcc',
@@ -83,21 +77,35 @@ elif platform == 'windows' and use_mingw:
         
         for gcc_path in mingw_locations:
             gxx_path = gcc_path.replace('-gcc', '-g++')
-            print(f"DEBUG: Checking {gcc_path} and {gxx_path}")
             if os.path.exists(gcc_path) and os.path.exists(gxx_path):
                 env['CC'] = gcc_path
                 env['CXX'] = gxx_path
-                print(f"DEBUG: Found MinGW compilers: CC={gcc_path}, CXX={gxx_path}")
                 break
         else:
             # Use default names and hope for the best
             env['CC'] = 'x86_64-w64-mingw32-gcc'
             env['CXX'] = 'x86_64-w64-mingw32-g++'
-            print("DEBUG: Using default MinGW compiler names (fallback)")
+            # Check if the compiler exists
+            import shutil
+            compiler_path = shutil.which(env['CC'])
+            if not compiler_path:
+                # Search in common locations
+                common_paths = [
+                    '/usr/bin',
+                    '/usr/local/bin',
+                    '/mingw64/bin'
+                ]
+                for path in common_paths:
+                    compiler_path = shutil.which(env['CC'], path=path)
+                    if compiler_path:
+                        env['CC'] = compiler_path
+                        env['CXX'] = compiler_path.replace('gcc', 'g++')
+                        break
+            
+            if not compiler_path:
+                print("ERROR: MinGW compiler not found. Please install MinGW and add it to your PATH.")
+                Exit(1)
     
-    # Verify final compiler settings
-    print(f"DEBUG: Final CC={env['CC']}")
-    print(f"DEBUG: Final CXX={env['CXX']}")
 else:
     # Use the default compiler on other platforms
     env = Environment()
