@@ -116,6 +116,10 @@ elif is_windows and use_mingw:
     # MinGW flags (similar to Linux but for Windows target)
     env.Append(CCFLAGS=['-fPIC'])
     env.Append(CXXFLAGS=['-std=c++17'])
+    # Add Windows-specific defines for MinGW
+    env.Append(CPPDEFINES=['WIN32', '_WIN32', 'WINDOWS_ENABLED'])
+    # Ensure proper linking for Windows
+    env.Append(LINKFLAGS=['-static-libgcc', '-static-libstdc++'])
 else:
     # Linux/macOS flags
     env.Append(CCFLAGS=['-fPIC'])
