@@ -20,6 +20,7 @@ if arch not in ['x86_64', 'x86_32', 'arm64', 'universal']:
     Exit(1)
 
 # Set up the environment based on the platform
+use_mingw = ARGUMENTS.get('use_mingw', 'no') == 'yes'
 
 if platform == 'windows' and not use_mingw:
     # Use the MSVC compiler on Windows (native build)
@@ -134,7 +135,6 @@ else:
 
 # When using MinGW for cross-compilation, we still get .a files with lib prefix
 # .lib files without prefix are only used with MSVC
-use_mingw = ARGUMENTS.get('use_mingw', 'no') == 'yes'
 if is_windows and not use_mingw:
     lib_ext = '.lib'
     lib_prefix = ''
@@ -143,6 +143,20 @@ else:
     lib_prefix = 'lib'
 godot_cpp_lib = f"{lib_prefix}godot-cpp.{platform}.{target}.{arch}{lib_ext}"
 env.Append(LIBS=[File(os.path.join('godot-cpp', 'bin', godot_cpp_lib))])
+
+# Debug logging for CI: print resolved names and compiler locations
+print("=== SCons debug: resolved build variables ===")
+print("platform:", platform)
+print("target:", target)
+print("arch:", arch)
+print("use_mingw:", ARGUMENTS.get('use_mingw', 'no'))
+print("expected godot_cpp_lib:", godot_cpp_lib)
+print("godot-cpp bin path:", os.path.join('godot-cpp', 'bin'))
+print("ENV CC:", os.environ.get('CC'))
+print("ENV CXX:", os.environ.get('CXX'))
+print("env['CC']:", env.get('CC'))
+print("env['CXX']:", env.get('CXX'))
+print("============================================")
 
 src_files = [
     'src/gedis.cpp',
@@ -163,6 +177,11 @@ elif platform == 'macos':
 else:
     env['SHLIBPREFIX'] = 'lib'
     env['SHLIBSUFFIX'] = '.so'
+
+# Debug logging: shared lib name details
+print("SHLIBPREFIX:", env.get('SHLIBPREFIX'))
+print("SHLIBSUFFIX:", env.get('SHLIBSUFFIX'))
+print("Target shared lib will be created as:", env.get('SHLIBPREFIX') + 'gedis' + env.get('SHLIBSUFFIX'))
 
 # Create the library with a simple name, SCons will add the correct extension
 library = env.SharedLibrary(target='libgedis', source=src_files)
