@@ -145,7 +145,7 @@ jobs:
           scons --version
           
           # Build with verbose output to see what SCons is doing
-          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes -j1 --debug=explain
+          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes -j1 --debug=explain -v
 
       - name: Build project (Unix)
         if: runner.os != 'Windows'
