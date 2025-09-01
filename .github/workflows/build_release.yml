@@ -95,45 +95,60 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ runner.os == 'Windows' && 'mingw' || 'native' }}-v2
             ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-
-      - name: Build godot-cpp (cache miss)
-        if: steps.cache-godotcpp.outputs.cache-hit != 'true'
-        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      - name: Build godot-cpp (cache miss) - Windows
+        if: steps.cache-godotcpp.outputs.cache-hit != 'true' && runner.os == 'Windows'
+        shell: msys2 {0}
         run: |
           cd godot-cpp
-          echo "Building godot-cpp for ${{ matrix.platform }} (${{ matrix.arch }})"
+          echo "Building godot-cpp for Windows (${{ matrix.arch }})"
+          echo "Using MinGW cross-compiler"
+          echo "CC: $CC, CXX: $CXX"
           
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            echo "Using MinGW cross-compiler"
-            echo "CC: $CC, CXX: $CXX"
-            scons platform=windows arch=${{ matrix.arch }} generate_bindings=yes target=template_release use_mingw=yes
-            scons platform=windows arch=${{ matrix.arch }} generate_bindings=yes target=template_debug use_mingw=yes
-          else
-            scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_release
-            scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_debug
-          fi
+          scons platform=windows arch=${{ matrix.arch }} generate_bindings=yes target=template_release use_mingw=yes
+          scons platform=windows arch=${{ matrix.arch }} generate_bindings=yes target=template_debug use_mingw=yes
           
           echo "Verifying godot-cpp build outputs:"
           ls -la bin/ || echo "No bin directory found"
           ls -la gen/ || echo "No gen directory found"
 
-      - name: Build with SCons
-        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      - name: Build godot-cpp (cache miss) - Unix
+        if: steps.cache-godotcpp.outputs.cache-hit != 'true' && runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd godot-cpp
+          echo "Building godot-cpp for ${{ matrix.platform }} (${{ matrix.arch }})"
+          
+          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_release
+          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_debug
+          
+          echo "Verifying godot-cpp build outputs:"
+          ls -la bin/ || echo "No bin directory found"
+          ls -la gen/ || echo "No gen directory found"
+
+      - name: Build with SCons - Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          echo "Building main project for Windows (${{ matrix.arch }})"
+          echo "Diagnostics (Windows):"
+          echo "CC: $CC, CXX: $CXX"
+          which $CC || echo "CC not found in PATH"
+          which $CXX || echo "CXX not found in PATH"
+          $CC --version || echo "CC version check failed"
+          scons --version || echo "SCons version check failed"
+          
+          echo "Building with MinGW..."
+          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
+          
+          echo "Verifying build outputs:"
+          ls -la addons/Gedis/bin/ || echo "No build outputs found"
+
+      - name: Build with SCons - Unix
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
           echo "Building main project for ${{ matrix.platform }} (${{ matrix.arch }})"
-          
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            echo "Diagnostics (Windows):"
-            echo "CC: $CC, CXX: $CXX"
-            which $CC || echo "CC not found in PATH"
-            which $CXX || echo "CXX not found in PATH"
-            $CC --version || echo "CC version check failed"
-            scons --version || echo "SCons version check failed"
-            
-            echo "Building with MinGW..."
-            scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
-          else
-            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
-          fi
+          scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
           
           echo "Verifying build outputs:"
           ls -la addons/Gedis/bin/ || echo "No build outputs found"
