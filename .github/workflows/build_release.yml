@@ -68,13 +68,13 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-config make
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-config mingw-w64-x86_64-python mingw-w64-x86_64-python-pip make
 
       - name: Install SCons (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
-          python3 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install scons
 
       - name: Set up Windows environment variables
