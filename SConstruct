@@ -20,7 +20,6 @@ if arch not in ['x86_64', 'x86_32', 'arm64', 'universal']:
     Exit(1)
 
 # Set up the environment based on the platform
-use_mingw = ARGUMENTS.get('use_mingw', 'no') == 'yes'
 
 if platform == 'windows' and not use_mingw:
     # Use the MSVC compiler on Windows (native build)
