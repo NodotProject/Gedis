@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export PATH="/mingw64/bin:$PATH"
+
 # Set full paths to compilers
 export CC=/mingw64/bin/x86_64-w64-mingw32-gcc
 export CXX=/mingw64/bin/x86_64-w64-mingw32-g++
