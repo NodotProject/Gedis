@@ -11,21 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-godot-cpp:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: windows
-            arch: x86_64
-          - os: macos-latest
-            platform: macos
-            arch: universal
-          - os: ubuntu-latest
-            platform: linux
-            arch: x86_64
-    name: Build godot-cpp for ${{ matrix.platform }} (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
+  build-linux-and-windows:
+    name: Build for Linux and Windows
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,145 +25,90 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install SCons
-        run: pip install scons
+      - name: Install SCons and MinGW
+        run: |
+          pip install scons
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
 
-      - name: Cache godot-cpp
-        id: cache-godotcpp
+      - name: Cache godot-cpp for Linux
+        id: cache-godotcpp-linux
         uses: actions/cache@v4
         with:
           path: |
             godot-cpp/bin
             godot-cpp/gen
-          key: godot-cpp-${{ runner.os }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
+          key: godot-cpp-linux-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
 
-      - name: Set up build environment (for godot-cpp)
-        if: matrix.platform == 'windows'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
-
-      - name: Build godot-cpp
-        if: steps.cache-godotcpp.outputs.cache-hit != 'true'
+      - name: Build godot-cpp for Linux
+        if: steps.cache-godotcpp-linux.outputs.cache-hit != 'true'
         run: |
           cd godot-cpp
-          if [ "${{ matrix.platform }}" == "windows" ]; then
-            export CC=/usr/bin/x86_64-w64-mingw32-gcc
-            export CXX=/usr/bin/x86_64-w64-mingw32-g++
-          fi
-          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_release
-          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_debug
+          scons platform=linux arch=x86_64 generate_bindings=yes target=template_release
+          scons platform=linux arch=x86_64 target=template_debug
 
-      - name: Upload godot-cpp artifacts
+      - name: Build project for Linux
+        run: |
+          scons platform=linux target=template_release arch=x86_64
+      
+      - name: Package Linux addon
+        run: |
+          mkdir -p package-linux/addons/Gedis/bin
+          cp -r addons/Gedis/* package-linux/addons/Gedis/
+          cp addons/Gedis/bin/libgedis.so package-linux/addons/Gedis/bin/
+          cd package-linux
+          zip -r ../gedis-linux-x86_64.zip .
+          cd ..
+
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: godot-cpp-build-${{ matrix.platform }}
+          name: gedis-linux-x86_64
+          path: gedis-linux-x86_64.zip
+
+      - name: Cache godot-cpp for Windows
+        id: cache-godotcpp-windows
+        uses: actions/cache@v4
+        with:
           path: |
             godot-cpp/bin
             godot-cpp/gen
+          key: godot-cpp-windows-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
 
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: windows
-            arch: x86_64
-            artifact_name: gedis-windows-x86_64
-          - os: macos-latest
-            platform: macos
-            arch: universal
-            artifact_name: gedis-macos-universal
-          - os: ubuntu-latest
-            platform: linux
-            arch: x86_64
-            artifact_name: gedis-linux-x86_64
-    name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-    needs: build-godot-cpp
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
-
-      - name: Download godot-cpp
-        uses: actions/download-artifact@v4
-        with:
-          name: godot-cpp-build-${{ matrix.platform }}
-          path: godot-cpp/
-
-      - name: Set up build environment
+      - name: Build godot-cpp for Windows
+        if: steps.cache-godotcpp-windows.outputs.cache-hit != 'true'
         run: |
-          if [ "${{ runner.os }}" == "Linux" ]; then
-            sudo apt-get update
-            # Install platform-appropriate toolchain. For Windows cross builds we need mingw-w64.
-            if [ "${{ matrix.platform }}" == "windows" ]; then
-              sudo apt-get install -y build-essential scons mingw-w64 pkg-config
-            else
-              sudo apt-get install -y build-essential scons pkg-config
-            fi
-          elif [ "${{ runner.os }}" == "macOS" ]; then
-            pip install scons
-          fi
-        shell: bash
+          cd godot-cpp
+          export CC=/usr/bin/x86_64-w64-mingw32-gcc
+          export CXX=/usr/bin/x86_64-w64-mingw32-g++
+          scons platform=windows arch=x86_64 generate_bindings=yes target=template_release
+          scons platform=windows arch=x86_64 target=template_debug
 
-      - name: Install Python & SCons (if needed)
+      - name: Build project for Windows
         run: |
-          # Ensure a Python scons is available for the build steps (Linux/macOS runners)
-          python -m pip install --upgrade pip || true
-          python -m pip install scons || true
-        shell: bash
+          export CC=/usr/bin/x86_64-w64-mingw32-gcc
+          export CXX=/usr/bin/x86_64-w64-mingw32-g++
+          scons platform=windows use_mingw=yes target=template_release arch=x86_64
 
-      - name: Build project (cross/native)
-        shell: bash
+      - name: Package Windows addon
         run: |
-          if [ "${{ matrix.platform }}" == "windows" ]; then
-            # Cross-compile Windows target on Linux runner using MinGW
-            # Prefer system paths for cross compilers
-            export CC=${CC:-/usr/bin/x86_64-w64-mingw32-gcc}
-            export CXX=${CXX:-/usr/bin/x86_64-w64-mingw32-g++}
-            echo "Using CC=$CC CXX=$CXX"
-            scons platform=windows use_mingw=yes target=template_release arch=${{ matrix.arch }}
-          else
-            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
-          fi
+          mkdir -p package-windows/addons/Gedis/bin
+          cp -r addons/Gedis/* package-windows/addons/Gedis/
+          cp addons/Gedis/bin/libgedis.dll package-windows/addons/Gedis/bin/
+          cd package-windows
+          zip -r ../gedis-windows-x86_64.zip .
+          cd ..
 
-      - name: Build project (Unix)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
-
-      - name: Package addon
-        shell: bash
-        run: |
-          mkdir -p package/addons/Gedis/bin
-          cp -r addons/Gedis/* package/addons/Gedis/
-  
-          # Copy the built library based on the target platform (matrix.platform)
-          if [ "${{ matrix.platform }}" == "windows" ]; then
-            # Cross-built on Linux produces libgedis.dll (with lib prefix)
-            cp addons/Gedis/bin/libgedis.dll package/addons/Gedis/bin/ || true
-          elif [ "${{ matrix.platform }}" == "macos" ]; then
-            cp addons/Gedis/bin/libgedis.dylib package/addons/Gedis/bin/ || true
-          else
-            cp addons/Gedis/bin/libgedis.so package/addons/Gedis/bin/ || true
-          fi
-  
-          cd package
-          zip -r ../${{ matrix.artifact_name }}.zip .
-
-      - name: Upload artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}.zip
+          name: gedis-windows-x86_64
+          path: gedis-windows-x86_64.zip
 
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build-linux-and-windows]
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download all artifacts
@@ -186,11 +119,9 @@ jobs:
       - name: Combine builds
         run: |
           mkdir -p release_package
-          unzip artifacts/gedis-windows-x86_64.zip -d release_package
-          unzip artifacts/gedis-macos-universal.zip -d temp_macos
-          unzip artifacts/gedis-linux-x86_64.zip -d temp_linux
-          cp -r temp_macos/addons/Gedis/bin/* release_package/addons/Gedis/bin/
-          cp -r temp_linux/addons/Gedis/bin/* release_package/addons/Gedis/bin/
+          unzip artifacts/gedis-linux-x86_64/gedis-linux-x86_64.zip -d release_package
+          unzip artifacts/gedis-windows-x86_64/gedis-windows-x86_64.zip -d temp_windows
+          cp -r temp_windows/addons/Gedis/bin/* release_package/addons/Gedis/bin/
           cd release_package
           zip -r ../gedis-release.zip .
 
