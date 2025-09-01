@@ -118,17 +118,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install scons
 
-      - name: Build project
+      - name: Build project (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
         run: |
-          if [ "${{ runner.os }}" == "Windows" ]; then
-            export CC=x86_64-w64-mingw32-gcc
-            export CXX=x86_64-w64-mingw32-g++
-            export PATH="/mingw64/bin:$PATH"
-            scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
-          else
-            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
-          fi
-        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+          export CC=x86_64-w64-mingw32-gcc
+          export CXX=x86_64-w64-mingw32-g++
+          export PATH="/mingw64/bin:$PATH"
+          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
+
+      - name: Build project (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
 
       - name: Package addon
         shell: bash
