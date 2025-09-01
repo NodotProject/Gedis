@@ -15,6 +15,10 @@ config/description="Redis-like in-memory key-value store for Godot, implemented 
 config/features=PackedStringArray("4.5")
 config/icon="uid://e8pq1st2w4gh"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/Gedis/plugin.cfg", "res://addons/gut/plugin.cfg")
+
 [rendering]
 
 renderer/rendering_method="mobile"

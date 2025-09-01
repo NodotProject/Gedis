@@ -76,9 +76,9 @@ jobs:
             godot-cpp/bin
             godot-cpp/gen
             godot-cpp/.sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json') }}
+          key: ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json') }}-${{ runner.os == 'Windows' && 'use_mingw' || '' }}
           restore-keys: |
-            ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-
+            ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ runner.os == 'Windows' && 'use_mingw' || '' }}
       - name: Build godot-cpp (cache miss)
         if: steps.cache-godotcpp.outputs.cache-hit != 'true'
         shell: bash
