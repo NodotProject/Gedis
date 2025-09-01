@@ -59,9 +59,14 @@ jobs:
       - name: Install SCons
         run: pip install scons
 
-      - name: Set up MinGW
+      # --- Windows Toolchain: use MSYS2/Mingw-w64 ---
+      - name: Set up MSYS2 / MinGW-w64
         if: runner.os == 'Windows'
-        run: choco install mingw --version=11.2.0
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-config make
 
       - name: Cache godot-cpp build
         id: cache-godotcpp
@@ -76,15 +81,28 @@ jobs:
             ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-
       - name: Build godot-cpp (cache miss)
         if: steps.cache-godotcpp.outputs.cache-hit != 'true'
+        shell: bash
         run: |
           cd godot-cpp
-          scons platform=${{ matrix.platform }} generate_bindings=yes target=template_release
-          scons platform=${{ matrix.platform }} generate_bindings=yes target=template_debug
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            echo "Building godot-cpp with MinGW (windows)"
+            scons platform=windows generate_bindings=yes target=template_release use_mingw=yes
+            scons platform=windows generate_bindings=yes target=template_debug use_mingw=yes
+          else
+            scons platform=${{ matrix.platform }} generate_bindings=yes target=template_release
+            scons platform=${{ matrix.platform }} generate_bindings=yes target=template_debug
+          fi
+
       - name: Build with SCons
         shell: bash
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }} use_mingw=yes
+            echo "Diagnostics (Windows):"
+            which gcc || true
+            gcc --version || true
+            scons --version || true
+
+            scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
           else
             scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
           fi
