@@ -166,5 +166,6 @@ else:
     env['SHLIBSUFFIX'] = '.so'
 
 # Create the library with a simple name, SCons will add the correct extension
-library = env.SharedLibrary(target='addons/Gedis/bin/libgedis', source=src_files)
+library = env.SharedLibrary(target='libgedis', source=src_files)
+env.Install('addons/Gedis/bin', library)
 Default(library)
