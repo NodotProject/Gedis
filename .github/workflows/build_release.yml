@@ -130,7 +130,6 @@ jobs:
           else
             scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
           fi
-        shell: bash
 
       - name: Build project (Unix)
         if: runner.os != 'Windows'
