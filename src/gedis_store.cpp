@@ -227,6 +227,82 @@ void GedisStore::remove_expired_keys() {
     }
 }
 
+// Debugger commands
+godot::String GedisStore::type(const godot::String &key) {
+    std::string std_key = key.utf8().get_data();
+    if (store.count(std_key)) {
+        GedisObject* obj = store[std_key];
+        if (obj->expiration != -1 && obj->expiration <= time(0)) {
+            delete obj;
+            store.erase(std_key);
+            return "NONE";
+        }
+        switch (obj->type) {
+            case STRING: return "STRING";
+            case LIST: return "LIST";
+            case HASH: return "HASH";
+            case SET: return "SET";
+        }
+    }
+    return "NONE";
+}
+
+godot::Dictionary GedisStore::dump(const godot::String &key) {
+    godot::Dictionary result;
+    std::string std_key = key.utf8().get_data();
+
+    if (store.count(std_key)) {
+        GedisObject* obj = store[std_key];
+        if (obj->expiration != -1 && obj->expiration <= time(0)) {
+            delete obj;
+            store.erase(std_key);
+            result["type"] = "NONE";
+            result["ttl"] = -2;
+            result["value"] = godot::Variant();
+            return result;
+        }
+
+        result["type"] = type(key);
+        result["ttl"] = ttl(key);
+
+        switch (obj->type) {
+            case STRING:
+                result["value"] = get(key);
+                break;
+            case LIST:
+                result["value"] = lrange(key, 0, -1);
+                break;
+            case HASH:
+                result["value"] = hgetall(key);
+                break;
+            case SET:
+                result["value"] = smembers(key);
+                break;
+        }
+    } else {
+        result["type"] = "NONE";
+        result["ttl"] = -2;
+        result["value"] = godot::Variant();
+    }
+
+    return result;
+}
+
+godot::Dictionary GedisStore::snapshot(const godot::String &pattern) {
+    godot::Dictionary result;
+    godot::TypedArray<godot::String> matching_keys = keys(pattern);
+
+    for (int i = 0; i < matching_keys.size(); i++) {
+        godot::String key = matching_keys[i];
+        godot::Dictionary key_info;
+        key_info["type"] = type(key);
+        key_info["ttl"] = ttl(key);
+        result[key] = key_info;
+    }
+
+    return result;
+}
+
 // Expiry commands
 bool GedisStore::expire(const godot::String &key, int64_t seconds) {
     std::string std_key = key.utf8().get_data();
