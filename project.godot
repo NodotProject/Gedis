@@ -12,13 +12,10 @@ config_version=5
 
 config/name="Gedis"
 config/description="Redis-like in-memory key-value store for Godot, implemented in GDScript."
+run/main_scene="uid://brqlc3ym6ktuo"
 config/features=PackedStringArray("4.5")
 config/icon="uid://e8pq1st2w4gh"
 
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/Gedis/plugin.cfg", "res://addons/gut/plugin.cfg")
-
-[rendering]
-
-renderer/rendering_method="mobile"
