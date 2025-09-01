@@ -37,6 +37,10 @@ jobs:
             godot-cpp/gen
           key: godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}-v3
 
+      - name: Install MinGW (for Windows cross-compiling)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+
       - name: Build godot-cpp for all platforms
         if: steps.cache-godotcpp.outputs.cache-hit != 'true'
         run: |
@@ -47,10 +51,6 @@ jobs:
           scons platform=linux arch=x86_64 target=template_debug
           
           # Build for Windows
-        - name: Install MinGW (for Windows cross-compiling)
-          if: runner.os == 'Linux'
-          run: sudo apt-get update && sudo apt-get install -y mingw-w64
-          
           scons platform=windows arch=x86_64 generate_bindings=yes target=template_release
           scons platform=windows arch=x86_64 target=template_debug
           
