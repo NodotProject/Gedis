@@ -93,3 +93,31 @@ func test_punsubscribe():
 	await get_tree().create_timer(0.1).timeout
 	
 	assert_eq(subscriber.received_pmessages.size(), 0, "Should not receive any pmessages after punsubscribing")
+
+func test_psubscribe_multiple_patterns():
+	var pattern1 = "test_pattern:*"
+	var pattern2 = "another_pattern:*"
+	var channel1 = "test_pattern:one"
+	var channel2 = "another_pattern:two"
+	var message1 = "Pattern 1 matched!"
+	var message2 = "Pattern 2 matched!"
+
+	gedis.psubscribe(pattern1, subscriber)
+	gedis.psubscribe(pattern2, subscriber)
+	await get_tree().create_timer(0.1).timeout
+
+	gedis.publish(channel1, message1)
+	gedis.publish(channel2, message2)
+	await get_tree().create_timer(0.1).timeout
+
+	assert_eq(subscriber.received_pmessages.size(), 2, "Should receive two pmessages")
+
+	gedis.punsubscribe(pattern1, subscriber)
+	await get_tree().create_timer(0.1).timeout
+
+	gedis.publish(channel1, "This should not be received")
+	gedis.publish(channel2, "This should be received")
+	await get_tree().create_timer(0.1).timeout
+	
+	assert_eq(subscriber.received_pmessages.size(), 3, "Should have received one more pmessage")
+	assert_eq(subscriber.received_pmessages[2].channel, channel2, "The channel of the last message should be from the still subscribed pattern")
