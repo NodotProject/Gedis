@@ -127,7 +127,7 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           which x86_64-w64-mingw32-g++
           x86_64-w64-mingw32-g++ --version
-          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
+          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++
 
       - name: Build project (Unix)
         if: runner.os != 'Windows'
