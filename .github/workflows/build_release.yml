@@ -127,9 +127,21 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export CC=x86_64-w64-mingw32-gcc
           export CXX=x86_64-w64-mingw32-g++
-          which x86_64-w64-mingw32-g++
+          
+          # Debug: Show environment and compiler availability
+          echo "PATH: $PATH"
+          echo "CC: $CC"
+          echo "CXX: $CXX"
+          which x86_64-w64-mingw32-gcc || echo "gcc not found in PATH"
+          which x86_64-w64-mingw32-g++ || echo "g++ not found in PATH"
           x86_64-w64-mingw32-g++ --version
-          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
+          
+          # Show SCons version and Python version
+          python --version
+          scons --version
+          
+          # Build with verbose output to see what SCons is doing
+          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes -j1 --debug=explain
 
       - name: Build project (Unix)
         if: runner.os != 'Windows'
