@@ -167,5 +167,5 @@ else:
 
 # Create the library with a simple name, SCons will add the correct extension
 library = env.SharedLibrary(target='libgedis', source=src_files)
-env.Install('addons/Gedis/bin', library)
-Default(library)
+installed_library = env.Install('addons/Gedis/bin', library)
+Default(installed_library)
