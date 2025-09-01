@@ -11,10 +11,60 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-godot-cpp:
+    name: Build godot-cpp
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install SCons
+        run: pip install scons
+
+      - name: Cache godot-cpp
+        id: cache-godotcpp
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot-cpp/bin
+            godot-cpp/gen
+          key: godot-cpp-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}-v3
+
+      - name: Build godot-cpp for all platforms
+        if: steps.cache-godotcpp.outputs.cache-hit != 'true'
+        run: |
+          cd godot-cpp
+          
+          # Build for Linux
+          scons platform=linux arch=x86_64 generate_bindings=yes target=template_release
+          scons platform=linux arch=x86_64 target=template_debug
+          
+          # Build for Windows
+          scons platform=windows arch=x86_64 generate_bindings=yes target=template_release
+          scons platform=windows arch=x86_64 target=template_debug
+          
+          # Build for macOS
+          scons platform=macos arch=universal generate_bindings=yes target=template_release
+          scons platform=macos arch=universal target=template_debug
+
+      - name: Upload godot-cpp artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-cpp-build
+          path: |
+            godot-cpp/bin
+            godot-cpp/gen
+
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           - os: windows-latest
             platform: windows
@@ -30,39 +80,30 @@ jobs:
             artifact_name: gedis-linux-x86_64
     name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
+    needs: build-godot-cpp
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
-      - name: Set up dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Download godot-cpp
+        uses: actions/download-artifact@v4
+        with:
+          name: godot-cpp-build
+          path: godot-cpp/
+
+      - name: Set up build environment
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev yasm
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y build-essential scons
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            pip install scons
+          fi
+        shell: bash
 
-      - name: Cache SCons build
-        uses: actions/cache@v4
-        with:
-          path: |
-            .sconsign.dblite
-            addons/Gedis/bin
-          key: ${{ runner.os }}-scons-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('SConstruct', 'src/**/*.cpp', 'src/**/*.h') }}-${{ runner.os == 'Windows' && 'mingw' || 'native' }}-v2
-          restore-keys: |
-            ${{ runner.os }}-scons-${{ matrix.platform }}-${{ matrix.arch }}-${{ runner.os == 'Windows' && 'mingw' || 'native' }}-v2
-            ${{ runner.os }}-scons-${{ matrix.platform }}-${{ matrix.arch }}-
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Install SCons (Unix)
-        if: runner.os != 'Windows'
-        run: pip install scons
-
-      # --- Windows Toolchain: use MSYS2/Mingw-w64 ---
-      - name: Set up MSYS2 / MinGW-w64
+      - name: Set up Windows build environment
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
@@ -77,89 +118,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install scons
 
-      - name: Set up Windows environment variables
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
+      - name: Build project
         run: |
-          echo "Setting up MinGW environment..."
-          echo "CC=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-          echo "CXX=x86_64-w64-mingw32-g++" >> $GITHUB_ENV
-          echo "PATH=/mingw64/bin:$PATH" >> $GITHUB_ENV
-          
-          # Verify the tools are available
-          which x86_64-w64-mingw32-gcc
-          which x86_64-w64-mingw32-g++
-          x86_64-w64-mingw32-gcc --version
-
-      - name: Cache godot-cpp build
-        id: cache-godotcpp
-        uses: actions/cache@v4
-        with:
-          path: |
-            godot-cpp/bin
-            godot-cpp/gen
-            godot-cpp/.sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}-${{ runner.os == 'Windows' && 'mingw' || 'native' }}-v2
-          restore-keys: |
-            ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-${{ runner.os == 'Windows' && 'mingw' || 'native' }}-v2
-            ${{ runner.os }}-godot-cpp-${{ matrix.platform }}-${{ matrix.arch }}-
-      - name: Build godot-cpp (cache miss) - Windows
-        if: steps.cache-godotcpp.outputs.cache-hit != 'true' && runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-          cd godot-cpp
-          echo "Building godot-cpp for Windows (${{ matrix.arch }})"
-          echo "Using MinGW cross-compiler"
-          echo "CC: $CC, CXX: $CXX"
-          
-          scons platform=windows arch=${{ matrix.arch }} generate_bindings=yes target=template_release use_mingw=yes
-          scons platform=windows arch=${{ matrix.arch }} generate_bindings=yes target=template_debug use_mingw=yes
-          
-          echo "Verifying godot-cpp build outputs:"
-          ls -la bin/ || echo "No bin directory found"
-          ls -la gen/ || echo "No gen directory found"
-
-      - name: Build godot-cpp (cache miss) - Unix
-        if: steps.cache-godotcpp.outputs.cache-hit != 'true' && runner.os != 'Windows'
-        shell: bash
-        run: |
-          cd godot-cpp
-          echo "Building godot-cpp for ${{ matrix.platform }} (${{ matrix.arch }})"
-          
-          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_release
-          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_debug
-          
-          echo "Verifying godot-cpp build outputs:"
-          ls -la bin/ || echo "No bin directory found"
-          ls -la gen/ || echo "No gen directory found"
-
-      - name: Build with SCons - Windows
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-          echo "Building main project for Windows (${{ matrix.arch }})"
-          echo "Diagnostics (Windows):"
-          echo "CC: $CC, CXX: $CXX"
-          which $CC || echo "CC not found in PATH"
-          which $CXX || echo "CXX not found in PATH"
-          $CC --version || echo "CC version check failed"
-          scons --version || echo "SCons version check failed"
-          
-          echo "Building with MinGW..."
-          scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
-          
-          echo "Verifying build outputs:"
-          ls -la addons/Gedis/bin/ || echo "No build outputs found"
-
-      - name: Build with SCons - Unix
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          echo "Building main project for ${{ matrix.platform }} (${{ matrix.arch }})"
-          scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
-          
-          echo "Verifying build outputs:"
-          ls -la addons/Gedis/bin/ || echo "No build outputs found"
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            export CC=x86_64-w64-mingw32-gcc
+            export CXX=x86_64-w64-mingw32-g++
+            export PATH="/mingw64/bin:$PATH"
+            scons platform=windows target=template_release arch=${{ matrix.arch }} use_mingw=yes
+          else
+            scons platform=${{ matrix.platform }} target=template_release arch=${{ matrix.arch }}
+          fi
+        shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
 
       - name: Package addon
         shell: bash
@@ -167,42 +136,17 @@ jobs:
           mkdir -p package/addons/Gedis/bin
           cp -r addons/Gedis/* package/addons/Gedis/
           
-          echo "Available build outputs:"
-          find . -name "*.dll" -o -name "*.so" -o -name "*.framework" | head -10
-          
+          # Copy the built library
           if [ "${{ runner.os }}" == "Windows" ]; then
-            # The actual file is created in addons/Gedis/bin/ as libgedis.dll
-            if [ -f "addons/Gedis/bin/libgedis.dll" ]; then
-              echo "Found Windows DLL: addons/Gedis/bin/libgedis.dll"
-              # File is already in the right location, just ensure it's copied
-              cp "addons/Gedis/bin/libgedis.dll" "package/addons/Gedis/bin/"
-            else
-              echo "ERROR: Windows DLL not found at expected location"
-              ls -la addons/Gedis/bin/ || echo "addons/Gedis/bin/ directory not found"
-              exit 1
-            fi
+            cp addons/Gedis/bin/libgedis.dll package/addons/Gedis/bin/
           elif [ "${{ runner.os }}" == "macOS" ]; then
-            if [ -d "addons/Gedis/bin/libgedis.framework" ]; then
-              cp -r "addons/Gedis/bin/libgedis.framework" "package/addons/Gedis/bin/"
-            else
-              echo "ERROR: macOS framework not found"
-              ls -la addons/Gedis/bin/ || echo "addons/Gedis/bin/ directory not found"
-              exit 1
-            fi
+            cp -r addons/Gedis/bin/libgedis.framework package/addons/Gedis/bin/
           else
-            # Linux
-            if [ -f "addons/Gedis/bin/libgedis.so" ]; then
-              cp "addons/Gedis/bin/libgedis.so" "package/addons/Gedis/bin/"
-            else
-              echo "ERROR: Linux shared library not found"
-              ls -la addons/Gedis/bin/ || echo "addons/Gedis/bin/ directory not found"
-              exit 1
-            fi
+            cp addons/Gedis/bin/libgedis.so package/addons/Gedis/bin/
           fi
           
           cd package
           zip -r ../${{ matrix.artifact_name }}.zip .
-          cd ..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -231,7 +175,6 @@ jobs:
           cp -r temp_linux/addons/Gedis/bin/* release_package/addons/Gedis/bin/
           cd release_package
           zip -r ../gedis-release.zip .
-          cd ..
 
       - name: Release
         uses: softprops/action-gh-release@v2
