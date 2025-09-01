@@ -30,6 +30,24 @@ elif platform == 'windows' and use_mingw:
         env['CC'] = os.environ['CC']
     if 'CXX' in os.environ:
         env['CXX'] = os.environ['CXX']
+    
+    # For MSYS2 environment, explicitly set the compiler paths
+    # This ensures SCons can find the MinGW compilers
+    if not env['CC'] and not env['CXX']:
+        # Try to find the MinGW compilers in common locations
+        import subprocess
+        try:
+            # Use 'which' to find the compiler in PATH
+            cc_path = subprocess.check_output(['which', 'x86_64-w64-mingw32-gcc'], universal_newlines=True).strip()
+            cxx_path = subprocess.check_output(['which', 'x86_64-w64-mingw32-g++'], universal_newlines=True).strip()
+            env['CC'] = cc_path
+            env['CXX'] = cxx_path
+            print(f"Found MinGW compilers: CC={cc_path}, CXX={cxx_path}")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            # Fallback to default names if 'which' fails
+            env['CC'] = 'x86_64-w64-mingw32-gcc'
+            env['CXX'] = 'x86_64-w64-mingw32-g++'
+            print("Using default MinGW compiler names")
 else:
     # Use the default compiler on other platforms
     env = Environment()
