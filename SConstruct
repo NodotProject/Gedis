@@ -158,7 +158,6 @@ env.Execute(Mkdir('addons/Gedis/bin'))
 if is_windows:
     # Windows shared libraries are .dll files
     env['SHLIBSUFFIX'] = '.dll'
-    env['SHLIBPREFIX'] = 'lib'
 
 # Create the library with a simple name, SCons will add the correct extension
 library = env.SharedLibrary(target='addons/Gedis/bin/libgedis', source=src_files)
