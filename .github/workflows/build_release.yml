@@ -57,12 +57,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install SCons (Windows)
-        if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install scons
       - name: Install SCons (Unix)
         if: runner.os != 'Windows'
         run: pip install scons
@@ -75,6 +69,13 @@ jobs:
           msystem: MINGW64
           update: true
           install: mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-config make
+
+      - name: Install SCons (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install scons
 
       - name: Set up Windows environment variables
         if: runner.os == 'Windows'
