@@ -156,8 +156,14 @@ env.Execute(Mkdir('addons/Gedis/bin'))
 
 # Set the correct library suffix and prefix based on platform
 if is_windows:
-    # Windows shared libraries are .dll files
+    env['SHLIBPREFIX'] = 'lib'
     env['SHLIBSUFFIX'] = '.dll'
+elif platform == 'macos':
+    env['SHLIBPREFIX'] = 'lib'
+    env['SHLIBSUFFIX'] = '.dylib'
+else:
+    env['SHLIBPREFIX'] = 'lib'
+    env['SHLIBSUFFIX'] = '.so'
 
 # Create the library with a simple name, SCons will add the correct extension
 library = env.SharedLibrary(target='addons/Gedis/bin/libgedis', source=src_files)
