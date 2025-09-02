@@ -4,27 +4,25 @@
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
-#include <string>
 #include <regex>
 
 GedisStore::GedisStore() {
-    // Constructor
+    object_pool.resize(GEDIS_OBJECT_POOL_SIZE);
+    for (int i = 0; i < GEDIS_OBJECT_POOL_SIZE; ++i) {
+        free_list.push_back(i);
+    }
 }
 
 GedisStore::~GedisStore() {
-    // Destructor - clean up all GedisObject pointers
-    for (auto const& [key, val] : store) {
-        delete val;
-    }
+    // Destructor - no need to delete objects, they are in the pool
     store.clear();
 }
 
 void GedisStore::set(const godot::String& key, const godot::Variant& value) {
     std::string std_key = key.utf8().get_data();
-    
-    // If key exists, delete old object before replacing
+    // If key exists, deallocate old object before replacing
     if (store.count(std_key)) {
-        delete store[std_key];
+        _deallocate_object(store[std_key]);
     }
     
     // Create a new GedisObject based on the variant type
@@ -32,13 +30,13 @@ void GedisStore::set(const godot::String& key, const godot::Variant& value) {
     switch (value.get_type()) {
         case godot::Variant::STRING: {
             std::string* str_data = new std::string(godot::String(value).utf8().get_data());
-            obj = new GedisObject(STRING, str_data);
+            obj = _allocate_object(STRING, str_data);
             break;
         }
         default: {
             // For now, convert everything else to string
             std::string* str_data = new std::string(godot::String(value).utf8().get_data());
-            obj = new GedisObject(STRING, str_data);
+            obj = _allocate_object(STRING, str_data);
             break;
         }
     }
@@ -47,12 +45,13 @@ void GedisStore::set(const godot::String& key, const godot::Variant& value) {
 }
 
 godot::Variant GedisStore::get(const godot::String& key) {
+    get_call_count++;
     std::string std_key = key.utf8().get_data();
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
-        // Check if key has expired
-        if (obj->expiration != -1 && obj->expiration <= time(0)) {
-            delete obj;
+        // Probabilistic expiry check
+        if (get_call_count % 100 == 0 && obj->expiration != -1 && obj->expiration <= time(0)) {
+            _deallocate_object(obj);
             store.erase(std_key);
             return godot::Variant(); // Key expired, return null
         }
@@ -67,10 +66,9 @@ godot::Variant GedisStore::get(const godot::String& key) {
 int64_t GedisStore::del(const godot::Array& keys) {
     int64_t deleted_count = 0;
     for (int i = 0; i < keys.size(); i++) {
-        godot::String key = keys[i];
-        std::string std_key = key.utf8().get_data();
+        std::string std_key = godot::String(keys[i]).utf8().get_data();
         if (store.count(std_key)) {
-            delete store[std_key];
+            _deallocate_object(store[std_key]);
             store.erase(std_key);
             deleted_count++;
         }
@@ -81,8 +79,7 @@ int64_t GedisStore::del(const godot::Array& keys) {
 int64_t GedisStore::exists(const godot::Array& keys) {
     int64_t exists_count = 0;
     for (int i = 0; i < keys.size(); i++) {
-        godot::String key = keys[i];
-        std::string std_key = key.utf8().get_data();
+        std::string std_key = godot::String(keys[i]).utf8().get_data();
         if (store.count(std_key)) {
             exists_count++;
         }
@@ -91,12 +88,13 @@ int64_t GedisStore::exists(const godot::Array& keys) {
 }
 
 bool GedisStore::exists(const godot::String& key) {
+    get_call_count++;
     std::string std_key = key.utf8().get_data();
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
-        // Check if key has expired
-        if (obj->expiration != -1 && obj->expiration <= time(0)) {
-            delete obj;
+        // Probabilistic expiry check
+        if (get_call_count % 100 == 0 && obj->expiration != -1 && obj->expiration <= time(0)) {
+            _deallocate_object(obj);
             store.erase(std_key);
             return false; // Key expired
         }
@@ -107,7 +105,6 @@ bool GedisStore::exists(const godot::String& key) {
 
 godot::Variant GedisStore::incr(const godot::String& key) {
     std::string std_key = key.utf8().get_data();
-    
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
         if (obj && obj->type == STRING && obj->data) {
@@ -117,15 +114,16 @@ godot::Variant GedisStore::incr(const godot::String& key) {
                 value++;
                 *str_data = std::to_string(value);
                 return godot::Variant(value);
-            } catch (...) {
-                // If conversion fails, return error
+            } catch (const std::invalid_argument& ia) {
+                return godot::Variant();
+            } catch (const std::out_of_range& oor) {
                 return godot::Variant();
             }
         }
     } else {
         // Key doesn't exist, create it with value 1
         std::string* str_data = new std::string("1");
-        GedisObject* obj = new GedisObject(STRING, str_data);
+        GedisObject* obj = _allocate_object(STRING, str_data);
         store[std_key] = obj;
         return godot::Variant(1);
     }
@@ -135,7 +133,6 @@ godot::Variant GedisStore::incr(const godot::String& key) {
 
 godot::Variant GedisStore::decr(const godot::String& key) {
     std::string std_key = key.utf8().get_data();
-    
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
         if (obj && obj->type == STRING && obj->data) {
@@ -145,15 +142,16 @@ godot::Variant GedisStore::decr(const godot::String& key) {
                 value--;
                 *str_data = std::to_string(value);
                 return godot::Variant(value);
-            } catch (...) {
-                // If conversion fails, return error
+            } catch (const std::invalid_argument& ia) {
+                return godot::Variant();
+            } catch (const std::out_of_range& oor) {
                 return godot::Variant();
             }
         }
     } else {
         // Key doesn't exist, create it with value -1
         std::string* str_data = new std::string("-1");
-        GedisObject* obj = new GedisObject(STRING, str_data);
+        GedisObject* obj = _allocate_object(STRING, str_data);
         store[std_key] = obj;
         return godot::Variant(-1);
     }
@@ -163,72 +161,40 @@ godot::Variant GedisStore::decr(const godot::String& key) {
 
 godot::TypedArray<godot::String> GedisStore::keys(const godot::String& pattern) {
     godot::TypedArray<godot::String> result;
-    std::string pattern_str = pattern.utf8().get_data();
     int64_t now = time(0);
+    std::string std_pattern = pattern.utf8().get_data();
+    std::regex regex_pattern(std_pattern);
     
-    // Convert glob pattern to regex
-    std::string regex_pattern = "";
-    for (char c : pattern_str) {
-        switch (c) {
-            case '*':
-                regex_pattern += ".*";
-                break;
-            case '?':
-                regex_pattern += ".";
-                break;
-            case '.':
-            case '^':
-            case '$':
-            case '+':
-            case '(':
-            case ')':
-            case '[':
-            case ']':
-            case '{':
-            case '}':
-            case '|':
-            case '\\':
-                regex_pattern += "\\";
-                regex_pattern += c;
-                break;
-            default:
-                regex_pattern += c;
-                break;
+    for (auto it = store.begin(); it != store.end();) {
+        // Check if key has expired
+        if (it->second->expiration != -1 && it->second->expiration <= now) {
+            _deallocate_object(it->second);
+            it = store.erase(it);
+            continue;
         }
+        
+        if (std::regex_match(it->first, regex_pattern)) {
+            result.append(godot::String(it->first.c_str()));
+        }
+        ++it;
     }
     
-    try {
-        std::regex pattern_regex("^" + regex_pattern + "$");
-        for (auto it = store.begin(); it != store.end();) {
-            // Check if key has expired
-            if (it->second->expiration != -1 && it->second->expiration <= now) {
-                delete it->second;
-                it = store.erase(it);
-                continue;
-            }
-            
-            if (std::regex_match(it->first, pattern_regex)) {
-                result.append(godot::String(it->first.c_str()));
-            }
-            ++it;
-        }
-    } catch (const std::regex_error& e) {
-        // If regex fails, fall back to exact match
-        for (auto it = store.begin(); it != store.end();) {
-            // Check if key has expired
-            if (it->second->expiration != -1 && it->second->expiration <= now) {
-                delete it->second;
-                it = store.erase(it);
-                continue;
-            }
-            
-            if (it->first == pattern_str) {
-                result.append(godot::String(it->first.c_str()));
-            }
-            ++it;
-        }
+    return result;
+}
+
+void GedisStore::mset(const godot::Dictionary& dictionary) {
+    godot::Array keys = dictionary.keys();
+    for (int i = 0; i < keys.size(); i++) {
+        godot::String key = keys[i];
+        set(key, dictionary[key]);
     }
-    
+}
+
+godot::Array GedisStore::mget(const godot::Array& keys) {
+    godot::Array result;
+    for (int i = 0; i < keys.size(); i++) {
+        result.push_back(get(keys[i]));
+    }
     return result;
 }
 
@@ -236,7 +202,7 @@ void GedisStore::remove_expired_keys() {
     int64_t now = time(0);
     for (auto it = store.begin(); it != store.end();) {
         if (it->second->expiration != -1 && it->second->expiration <= now) {
-            delete it->second;
+            _deallocate_object(it->second);
             it = store.erase(it);
         } else {
             ++it;
@@ -250,7 +216,7 @@ godot::String GedisStore::type(const godot::String &key) {
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
         if (obj->expiration != -1 && obj->expiration <= time(0)) {
-            delete obj;
+            _deallocate_object(obj);
             store.erase(std_key);
             return "NONE";
         }
@@ -271,7 +237,7 @@ godot::Dictionary GedisStore::dump(const godot::String &key) {
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
         if (obj->expiration != -1 && obj->expiration <= time(0)) {
-            delete obj;
+            _deallocate_object(obj);
             store.erase(std_key);
             result["type"] = "NONE";
             result["ttl"] = -2;
@@ -361,42 +327,31 @@ bool GedisStore::persist(const godot::String &key) {
 // Hash commands
 int64_t GedisStore::hset(const godot::String &key, const godot::String &field, const godot::Variant &value) {
     std::string std_key = key.utf8().get_data();
-    std::string std_field = field.utf8().get_data();
-    std::string std_value = godot::String(value).utf8().get_data();
-
     if (store.count(std_key) && store[std_key]->type != HASH) {
         return -1; // Wrong type
     }
 
     if (!store.count(std_key)) {
-        store[std_key] = new GedisObject(HASH, new std::unordered_map<std::string, std::string>());
+        store[std_key] = _allocate_object(HASH, new std::unordered_map<std::string, std::string>());
     }
 
     auto* hash = store[std_key]->getHash();
+    std::string std_field = field.utf8().get_data();
     int64_t created = !hash->count(std_field);
-    (*hash)[std_field] = std_value;
+    (*hash)[std_field] = godot::String(value).utf8().get_data();
     return created;
 }
 
 godot::Variant GedisStore::hget(const godot::String &key, const godot::String &field, const godot::Variant &default_value) {
     std::string std_key = key.utf8().get_data();
-    std::string std_field = field.utf8().get_data();
-
     if (!store.count(std_key) || store[std_key]->type != HASH) {
         return default_value;
     }
 
     auto* hash = store[std_key]->getHash();
+    std::string std_field = field.utf8().get_data();
     if (hash->count(std_field)) {
-        std::string value_str = hash->at(std_field);
-        // Try to convert to integer if it looks like a number
-        try {
-            int64_t int_val = std::stoll(value_str);
-            return godot::Variant(int_val);
-        } catch (...) {
-            // If not a number, return as string
-            return godot::String(value_str.c_str());
-        }
+        return godot::String(hash->at(std_field).c_str());
     }
 
     return default_value;
@@ -409,14 +364,7 @@ godot::Dictionary GedisStore::hgetall(const godot::String &key) {
     if (store.count(std_key) && store[std_key]->type == HASH) {
         auto* hash = store[std_key]->getHash();
         for (const auto& [field, value] : *hash) {
-            // Try to convert to integer if it looks like a number
-            try {
-                int64_t int_val = std::stoll(value);
-                result[godot::String(field.c_str())] = godot::Variant(int_val);
-            } catch (...) {
-                // If not a number, return as string
-                result[godot::String(field.c_str())] = godot::String(value.c_str());
-            }
+            result[godot::String(field.c_str())] = godot::String(value.c_str());
         }
     }
 
@@ -436,15 +384,13 @@ int64_t GedisStore::hdel(const godot::String &key, const godot::Variant &fields)
     if (fields.get_type() == godot::Variant::ARRAY) {
         godot::Array field_array = fields;
         for (int i = 0; i < field_array.size(); i++) {
-            std::string std_field = godot::String(field_array[i]).utf8().get_data();
-            if (hash->erase(std_field)) {
+            if (hash->erase(godot::String(field_array[i]).utf8().get_data())) {
                 deleted_count++;
             }
         }
     } else {
         // Single field
-        std::string std_field = godot::String(fields).utf8().get_data();
-        if (hash->erase(std_field)) {
+        if (hash->erase(godot::String(fields).utf8().get_data())) {
             deleted_count++;
         }
     }
@@ -454,14 +400,12 @@ int64_t GedisStore::hdel(const godot::String &key, const godot::Variant &fields)
 
 bool GedisStore::hexists(const godot::String &key, const godot::String &field) {
     std::string std_key = key.utf8().get_data();
-    std::string std_field = field.utf8().get_data();
-
     if (!store.count(std_key) || store[std_key]->type != HASH) {
         return false;
     }
 
     auto* hash = store[std_key]->getHash();
-    return hash->count(std_field);
+    return hash->count(field.utf8().get_data());
 }
 
 godot::Array GedisStore::hkeys(const godot::String &key) {
@@ -485,14 +429,7 @@ godot::Array GedisStore::hvals(const godot::String &key) {
     if (store.count(std_key) && store[std_key]->type == HASH) {
         auto* hash = store[std_key]->getHash();
         for (const auto& [field, value] : *hash) {
-            // Try to convert to integer if it looks like a number
-            try {
-                int64_t int_val = std::stoll(value);
-                result.append(godot::Variant(int_val));
-            } catch (...) {
-                // If not a number, return as string
-                result.append(godot::String(value.c_str()));
-            }
+            result.append(godot::String(value.c_str()));
         }
     }
 
@@ -510,13 +447,12 @@ int64_t GedisStore::hlen(const godot::String &key) {
 // List commands
 int64_t GedisStore::lpush(const godot::String &key, const godot::Variant &values) {
     std::string std_key = key.utf8().get_data();
-    
     if (store.count(std_key) && store[std_key]->type != LIST) {
         return -1; // Wrong type
     }
 
     if (!store.count(std_key)) {
-        store[std_key] = new GedisObject(LIST, new std::vector<std::string>());
+        store[std_key] = _allocate_object(LIST, new std::vector<std::string>());
     }
 
     auto* list = store[std_key]->getList();
@@ -525,13 +461,11 @@ int64_t GedisStore::lpush(const godot::String &key, const godot::Variant &values
     if (values.get_type() == godot::Variant::ARRAY) {
         godot::Array value_array = values;
         for (int i = 0; i < value_array.size(); i++) {
-            std::string value = godot::String(value_array[i]).utf8().get_data();
-            list->insert(list->begin(), value);
+            list->insert(list->begin(), godot::String(value_array[i]).utf8().get_data());
         }
     } else {
         // Single value
-        std::string value = godot::String(values).utf8().get_data();
-        list->insert(list->begin(), value);
+        list->insert(list->begin(), godot::String(values).utf8().get_data());
     }
 
     return list->size();
@@ -539,13 +473,12 @@ int64_t GedisStore::lpush(const godot::String &key, const godot::Variant &values
 
 int64_t GedisStore::rpush(const godot::String &key, const godot::Variant &values) {
     std::string std_key = key.utf8().get_data();
-    
     if (store.count(std_key) && store[std_key]->type != LIST) {
         return -1; // Wrong type
     }
 
     if (!store.count(std_key)) {
-        store[std_key] = new GedisObject(LIST, new std::vector<std::string>());
+        store[std_key] = _allocate_object(LIST, new std::vector<std::string>());
     }
 
     auto* list = store[std_key]->getList();
@@ -554,13 +487,11 @@ int64_t GedisStore::rpush(const godot::String &key, const godot::Variant &values
     if (values.get_type() == godot::Variant::ARRAY) {
         godot::Array value_array = values;
         for (int i = 0; i < value_array.size(); i++) {
-            std::string value = godot::String(value_array[i]).utf8().get_data();
-            list->push_back(value);
+            list->push_back(godot::String(value_array[i]).utf8().get_data());
         }
     } else {
         // Single value
-        std::string value = godot::String(values).utf8().get_data();
-        list->push_back(value);
+        list->push_back(godot::String(values).utf8().get_data());
     }
 
     return list->size();
@@ -579,14 +510,7 @@ godot::Variant GedisStore::lpop(const godot::String &key) {
 
     std::string value = list->front();
     list->erase(list->begin());
-    // Try to convert to integer if it looks like a number
-    try {
-        int64_t int_val = std::stoll(value);
-        return godot::Variant(int_val);
-    } catch (...) {
-        // If not a number, return as string
-        return godot::String(value.c_str());
-    }
+    return godot::String(value.c_str());
 }
 
 godot::Variant GedisStore::rpop(const godot::String &key) {
@@ -602,14 +526,7 @@ godot::Variant GedisStore::rpop(const godot::String &key) {
 
     std::string value = list->back();
     list->pop_back();
-    // Try to convert to integer if it looks like a number
-    try {
-        int64_t int_val = std::stoll(value);
-        return godot::Variant(int_val);
-    } catch (...) {
-        // If not a number, return as string
-        return godot::String(value.c_str());
-    }
+    return godot::String(value.c_str());
 }
 
 int64_t GedisStore::llen(const godot::String &key) {
@@ -634,15 +551,7 @@ godot::Array GedisStore::lrange(const godot::String &key, int64_t start, int64_t
 
         if (start <= stop) {
             for (int64_t i = start; i <= stop; i++) {
-                // Try to convert to integer if it looks like a number
-                std::string value_str = (*list)[i];
-                try {
-                    int64_t int_val = std::stoll(value_str);
-                    result.append(godot::Variant(int_val));
-                } catch (...) {
-                    // If not a number, return as string
-                    result.append(godot::String(value_str.c_str()));
-                }
+                result.append(godot::String((*list)[i].c_str()));
             }
         }
     }
@@ -662,15 +571,7 @@ godot::Variant GedisStore::lindex(const godot::String &key, int64_t index) {
         return godot::Variant();
     }
 
-    // Try to convert to integer if it looks like a number
-    std::string value_str = (*list)[index];
-    try {
-        int64_t int_val = std::stoll(value_str);
-        return godot::Variant(int_val);
-    } catch (...) {
-        // If not a number, return as string
-        return godot::String(value_str.c_str());
-    }
+    return godot::String((*list)[index].c_str());
 }
 
 bool GedisStore::lset(const godot::String &key, int64_t index, const godot::Variant &value) {
@@ -735,13 +636,12 @@ int64_t GedisStore::lrem(const godot::String &key, int64_t count, const godot::V
 // Set commands
 int64_t GedisStore::sadd(const godot::String &key, const godot::Variant &members) {
     std::string std_key = key.utf8().get_data();
-    
     if (store.count(std_key) && store[std_key]->type != SET) {
         return -1; // Wrong type
     }
 
     if (!store.count(std_key)) {
-        store[std_key] = new GedisObject(SET, new std::unordered_set<std::string>());
+        store[std_key] = _allocate_object(SET, new std::unordered_set<std::string>());
     }
 
     int64_t added_count = 0;
@@ -751,15 +651,13 @@ int64_t GedisStore::sadd(const godot::String &key, const godot::Variant &members
     if (members.get_type() == godot::Variant::ARRAY) {
         godot::Array member_array = members;
         for (int i = 0; i < member_array.size(); i++) {
-            std::string member = godot::String(member_array[i]).utf8().get_data();
-            if (set->insert(member).second) {
+            if (set->insert(godot::String(member_array[i]).utf8().get_data()).second) {
                 added_count++;
             }
         }
     } else {
         // Single member
-        std::string member = godot::String(members).utf8().get_data();
-        if (set->insert(member).second) {
+        if (set->insert(godot::String(members).utf8().get_data()).second) {
             added_count++;
         }
     }
@@ -801,14 +699,7 @@ godot::Array GedisStore::smembers(const godot::String &key) {
     if (store.count(std_key) && store[std_key]->type == SET) {
         auto* set = store[std_key]->getSet();
         for (const auto& member : *set) {
-            // Try to convert to integer if it looks like a number
-            try {
-                int64_t int_val = std::stoll(member);
-                result.append(godot::Variant(int_val));
-            } catch (...) {
-                // If not a number, return as string
-                result.append(godot::String(member.c_str()));
-            }
+            result.append(godot::String(member.c_str()));
         }
     }
 
@@ -848,19 +739,12 @@ godot::Variant GedisStore::spop(const godot::String &key) {
     auto it = set->begin();
     std::string value = *it;
     set->erase(it);
-    // Try to convert to integer if it looks like a number
-    try {
-        int64_t int_val = std::stoll(value);
-        return godot::Variant(int_val);
-    } catch (...) {
-        // If not a number, return as string
-        return godot::String(value.c_str());
-    }
+    return godot::String(value.c_str());
 }
 
 bool GedisStore::smove(const godot::String &source, const godot::String &destination, const godot::Variant &member) {
     std::string std_source = source.utf8().get_data();
-    std::string std_dest = destination.utf8().get_data();
+    std::string std_destination = destination.utf8().get_data();
     std::string std_member = godot::String(member).utf8().get_data();
 
     if (!store.count(std_source) || store[std_source]->type != SET) {
@@ -873,13 +757,13 @@ bool GedisStore::smove(const godot::String &source, const godot::String &destina
     }
 
     // Create destination set if it doesn't exist
-    if (!store.count(std_dest)) {
-        store[std_dest] = new GedisObject(SET, new std::unordered_set<std::string>());
-    } else if (store[std_dest]->type != SET) {
+    if (!store.count(std_destination)) {
+        store[std_destination] = _allocate_object(SET, new std::unordered_set<std::string>());
+    } else if (store[std_destination]->type != SET) {
         return false;
     }
 
-    auto* dest_set = store[std_dest]->getSet();
+    auto* dest_set = store[std_destination]->getSet();
     
     // Move the member
     source_set->erase(std_member);
@@ -890,8 +774,7 @@ bool GedisStore::smove(const godot::String &source, const godot::String &destina
 
 // Pub/Sub commands
 void GedisStore::subscribe(const godot::String &channel, godot::Object *subscriber) {
-    std::string std_channel = channel.utf8().get_data();
-    subscriptions[std_channel].push_back(subscriber);
+    subscriptions[channel.utf8().get_data()].push_back(subscriber);
 }
 
 void GedisStore::unsubscribe(const godot::String &channel, godot::Object *subscriber) {
@@ -903,8 +786,7 @@ void GedisStore::unsubscribe(const godot::String &channel, godot::Object *subscr
 }
 
 void GedisStore::psubscribe(const godot::String &pattern, godot::Object *subscriber) {
-    std::string std_pattern = pattern.utf8().get_data();
-    psubscriptions[std_pattern].push_back(subscriber);
+    psubscriptions[pattern.utf8().get_data()].push_back(subscriber);
 }
 
 void GedisStore::punsubscribe(const godot::String &pattern, godot::Object *subscriber) {
@@ -925,4 +807,28 @@ std::vector<godot::Object*> GedisStore::get_subscribers(const godot::String &cha
 
 std::unordered_map<std::string, std::vector<godot::Object*>> GedisStore::get_psubscribers() {
     return psubscriptions;
+}
+
+GedisObject* GedisStore::_allocate_object(GedisObjectType t, void* d) {
+    if (free_list.empty()) {
+        // Pool is full, fallback to new
+        return new GedisObject(t, d);
+    }
+    int index = free_list.back();
+    free_list.pop_back();
+    GedisObject* obj = &object_pool[index];
+    obj->type = t;
+    obj->data = d;
+    obj->expiration = -1;
+    return obj;
+}
+
+void GedisStore::_deallocate_object(GedisObject* obj) {
+    if (obj >= &object_pool[0] && obj <= &object_pool[GEDIS_OBJECT_POOL_SIZE - 1]) {
+        int index = obj - &object_pool[0];
+        free_list.push_back(index);
+    } else {
+        // This object was not from the pool, so delete it
+        delete obj;
+    }
 }

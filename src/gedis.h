@@ -51,6 +51,8 @@ public:
     Variant incr(const String &key);
     Variant decr(const String &key);
     TypedArray<String> keys(const String &pattern);
+    void mset(const Dictionary &dictionary);
+    Array mget(const Array &keys);
 
     // Debugger commands
     String type(const String &key);

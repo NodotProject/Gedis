@@ -1,11 +1,13 @@
 #ifndef GEDIS_OBJECT_H
 #define GEDIS_OBJECT_H
 
+#include <godot_cpp/variant/string.hpp>
 #include <cstdint>
-#include <string>
 #include <unordered_map>
 #include <vector>
 #include <unordered_set>
+#include <string>
+
 
 enum GedisObjectType {
     STRING,
@@ -19,6 +21,7 @@ struct GedisObject {
     void* data;
     int64_t expiration; // Using int64_t for timestamp
 
+    GedisObject() = default;
     GedisObject(GedisObjectType t, void* d);
     ~GedisObject();
 
