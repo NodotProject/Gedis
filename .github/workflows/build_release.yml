@@ -90,7 +90,7 @@ jobs:
             os-name: macOS
             platform: macos
             arch: universal
-            extension: so # This will be a fat binary, but the extension is .so for macOS
+            extension: dylib
     
     steps:
       - name: Checkout repository
