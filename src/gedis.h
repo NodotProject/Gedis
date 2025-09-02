@@ -28,6 +28,11 @@ public:
     Variant decr(const String &key);
     TypedArray<String> keys(const String &pattern);
 
+    // Debugger commands
+    String type(const String &key);
+    Dictionary dump(const String &key);
+    Dictionary snapshot(const String &pattern);
+
     // Expiry commands
     bool expire(const String &key, int64_t seconds);
     int64_t ttl(const String &key);
