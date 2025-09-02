@@ -17,28 +17,6 @@ jobs:
         mv Godot_v4.1.1-stable_linux.x86_64 godot
         chmod +x godot
 
-    - name: Install scons
-      run: sudo apt-get update && sudo apt-get install -y scons
-
-    - name: Cache godot-cpp build
-      uses: actions/cache@v4
-      id: cache-godot-cpp
-      with:
-        path: |
-          godot-cpp/bin
-          godot-cpp/gen
-          godot-cpp/.sconsign.dblite
-        key: ${{ runner.os }}-godot-cpp-linux-x86_64-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json') }}
-        restore-keys: |
-          ${{ runner.os }}-godot-cpp-linux-x86_64-
-          ${{ runner.os }}-godot-cpp-
-
-    - name: Build godot-cpp bindings
-      if: steps.cache-godot-cpp.outputs.cache-hit != 'true'
+    - name: Run unit tests
       run: |
-        cd godot-cpp
-        scons platform=linux generate_bindings=yes target=template_release
-        scons platform=linux generate_bindings=yes target=template_debug
-
-    - name: Compile GDExtension
-      run: scons
+        ./godot --headless --verbose -s res://addons/gut/gut_cmdln.gd -gdir=res://test -gexit -ginclude_subdirs

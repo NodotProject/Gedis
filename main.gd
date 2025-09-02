@@ -9,10 +9,12 @@ var shared_gedis: Gedis
 func _ready():
 	# Create Gedis instances - they will automatically register with the debugger
 	my_gedis = Gedis.new()
-	my_gedis.set_instance_name("PlayerData")
+	my_gedis.name ="PlayerData"
+	add_child(my_gedis)
 	
 	shared_gedis = Gedis.new()
-	shared_gedis.set_instance_name("GameState")
+	shared_gedis.name = "GameState"
+	add_child(shared_gedis)
 	
 	# Add some sample data
 	setup_sample_data()

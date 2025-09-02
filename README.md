@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    An in-memory, Redis-like datastore for Godot, implemented as a GDExtension.
+    An in-memory, Redis-like datastore for Godot.
 </p>
 
 [![](https://dcbadge.vercel.app/api/server/Rx9CZX4sjG)](https://discord.gg/Rx9CZX4sjG) [![](https://img.shields.io/mastodon/follow/110106863700290562?domain=https%3A%2F%2Fmastodon.gamedev.place&label=MASTODON&style=for-the-badge)](https://mastodon.gamedev.place/@krazyjakee) [![](https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ?label=YOUTUBE&style=for-the-badge)](https://www.youtube.com/@GodotNodot)
@@ -14,7 +14,7 @@
 
 ## Overview
 
-Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands, accessible directly from GDScript. As a GDExtension, it runs with native C++ speed, making it suitable for performance-critical applications. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set("score", 10)`.
+Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set("score", 10)`.
 
 **Redis-like? What the heck is Redis?** - See [Redis in 100 Seconds](https://www.youtube.com/watch?v=G1rOthIU-uo).
 
@@ -211,45 +211,25 @@ func _on_button_pressed():
 | `psubscribe(pattern, subscriber)` | Subscribes to channels matching a pattern.                |
 | `punsubscribe(pattern, subscriber)` | Unsubscribes from channels matching a pattern.          |
 
-## Benchmarks
-
-Basic `set`/`get` operations were benchmarked against Godot's native `Dictionary`. The tests were performed by setting and getting 100,000 keys.
-
-| Operation | Gedis | GDScript Dictionary |
-| --- | --- | --- |
-| **SET** | 111,707 µs | 57,922 µs |
-| **GET** | 42,797 µs | 20,748 µs |
-
-These results show that for raw `set`/`get` speed, the native `Dictionary` is faster. However, several optimizations have been implemented to narrow the gap:
-
-- **Internal `godot::String` Usage**: Gedis now uses `godot::String` internally, eliminating the overhead of converting to and from `std::string`.
-- **Memory Pooling**: A memory pool for `GedisObject`s has been implemented to reduce the overhead of dynamic memory allocation.
-- **Probabilistic Key Eviction**: Instead of checking for expired keys on every read, Gedis now uses a probabilistic approach, checking keys periodically. This reduces the overhead on the majority of `get` operations.
-
-While a native `Dictionary` will always have an edge in raw speed, these optimizations make Gedis a highly performant option for projects that require its rich, Redis-like feature set.
 ## Contribution Instructions
 
-To compile the Gedis GDExtension from source, follow these steps:
+This addon is implemented in GDScript and does not require native compilation. To work on or test the addon, follow these steps:
 
 1.  **Clone the repository**:
 
     ```sh
     git clone --recursive https://github.com/NodotProject/Gedis.git
-    cd gedis
+    cd Gedis
     ```
 
-    _Note: If you cloned without `--recursive`, you can initialize the submodule separately:_
+2.  **Develop & Test**:
 
-    ```sh
-    git submodule update --init --recursive
-    ```
+    - The addon code lives under `addons/Gedis`. Copy that folder into your Godot project's `addons` directory to test changes.
+    - Run the project's test suite with `./run_tests.sh`.
 
-2.  **Compile with SCons**:
-    You will need SCons and a C++ compiler (like GCC, Clang, or MSVC) installed.
-    ```sh
-    scons
-    ```
-    This will build the GDExtension and place the compiled library in the `addons/Gedis/bin/` directory.
+3.  **Contribute**:
+
+    Create a branch, make your changes, and open a pull request describing the work.
 
 ## License
 
