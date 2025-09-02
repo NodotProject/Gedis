@@ -1,6 +1,12 @@
 # Gedis GDExtension
 
-<img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/7724b2b2-2d63-4786-9078-8123aca0bb2d" />
+<p align="center">
+    <img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/7724b2b2-2d63-4786-9078-8123aca0bb2d" />
+</p>
+
+[![](https://dcbadge.vercel.app/api/server/Rx9CZX4sjG)](https://discord.gg/Rx9CZX4sjG) [![](https://img.shields.io/mastodon/follow/110106863700290562?domain=https%3A%2F%2Fmastodon.gamedev.place&label=MASTODON&style=for-the-badge)](https://mastodon.gamedev.place/@krazyjakee) [![](https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ?label=YOUTUBE&style=for-the-badge)](https://www.youtube.com/@GodotNodot)
+
+![Stats](https://repobeats.axiom.co/api/embed/2a34f9ee10e86a04db97091d90c892c07c8314d1.svg "Repobeats analytics image")
 
 An in-memory, Redis-like datastore for Godot, implemented as a GDExtension.
 
@@ -208,7 +214,7 @@ To compile the Gedis GDExtension from source, follow these steps:
 1.  **Clone the repository**:
 
     ```sh
-    git clone --recursive https://github.com/your-username/gedis.git
+    git clone --recursive https://github.com/NodotProject/Gedis.git
     cd gedis
     ```
 
