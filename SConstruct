@@ -26,8 +26,9 @@ if platform == 'windows' and not use_mingw:
     # Use the MSVC compiler on Windows (native build)
     env = Environment(tools=['default', 'msvc'])
 elif platform == 'windows' and use_mingw:
-    # Use MinGW for Windows cross-compilation
+    # Force SCons to use the MinGW toolchain for cross-compilation
     env = Environment(
+        platform='posix',  # Prevent SCons from loading Windows-specific defaults
         tools=['mingw'],
         CC=os.environ.get('CC', 'x86_64-w64-mingw32-gcc'),
         CXX=os.environ.get('CXX', 'x86_64-w64-mingw32-g++')
