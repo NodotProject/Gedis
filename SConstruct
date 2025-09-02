@@ -58,8 +58,11 @@ elif is_windows and use_mingw:
     env.Append(CXXFLAGS=['-std=c++17'])
     # Add Windows-specific defines for MinGW
     env.Append(CPPDEFINES=['WIN32', '_WIN32', 'WINDOWS_ENABLED'])
-    # Ensure proper linking for Windows with C++ standard library and pthread support
-    env.Append(LINKFLAGS=['-static-libgcc', '-static-libstdc++', '-lstdc++', '-lpthread'])
+    # Match godot-cpp's MinGW linking configuration for compatibility
+    env.Append(CCFLAGS=['-Wwrite-strings'])
+    env.Append(LINKFLAGS=['-Wl,--no-undefined'])
+    # Use static linking to match godot-cpp's default use_static_cpp=True behavior
+    env.Append(LINKFLAGS=['-static', '-static-libgcc', '-static-libstdc++'])
 else:
     # Linux/macOS flags
     env.Append(CCFLAGS=['-fPIC'])
