@@ -7,6 +7,12 @@
 #include <map>
 #include "gedis_store.h"
 
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+
 namespace godot {
 
 class Gedis : public Object {
@@ -20,13 +26,25 @@ private:
     static bool debugger_registered;
     String instance_name;
     int instance_id;
-    
+
+    // Background worker for expiry/persistence
+    std::thread worker_thread;
+    std::atomic<bool> worker_running{false};
+    std::mutex store_mutex; // minimal locking to protect store during background ops
+    std::condition_variable worker_cv;
+    std::chrono::milliseconds worker_interval{std::chrono::milliseconds(250)}; // default 250ms
+
     // Debugger communication
     static bool _register_debugger();
     static bool _capture_debugger_message(const String &message, const Array &data);
     static void _send_instances_update();
     static Gedis* _get_instance_by_id(int id);
     static bool _debug_all_messages(const String &message, const Array &data);
+
+    // Worker control
+    void start_worker();
+    void stop_worker();
+    void worker_loop();
     
 public:
     static Gedis* get_instance_by_id(int id);

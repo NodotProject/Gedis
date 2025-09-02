@@ -6,6 +6,12 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <regex>
 
+// Lightweight helpers to reduce repeated UTF-8 conversions and allocations
+static inline std::string to_std_string(const godot::String &s) {
+    return s.utf8().get_data();
+}
+
+
 GedisStore::GedisStore() {
     object_pool.resize(GEDIS_OBJECT_POOL_SIZE);
     for (int i = 0; i < GEDIS_OBJECT_POOL_SIZE; ++i) {
@@ -19,34 +25,36 @@ GedisStore::~GedisStore() {
 }
 
 void GedisStore::set(const godot::String& key, const godot::Variant& value) {
-    std::string std_key = key.utf8().get_data();
+    // Convert key once
+    std::string std_key = to_std_string(key);
+
     // If key exists, deallocate old object before replacing
     if (store.count(std_key)) {
         _deallocate_object(store[std_key]);
     }
-    
+
     // Create a new GedisObject based on the variant type
     GedisObject* obj = nullptr;
-    switch (value.get_type()) {
-        case godot::Variant::STRING: {
-            std::string* str_data = new std::string(godot::String(value).utf8().get_data());
-            obj = _allocate_object(STRING, str_data);
-            break;
-        }
-        default: {
-            // For now, convert everything else to string
-            std::string* str_data = new std::string(godot::String(value).utf8().get_data());
-            obj = _allocate_object(STRING, str_data);
-            break;
-        }
+
+    if (value.get_type() == godot::Variant::STRING) {
+        // Convert string variant once
+        std::string sval = to_std_string(godot::String(value));
+        std::string* str_data = new std::string(std::move(sval));
+        obj = _allocate_object(STRING, str_data);
+    } else {
+        // Convert other types to string once
+        godot::String sval_variant = godot::String(value);
+        std::string sval = to_std_string(sval_variant);
+        std::string* str_data = new std::string(std::move(sval));
+        obj = _allocate_object(STRING, str_data);
     }
-    
+
     store[std_key] = obj;
 }
 
 godot::Variant GedisStore::get(const godot::String& key) {
     get_call_count++;
-    std::string std_key = key.utf8().get_data();
+    std::string std_key = to_std_string(key);
     if (store.count(std_key)) {
         GedisObject* obj = store[std_key];
         // Probabilistic expiry check
@@ -162,9 +170,30 @@ godot::Variant GedisStore::decr(const godot::String& key) {
 godot::TypedArray<godot::String> GedisStore::keys(const godot::String& pattern) {
     godot::TypedArray<godot::String> result;
     int64_t now = time(0);
-    std::string std_pattern = pattern.utf8().get_data();
+    std::string std_pattern = to_std_string(pattern);
+
+    // Fast-path for simple prefix patterns like "prefix*"
+    if (!std_pattern.empty() && std_pattern.back() == '*') {
+        std::string prefix = std_pattern.substr(0, std_pattern.size() - 1);
+        // If prefix contains no common regex meta-characters, do a cheap prefix check
+        if (prefix.find_first_of(".^$+?()[]{}\\|") == std::string::npos) {
+            for (auto it = store.begin(); it != store.end();) {
+                if (it->second->expiration != -1 && it->second->expiration <= now) {
+                    _deallocate_object(it->second);
+                    it = store.erase(it);
+                    continue;
+                }
+                if (it->first.rfind(prefix, 0) == 0) { // starts_with check
+                    result.append(godot::String(it->first.c_str()));
+                }
+                ++it;
+            }
+            return result;
+        }
+    }
+
+    // Fallback to regex only when needed
     std::regex regex_pattern(std_pattern);
-    
     for (auto it = store.begin(); it != store.end();) {
         // Check if key has expired
         if (it->second->expiration != -1 && it->second->expiration <= now) {
@@ -172,18 +201,22 @@ godot::TypedArray<godot::String> GedisStore::keys(const godot::String& pattern) 
             it = store.erase(it);
             continue;
         }
-        
+
         if (std::regex_match(it->first, regex_pattern)) {
             result.append(godot::String(it->first.c_str()));
         }
         ++it;
     }
-    
+
     return result;
 }
 
 void GedisStore::mset(const godot::Dictionary& dictionary) {
     godot::Array keys = dictionary.keys();
+    size_t expected = keys.size();
+    if (expected > 0) {
+        store.reserve(expected * 2); // reduce rehash overhead for bulk inserts
+    }
     for (int i = 0; i < keys.size(); i++) {
         godot::String key = keys[i];
         set(key, dictionary[key]);
