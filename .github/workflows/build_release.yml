@@ -62,12 +62,12 @@ jobs:
       - name: Build godot-cpp
         if: steps.cache-godotcpp.outputs.cache-hit != 'true'
         env:
-          CC: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-gcc' || '' }}
-          CXX: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-g++' || '' }}
+          CC: ${{ matrix.platform == 'windows' && 'x86_64-w64-mingw32-gcc' || '' }}
+          CXX: ${{ matrix.platform == 'windows' && 'x86_64-w64-mingw32-g++' || '' }}
         run: |
           cd godot-cpp
-          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_release
-          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_debug
+          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} ${{ matrix.platform == 'windows' && 'use_mingw=yes' || '' }} generate_bindings=yes target=template_release
+          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} ${{ matrix.platform == 'windows' && 'use_mingw=yes' || '' }} target=template_debug
 
   build-addon:
     name: Build addon for ${{ matrix.os-name }}
@@ -122,10 +122,10 @@ jobs:
 
       - name: Build project
         env:
-          CC: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-gcc' || '' }}
-          CXX: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-g++' || '' }}
+          CC: ${{ matrix.platform == 'windows' && 'x86_64-w64-mingw32-gcc' || '' }}
+          CXX: ${{ matrix.platform == 'windows' && 'x86_64-w64-mingw32-g++' || '' }}
         run: |
-          scons platform=${{ matrix.platform }} use_mingw=${{ matrix.platform == 'windows' }} target=template_release arch=${{ matrix.arch }}
+          scons platform=${{ matrix.platform }} ${{ matrix.platform == 'windows' && 'use_mingw=yes' || '' }} target=template_release arch=${{ matrix.arch }}
 
       - name: Package addon
         run: |
