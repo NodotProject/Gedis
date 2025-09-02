@@ -117,8 +117,11 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		
 		# Key list tree
 		var key_list = Tree.new()
+		key_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		key_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		key_list.name = "key_list"
 		key_list.columns = 3
+		key_list.column_titles_visible = true
 		key_list.set_column_title(0, "Key")
 		key_list.set_column_title(1, "Type")
 		key_list.set_column_title(2, "TTL")
@@ -127,27 +130,30 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		
 		# Value view
 		var key_value_view = TextEdit.new()
+		key_value_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		key_value_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		key_value_view.name = "key_value_view"
 		key_value_view.editable = false
 		h_split.add_child(key_value_view)
 		
+		# TODO: Fix edit and save functionality
 		# Bottom panel with edit/save buttons
-		var bottom_panel = HBoxContainer.new()
-		dashboard.add_child(bottom_panel)
-		
-		var edit_button = Button.new()
-		edit_button.name = "edit_button"
-		edit_button.text = "Edit"
-		edit_button.disabled = true
-		bottom_panel.add_child(edit_button)
-		edit_button.pressed.connect(func(): _on_edit_pressed(session_id))
-		
-		var save_button = Button.new()
-		save_button.name = "save_button"
-		save_button.text = "Save"
-		save_button.disabled = true
-		bottom_panel.add_child(save_button)
-		save_button.pressed.connect(func(): _on_save_pressed(session_id))
+		#var bottom_panel = HBoxContainer.new()
+		#dashboard.add_child(bottom_panel)
+		#
+		#var edit_button = Button.new()
+		#edit_button.name = "edit_button"
+		#edit_button.text = "Edit"
+		#edit_button.disabled = true
+		#bottom_panel.add_child(edit_button)
+		#edit_button.pressed.connect(func(): _on_edit_pressed(session_id))
+		#
+		#var save_button = Button.new()
+		#save_button.name = "save_button"
+		#save_button.text = "Save"
+		#save_button.disabled = true
+		#bottom_panel.add_child(save_button)
+		#save_button.pressed.connect(func(): _on_save_pressed(session_id))
 		
 		return dashboard
 	
@@ -165,7 +171,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 	func _request_instances_update(session_id):
 			var session = get_session(session_id)
 			if session and session.is_active():
-				session.send_message("request_instances", [])
+				session.send_message("gedis:request_instances", [])
 	
 	func _update_instances(instances_data, session_id):
 		if not session_id in dashboard_tabs:
@@ -212,7 +218,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 				# Request snapshot via debugger RPC instead of trying to resolve native object
 				pending_requests[session_id] = {"command": "snapshot", "instance_id": instance_id}
 				if session and session.is_active():
-					session.send_message("request_instance_data", [instance_id, "snapshot", "*"])
+					session.send_message("gedis:request_instance_data", [instance_id, "snapshot", "*"])
 	
 	func _on_fetch_keys_pressed(session_id):
 			# Manual fetch triggered by the "Fetch Keys" button.
@@ -224,7 +230,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 			var session = get_session(session_id)
 			pending_requests[session_id] = {"command": "snapshot", "instance_id": instance_id}
 			if session and session.is_active():
-				session.send_message("request_instance_data", [instance_id, "snapshot", "*"])
+				session.send_message("gedis:request_instance_data", [instance_id, "snapshot", "*"])
 
 	func _on_filter_pressed(session_id):
 		if not session_id in dashboard_tabs:
@@ -316,7 +322,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 				var session = get_session(session_id)
 				pending_requests[session_id] = {"command": "dump", "instance_id": instance_id, "key": selected_key}
 				if session and session.is_active():
-					session.send_message("request_instance_data", [instance_id, "dump", selected_key])
+					session.send_message("gedis:request_instance_data", [instance_id, "dump", selected_key])
 			
 			edit_button.disabled = false
 			save_button.disabled = true
@@ -373,7 +379,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		var session = get_session(session_id)
 		if session and session.is_active():
 			pending_requests[session_id] = {"command": "set", "instance_id": instance_id, "key": key}
-			session.send_message("request_instance_data", [instance_id, "set", key, new_value])
+			session.send_message("gedis:request_instance_data", [instance_id, "set", key, new_value])
 
 		key_value_view.editable = false
 		save_button.disabled = true
