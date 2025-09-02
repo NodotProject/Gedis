@@ -55,7 +55,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 	func _setup_session(session_id):
 		# Create the dashboard UI for this session
 		var dashboard = _create_dashboard_ui(session_id)
-		dashboard.name = "Gedis Dashboard"
+		dashboard.name = "Gedis"
 		
 		var session = get_session(session_id)
 		session.started.connect(func(): _on_session_started(session_id))
@@ -192,7 +192,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 			status_label.add_theme_color_override("font_color", Color.GREEN)
 			
 			for instance_info in instances_data:
-				var name = instance_info["name"] if instance_info.has("name") else str(instance_info)
+				var name = instance_info.get("name", "Gedis_%d" % instance_info.get("id", -1))
 				var id = int(instance_info["id"]) if instance_info.has("id") else -1
 				instance_selector.add_item(name, id)
 			
