@@ -12,7 +12,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.user
-addons/gut/
 *.dblite
 *.log
 
@@ -24,4 +23,3 @@ addons/gut/
 *.dll
 *.lib
 *.exe
-addons/Gedis/bin/
