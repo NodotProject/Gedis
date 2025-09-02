@@ -1,18 +1,19 @@
-# Gedis GDExtension
+# Gedis
 
 <p align="center">
     <img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/7724b2b2-2d63-4786-9078-8123aca0bb2d" />
+    An in-memory, Redis-like datastore for Godot, implemented as a GDExtension.
 </p>
 
 [![](https://dcbadge.vercel.app/api/server/Rx9CZX4sjG)](https://discord.gg/Rx9CZX4sjG) [![](https://img.shields.io/mastodon/follow/110106863700290562?domain=https%3A%2F%2Fmastodon.gamedev.place&label=MASTODON&style=for-the-badge)](https://mastodon.gamedev.place/@krazyjakee) [![](https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ?label=YOUTUBE&style=for-the-badge)](https://www.youtube.com/@GodotNodot)
 
 ![Stats](https://repobeats.axiom.co/api/embed/2a34f9ee10e86a04db97091d90c892c07c8314d1.svg "Repobeats analytics image")
 
-An in-memory, Redis-like datastore for Godot, implemented as a GDExtension.
-
 ## Overview
 
 Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands, accessible directly from GDScript. As a GDExtension, it runs with native C++ speed, making it suitable for performance-critical applications. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set("score", 10)`.
+
+*Redis-like? What the heck is a Redis?* - See [Redis in 100 Seconds][https://www.youtube.com/watch?v=G1rOthIU-uo].
 
 ## Features
 
