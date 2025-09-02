@@ -2,6 +2,9 @@
 
 <p align="center">
     <img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/7724b2b2-2d63-4786-9078-8123aca0bb2d" />
+</p>
+
+<p align="center">
     An in-memory, Redis-like datastore for Godot, implemented as a GDExtension.
 </p>
 
