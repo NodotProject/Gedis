@@ -97,9 +97,15 @@ Gedis::Gedis() {
     if (debugger_registered) {
         _send_instances_update();
     }
+
+    // Start background worker for expiry / persistence tasks
+    start_worker();
 }
 
 Gedis::~Gedis() {
+    // Stop background worker first to avoid the worker touching a destructed object
+    stop_worker();
+
     instances.erase(this);
     instance_ids.erase(this);
     
@@ -133,177 +139,220 @@ Array Gedis::get_all_instances() {
 
 
 void Gedis::set(const String &key, const Variant &value) {
+    std::scoped_lock lock(store_mutex);
     store.set(key, value);
 }
 
 Variant Gedis::get(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.get(key);
 }
 
 int64_t Gedis::del(const Array &keys) {
+    std::scoped_lock lock(store_mutex);
     return store.del(keys);
 }
 
 int64_t Gedis::exists(const Array &keys) {
+    std::scoped_lock lock(store_mutex);
     return store.exists(keys);
 }
 
 bool Gedis::key_exists(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.exists(key);
 }
 
 Variant Gedis::incr(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.incr(key);
 }
 
 Variant Gedis::decr(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.decr(key);
 }
 
 TypedArray<String> Gedis::keys(const String &pattern) {
+    std::scoped_lock lock(store_mutex);
     return store.keys(pattern);
 }
 
 void Gedis::mset(const Dictionary &dictionary) {
+    std::scoped_lock lock(store_mutex);
     store.mset(dictionary);
 }
 
 Array Gedis::mget(const Array &keys) {
+    std::scoped_lock lock(store_mutex);
     return store.mget(keys);
 }
 
 // Debugger commands
 String Gedis::type(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.type(key);
 }
 
 Dictionary Gedis::dump(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.dump(key);
 }
 
 Dictionary Gedis::snapshot(const String &pattern) {
+    std::scoped_lock lock(store_mutex);
     return store.snapshot(pattern);
 }
 
 // Expiry commands
 bool Gedis::expire(const String &key, int64_t seconds) {
+    std::scoped_lock lock(store_mutex);
     return store.expire(key, seconds);
 }
 
 int64_t Gedis::ttl(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.ttl(key);
 }
 
 bool Gedis::persist(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.persist(key);
 }
 
 // Hash commands
 int64_t Gedis::hset(const String &key, const String &field, const Variant &value) {
+    std::scoped_lock lock(store_mutex);
     return store.hset(key, field, value);
 }
 
 Variant Gedis::hget(const String &key, const String &field, const Variant &default_value) {
+    std::scoped_lock lock(store_mutex);
     return store.hget(key, field, default_value);
 }
 
 Dictionary Gedis::hgetall(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.hgetall(key);
 }
 
 int64_t Gedis::hdel(const String &key, const Variant &fields) {
+    std::scoped_lock lock(store_mutex);
     return store.hdel(key, fields);
 }
 
 bool Gedis::hexists(const String &key, const String &field) {
+    std::scoped_lock lock(store_mutex);
     return store.hexists(key, field);
 }
 
 Array Gedis::hkeys(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.hkeys(key);
 }
 
 Array Gedis::hvals(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.hvals(key);
 }
 
 int64_t Gedis::hlen(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.hlen(key);
 }
 
 // List commands
 int64_t Gedis::lpush(const String &key, const Variant &values) {
+    std::scoped_lock lock(store_mutex);
     return store.lpush(key, values);
 }
 
 int64_t Gedis::rpush(const String &key, const Variant &values) {
+    std::scoped_lock lock(store_mutex);
     return store.rpush(key, values);
 }
 
 Variant Gedis::lpop(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.lpop(key);
 }
 
 Variant Gedis::rpop(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.rpop(key);
 }
 
 int64_t Gedis::llen(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.llen(key);
 }
 
 Array Gedis::lrange(const String &key, int64_t start, int64_t stop) {
+    std::scoped_lock lock(store_mutex);
     return store.lrange(key, start, stop);
 }
 
 Variant Gedis::lindex(const String &key, int64_t index) {
+    std::scoped_lock lock(store_mutex);
     return store.lindex(key, index);
 }
 
 bool Gedis::lset(const String &key, int64_t index, const Variant &value) {
+    std::scoped_lock lock(store_mutex);
     return store.lset(key, index, value);
 }
 
 int64_t Gedis::lrem(const String &key, int64_t count, const Variant &value) {
+    std::scoped_lock lock(store_mutex);
     return store.lrem(key, count, value);
 }
 
 // Set commands
 int64_t Gedis::sadd(const String &key, const Variant &members) {
+    std::scoped_lock lock(store_mutex);
     return store.sadd(key, members);
 }
 
 int64_t Gedis::srem(const String &key, const Variant &members) {
+    std::scoped_lock lock(store_mutex);
     return store.srem(key, members);
 }
 
 Array Gedis::smembers(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.smembers(key);
 }
 
 bool Gedis::sismember(const String &key, const Variant &member) {
+    std::scoped_lock lock(store_mutex);
     return store.sismember(key, member);
 }
 
 int64_t Gedis::scard(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.scard(key);
 }
 
 Variant Gedis::spop(const String &key) {
+    std::scoped_lock lock(store_mutex);
     return store.spop(key);
 }
 
 bool Gedis::smove(const String &source, const String &destination, const Variant &member) {
+    std::scoped_lock lock(store_mutex);
     return store.smove(source, destination, member);
 }
 
 // Pub/Sub commands
 void Gedis::publish(const String &channel, const Variant &message) {
+    // Lock while reading subscriber lists to avoid races with subscribe/unsubscribe
+    std::scoped_lock lock(store_mutex);
+
     // Direct subscribers
     for (Object *subscriber : store.get_subscribers(channel)) {
         subscriber->emit_signal("pubsub_message", channel, message);
     }
-
+ 
     // Pattern subscribers
     for (const auto& [pattern, subscribers] : store.get_psubscribers()) {
         if (channel.match(godot::String(pattern.c_str()))) {
@@ -315,18 +364,22 @@ void Gedis::publish(const String &channel, const Variant &message) {
 }
 
 void Gedis::subscribe(const String &channel, Object *subscriber) {
+    std::scoped_lock lock(store_mutex);
     store.subscribe(channel, subscriber);
 }
 
 void Gedis::unsubscribe(const String &channel, Object *subscriber) {
+    std::scoped_lock lock(store_mutex);
     store.unsubscribe(channel, subscriber);
 }
 
 void Gedis::psubscribe(const String &pattern, Object *subscriber) {
+    std::scoped_lock lock(store_mutex);
     store.psubscribe(pattern, subscriber);
 }
 
 void Gedis::punsubscribe(const String &pattern, Object *subscriber) {
+    std::scoped_lock lock(store_mutex);
     store.punsubscribe(pattern, subscriber);
 }
 
@@ -513,4 +566,43 @@ Gedis* Gedis::_get_instance_by_id(int id) {
         }
     }
     return nullptr;
+}
+
+// Worker control and implementation
+void Gedis::start_worker() {
+    bool expected = false;
+    if (!worker_running.compare_exchange_strong(expected, true)) {
+        return; // already running
+    }
+
+    // Launch worker thread
+    worker_thread = std::thread(&Gedis::worker_loop, this);
+}
+
+void Gedis::stop_worker() {
+    bool expected = true;
+    if (!worker_running.compare_exchange_strong(expected, false)) {
+        return; // not running
+    }
+
+    // Notify and join
+    worker_cv.notify_all();
+    if (worker_thread.joinable()) {
+        worker_thread.join();
+    }
+}
+
+void Gedis::worker_loop() {
+    while (worker_running.load()) {
+        {
+            // Do expiry cleanup under lock to avoid races with main thread operations
+            std::scoped_lock lock(store_mutex);
+            store.remove_expired_keys();
+            // TODO: Add persistence or other background tasks here, under the same lock.
+        }
+
+        // Wait for the configured interval or until stop requested
+        std::unique_lock<std::mutex> lk(store_mutex);
+        worker_cv.wait_for(lk, worker_interval, [this]() { return !worker_running.load(); });
+    }
 }

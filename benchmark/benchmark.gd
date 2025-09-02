@@ -174,7 +174,7 @@ func benchmark_gedis_keys(gedis_instance: Gedis):
 	# Populate the Gedis instance with the keys
 	gedis_instance.mset(d)
 	var start_time = Time.get_ticks_usec()
-	gedis_instance.keys("key:2*")
+	gedis_instance.keys("key*")
 	var end_time = Time.get_ticks_usec()
 	var elapsed = end_time - start_time
 	return elapsed
