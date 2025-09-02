@@ -26,29 +26,12 @@ if platform == 'windows' and not use_mingw:
     # Use the MSVC compiler on Windows (native build)
     env = Environment(tools=['default', 'msvc'])
 elif platform == 'windows' and use_mingw:
-    # Use MinGW for Windows cross-compilation (simplified)
-    # Prefer CC/CXX environment variables, otherwise fall back to common cross-compiler names.
-    env = Environment(tools=['gcc', 'g++', 'gnulink', 'ar', 'gas'])
-
-    # Determine compiler commands (allow CI to override via CC/CXX)
-    cc_cmd = os.environ.get('CC', 'x86_64-w64-mingw32-gcc')
-    cxx_cmd = os.environ.get('CXX', 'x86_64-w64-mingw32-g++')
-
-    # Verify compiler is available; try common locations if not found in PATH
-    import shutil
-    if not shutil.which(cc_cmd):
-        for p in ['/usr/bin/x86_64-w64-mingw32-gcc', '/usr/local/bin/x86_64-w64-mingw32-gcc', '/mingw64/bin/x86_64-w64-mingw32-gcc']:
-            if os.path.exists(p):
-                cc_cmd = p
-                cxx_cmd = p.replace('gcc', 'g++')
-                break
-
-    if not shutil.which(cc_cmd) and not os.path.exists(cc_cmd):
-        print("ERROR: MinGW cross-compiler not found. Install mingw-w64 (e.g. apt-get install mingw-w64) or set CC/CXX to the cross-compiler paths.")
-        Exit(1)
-
-    env['CC'] = cc_cmd
-    env['CXX'] = cxx_cmd
+    # Use MinGW for Windows cross-compilation
+    env = Environment(
+        tools=['mingw'],
+        CC=os.environ.get('CC', 'x86_64-w64-mingw32-gcc'),
+        CXX=os.environ.get('CXX', 'x86_64-w64-mingw32-g++')
+    )
 
 else:
     # Use the default compiler on other platforms
