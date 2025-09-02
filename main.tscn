@@ -1,6 +1,13 @@
 [gd_scene load_steps=2 format=3 uid="uid://cqnmjqktec22h"]
 
-[ext_resource type="Script" uid="uid://d3wtl6wj77nem" path="res://main.gd" id="1_ig7tw"]
+[sub_resource type="GDScript" id="GDScript_7dm0k"]
+script/source = "extends Node
+
+var gedis := Gedis.new()
+
+func _ready():
+	gedis.set(\"a\", \"cool\")
+"
 
 [node name="Main" type="Node"]
-script = ExtResource("1_ig7tw")
+script = SubResource("GDScript_7dm0k")
