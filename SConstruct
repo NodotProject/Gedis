@@ -36,7 +36,7 @@ elif platform == 'windows' and use_mingw:
     
     env.Replace(CC=cc_cmd)
     env.Replace(CXX=cxx_cmd)
-    env.Replace(LINK=cc_cmd)  # Use GCC for linking too
+    env.Replace(LINK=cxx_cmd)  # Use C++ compiler for linking (g++) so libstdc++ and C++ EH symbols are pulled in
 
 else:
     # Use the default compiler on other platforms
