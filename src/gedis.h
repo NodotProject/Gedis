@@ -22,7 +22,7 @@ private:
     int instance_id;
     
     // Debugger communication
-    static void _register_debugger();
+    static bool _register_debugger();
     static bool _capture_debugger_message(const String &message, const Array &data);
     static void _send_instances_update();
     static Gedis* _get_instance_by_id(int id);

@@ -82,8 +82,7 @@ void Gedis::_bind_methods() {
 Gedis::Gedis() {
     // Register debugger on first instance creation
     if (!debugger_registered) {
-        _register_debugger();
-        debugger_registered = true;
+        debugger_registered = _register_debugger();
     }
     
     // Add to instance registry
@@ -93,7 +92,9 @@ Gedis::Gedis() {
     instance_name = "Gedis_" + String::num_int64(instance_id);
     
     // Notify debugger of new instance
-    _send_instances_update();
+    if (debugger_registered) {
+        _send_instances_update();
+    }
 }
 
 Gedis::~Gedis() {
@@ -101,7 +102,9 @@ Gedis::~Gedis() {
     instance_ids.erase(this);
     
     // Notify debugger of instance removal
-    _send_instances_update();
+    if (debugger_registered) {
+        _send_instances_update();
+    }
 }
 
 void Gedis::set_instance_name(const String &name) {
@@ -337,10 +340,10 @@ void Gedis::punsubscribe(const String &pattern, Object *subscriber) {
 }
 
 // Debugger communication methods
-void Gedis::_register_debugger() {
+bool Gedis::_register_debugger() {
     EngineDebugger *debugger = EngineDebugger::get_singleton();
-    if (!debugger) {
-        return;
+    if (!debugger || !debugger->is_active()) {
+        return false;
     }
 
     // Register the main capture used by the plugin front-end
@@ -352,6 +355,7 @@ void Gedis::_register_debugger() {
     debugger->register_message_capture("request_instance_data", callable_mp_static(&Gedis::_capture_debugger_message));
 
     debugger->register_message_capture("", callable_mp_static(&Gedis::_debug_all_messages));
+    return true;
 }
 
 bool Gedis::_debug_all_messages(const String &message, const Array &data) {
@@ -491,7 +495,9 @@ bool Gedis::_capture_debugger_message(const String &message, const Array &data) 
 
 void Gedis::_send_instances_update() {
     EngineDebugger *debugger = EngineDebugger::get_singleton();
-    if (!debugger) return;
+    if (!debugger || !debugger->is_active()) {
+        return;
+    }
     
     Array instances_data;
     for (Gedis* instance : instances) {
