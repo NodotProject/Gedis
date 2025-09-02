@@ -3,7 +3,7 @@ entry_symbol = "gedis_library_init"
 compatibility_minimum = "4.4"
 
 [libraries]
-# Generic fallbacks
+# Generic fallbacks (keep these as convenience defaults)
 linux = "res://addons/Gedis/bin/libgedis.so"
 linux.debug = "res://addons/Gedis/bin/libgedis.so"
 linux.release = "res://addons/Gedis/bin/libgedis.so"
@@ -11,10 +11,40 @@ linuxbsd = "res://addons/Gedis/bin/libgedis.so"
 linuxbsd.debug = "res://addons/Gedis/bin/libgedis.so"
 linuxbsd.release = "res://addons/Gedis/bin/libgedis.so"
 
-# Architecture-specific entries
+# Linux (architectures)
 linux.x86_64 = "res://addons/Gedis/bin/libgedis.so"
 linux.x86_64.debug = "res://addons/Gedis/bin/libgedis.so"
 linux.x86_64.release = "res://addons/Gedis/bin/libgedis.so"
+linux.arm64 = "res://addons/Gedis/bin/libgedis.so"
+linux.arm64.debug = "res://addons/Gedis/bin/libgedis.so"
+linux.arm64.release = "res://addons/Gedis/bin/libgedis.so"
+
+# Linux BSD variants
 linuxbsd.x86_64 = "res://addons/Gedis/bin/libgedis.so"
 linuxbsd.x86_64.debug = "res://addons/Gedis/bin/libgedis.so"
 linuxbsd.x86_64.release = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.arm64 = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.arm64.debug = "res://addons/Gedis/bin/libgedis.so"
+linuxbsd.arm64.release = "res://addons/Gedis/bin/libgedis.so"
+
+# macOS (dylib)
+macos.x86_64 = "res://addons/Gedis/bin/libgedis.dylib"
+macos.x86_64.debug = "res://addons/Gedis/bin/libgedis.dylib"
+macos.x86_64.release = "res://addons/Gedis/bin/libgedis.dylib"
+macos.arm64 = "res://addons/Gedis/bin/libgedis.dylib"
+macos.arm64.debug = "res://addons/Gedis/bin/libgedis.dylib"
+macos.arm64.release = "res://addons/Gedis/bin/libgedis.dylib"
+
+# Windows (dll)
+windows = "res://addons/Gedis/bin/gedis.dll"
+windows.debug = "res://addons/Gedis/bin/gedis.dll"
+windows.release = "res://addons/Gedis/bin/gedis.dll"
+windows.x86_64 = "res://addons/Gedis/bin/gedis.dll"
+windows.x86_64.debug = "res://addons/Gedis/bin/gedis.dll"
+windows.x86_64.release = "res://addons/Gedis/bin/gedis.dll"
+
+# Android (ABI variants)
+android.armeabi_v7a = "res://addons/Gedis/bin/libgedis.so"
+android.arm64_v8a = "res://addons/Gedis/bin/libgedis.so"
+android.x86 = "res://addons/Gedis/bin/libgedis.so"
+android.x86_64 = "res://addons/Gedis/bin/libgedis.so"
