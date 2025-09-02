@@ -58,8 +58,8 @@ elif is_windows and use_mingw:
     env.Append(CXXFLAGS=['-std=c++17'])
     # Add Windows-specific defines for MinGW
     env.Append(CPPDEFINES=['WIN32', '_WIN32', 'WINDOWS_ENABLED'])
-    # Ensure proper linking for Windows
-    env.Append(LINKFLAGS=['-static-libgcc', '-static-libstdc++'])
+    # Ensure proper linking for Windows with C++ standard library and pthread support
+    env.Append(LINKFLAGS=['-static-libgcc', '-static-libstdc++', '-lstdc++', '-lpthread'])
 else:
     # Linux/macOS flags
     env.Append(CCFLAGS=['-fPIC'])
