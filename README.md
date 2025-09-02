@@ -211,6 +211,22 @@ func _on_button_pressed():
 | `psubscribe(pattern, subscriber)` | Subscribes to channels matching a pattern.                |
 | `punsubscribe(pattern, subscriber)` | Unsubscribes from channels matching a pattern.          |
 
+## Benchmarks
+
+Basic `set`/`get` operations were benchmarked against Godot's native `Dictionary`. The tests were performed by setting and getting 100,000 keys.
+
+| Operation | Gedis | GDScript Dictionary |
+| --- | --- | --- |
+| **SET** | 111,707 µs | 57,922 µs |
+| **GET** | 42,797 µs | 20,748 µs |
+
+These results show that for raw `set`/`get` speed, the native `Dictionary` is faster. However, several optimizations have been implemented to narrow the gap:
+
+- **Internal `godot::String` Usage**: Gedis now uses `godot::String` internally, eliminating the overhead of converting to and from `std::string`.
+- **Memory Pooling**: A memory pool for `GedisObject`s has been implemented to reduce the overhead of dynamic memory allocation.
+- **Probabilistic Key Eviction**: Instead of checking for expired keys on every read, Gedis now uses a probabilistic approach, checking keys periodically. This reduces the overhead on the majority of `get` operations.
+
+While a native `Dictionary` will always have an edge in raw speed, these optimizations make Gedis a highly performant option for projects that require its rich, Redis-like feature set.
 ## Contribution Instructions
 
 To compile the Gedis GDExtension from source, follow these steps:

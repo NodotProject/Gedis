@@ -2,12 +2,12 @@
 #define GEDIS_STORE_H
 
 #include "gedis_object.h"
+#include <godot_cpp/variant/string.hpp>
 #include <unordered_map>
 #include <string>
 
 // Forward declarations for Godot types
 namespace godot {
-    class String;
     class Variant;
     class Array;
     class Dictionary;
@@ -17,9 +17,17 @@ namespace godot {
 
 class GedisStore {
 private:
+    static const int GEDIS_OBJECT_POOL_SIZE = 100000;
+    std::vector<GedisObject> object_pool;
+    std::vector<int> free_list;
+    int get_call_count = 0;
+
     std::unordered_map<std::string, GedisObject*> store;
     std::unordered_map<std::string, std::vector<godot::Object*>> subscriptions;
     std::unordered_map<std::string, std::vector<godot::Object*>> psubscriptions;
+
+    GedisObject* _allocate_object(GedisObjectType t, void* d);
+    void _deallocate_object(GedisObject* obj);
 
 public:
     GedisStore();
@@ -33,6 +41,8 @@ public:
     godot::Variant incr(const godot::String& key);
     godot::Variant decr(const godot::String& key);
     godot::TypedArray<godot::String> keys(const godot::String& pattern);
+    void mset(const godot::Dictionary& dictionary);
+    godot::Array mget(const godot::Array& keys);
     void remove_expired_keys();
 
     // Debugger commands

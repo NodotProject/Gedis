@@ -22,6 +22,8 @@ void Gedis::_bind_methods() {
     ClassDB::bind_method(D_METHOD("incr", "key"), &Gedis::incr);
     ClassDB::bind_method(D_METHOD("decr", "key"), &Gedis::decr);
     ClassDB::bind_method(D_METHOD("keys", "pattern"), &Gedis::keys);
+    ClassDB::bind_method(D_METHOD("mset", "dictionary"), &Gedis::mset);
+    ClassDB::bind_method(D_METHOD("mget", "keys"), &Gedis::mget);
 
     // Debugger commands
     ClassDB::bind_method(D_METHOD("type", "key"), &Gedis::type);
@@ -162,6 +164,14 @@ TypedArray<String> Gedis::keys(const String &pattern) {
     return store.keys(pattern);
 }
 
+void Gedis::mset(const Dictionary &dictionary) {
+    store.mset(dictionary);
+}
+
+Array Gedis::mget(const Array &keys) {
+    return store.mget(keys);
+}
+
 // Debugger commands
 String Gedis::type(const String &key) {
     return store.type(key);
@@ -296,28 +306,9 @@ void Gedis::publish(const String &channel, const Variant &message) {
 
     // Pattern subscribers
     for (const auto& [pattern, subscribers] : store.get_psubscribers()) {
-        std::string pattern_str = pattern;
-        std::string channel_str = channel.utf8().get_data();
-        
-        // Convert glob to regex
-        std::string regex_pattern = "";
-        for (char c : pattern_str) {
-            switch (c) {
-                case '*':
-                    regex_pattern += ".*";
-                    break;
-                case '?':
-                    regex_pattern += ".";
-                    break;
-                default:
-                    regex_pattern += c;
-                    break;
-            }
-        }
-
-        if (std::regex_match(channel_str, std::regex(regex_pattern))) {
+        if (channel.match(godot::String(pattern.c_str()))) {
             for (Object *subscriber : subscribers) {
-                subscriber->emit_signal("psub_message", String(pattern.c_str()), channel, message);
+                subscriber->emit_signal("psub_message", godot::String(pattern.c_str()), channel, message);
             }
         }
     }
