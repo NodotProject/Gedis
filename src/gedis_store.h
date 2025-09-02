@@ -35,6 +35,11 @@ public:
     godot::TypedArray<godot::String> keys(const godot::String& pattern);
     void remove_expired_keys();
 
+    // Debugger commands
+    godot::String type(const godot::String &key);
+    godot::Dictionary dump(const godot::String &key);
+    godot::Dictionary snapshot(const godot::String &pattern);
+
     // Expiry commands
     bool expire(const godot::String &key, int64_t seconds);
     int64_t ttl(const godot::String &key);

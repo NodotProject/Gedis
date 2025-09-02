@@ -15,6 +15,11 @@ void Gedis::_bind_methods() {
     ClassDB::bind_method(D_METHOD("decr", "key"), &Gedis::decr);
     ClassDB::bind_method(D_METHOD("keys", "pattern"), &Gedis::keys);
 
+    // Debugger commands
+    ClassDB::bind_method(D_METHOD("type", "key"), &Gedis::type);
+    ClassDB::bind_method(D_METHOD("dump", "key"), &Gedis::dump);
+    ClassDB::bind_method(D_METHOD("snapshot", "pattern"), &Gedis::snapshot, DEFVAL("*"));
+
     // Expiry commands
     ClassDB::bind_method(D_METHOD("expire", "key", "seconds"), &Gedis::expire);
     ClassDB::bind_method(D_METHOD("ttl", "key"), &Gedis::ttl);
@@ -98,6 +103,19 @@ Variant Gedis::decr(const String &key) {
 
 TypedArray<String> Gedis::keys(const String &pattern) {
     return store.keys(pattern);
+}
+
+// Debugger commands
+String Gedis::type(const String &key) {
+    return store.type(key);
+}
+
+Dictionary Gedis::dump(const String &key) {
+    return store.dump(key);
+}
+
+Dictionary Gedis::snapshot(const String &pattern) {
+    return store.snapshot(pattern);
 }
 
 // Expiry commands
