@@ -11,9 +11,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-linux-and-windows:
-    name: Build for Linux and Windows
-    runs-on: ubuntu-latest
+  build-godot-cpp:
+    name: Build godot-cpp for ${{ matrix.os-name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os-name: Linux
+            platform: linux
+            arch: x86_64
+          - os: ubuntu-latest
+            os-name: Windows
+            platform: windows
+            arch: x86_64
+          - os: macos-latest
+            os-name: macOS
+            platform: macos
+            arch: universal
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,90 +41,111 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install SCons and MinGW
+      - name: Install SCons
+        run: pip install scons
+
+      - name: Install MinGW (for Windows cross-compilation)
+        if: matrix.platform == 'windows'
         run: |
-          pip install scons
           sudo apt-get update
           sudo apt-get install -y mingw-w64
 
-      - name: Cache godot-cpp for Linux
-        id: cache-godotcpp-linux
+      - name: Cache godot-cpp
+        id: cache-godotcpp
         uses: actions/cache@v4
         with:
           path: |
             godot-cpp/bin
             godot-cpp/gen
-          key: godot-cpp-linux-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
+          key: godot-cpp-${{ matrix.platform }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
 
-      - name: Build godot-cpp for Linux
-        if: steps.cache-godotcpp-linux.outputs.cache-hit != 'true'
+      - name: Build godot-cpp
+        if: steps.cache-godotcpp.outputs.cache-hit != 'true'
+        env:
+          CC: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-gcc' || '' }}
+          CXX: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-g++' || '' }}
         run: |
           cd godot-cpp
-          scons platform=linux arch=x86_64 generate_bindings=yes target=template_release
-          scons platform=linux arch=x86_64 target=template_debug
+          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} generate_bindings=yes target=template_release
+          scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_debug
 
-      - name: Build project for Linux
-        run: |
-          scons platform=linux target=template_release arch=x86_64
-      
-      - name: Package Linux addon
-        run: |
-          mkdir -p package-linux/addons/Gedis/bin
-          cp -r addons/Gedis/* package-linux/addons/Gedis/
-          cp addons/Gedis/bin/libgedis.so package-linux/addons/Gedis/bin/
-          cd package-linux
-          zip -r ../gedis-linux-x86_64.zip .
-          cd ..
-
-      - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+  build-addon:
+    name: Build addon for ${{ matrix.os-name }}
+    runs-on: ${{ matrix.os }}
+    needs: build-godot-cpp
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os-name: Linux
+            platform: linux
+            arch: x86_64
+            extension: so
+          - os: ubuntu-latest
+            os-name: Windows
+            platform: windows
+            arch: x86_64
+            extension: dll
+          - os: macos-latest
+            os-name: macOS
+            platform: macos
+            arch: universal
+            extension: so # This will be a fat binary, but the extension is .so for macOS
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          name: gedis-linux-x86_64
-          path: gedis-linux-x86_64.zip
+          submodules: "recursive"
 
-      - name: Cache godot-cpp for Windows
-        id: cache-godotcpp-windows
-        uses: actions/cache@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install SCons
+        run: pip install scons
+        
+      - name: Install MinGW (for Windows cross-compilation)
+        if: matrix.platform == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
+      - name: Restore godot-cpp cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             godot-cpp/bin
             godot-cpp/gen
-          key: godot-cpp-windows-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
+          key: godot-cpp-${{ matrix.platform }}-${{ hashFiles('godot-cpp/SConstruct', 'godot-cpp/gdextension/extension_api.json', 'godot-cpp/binding_generator.py') }}
 
-      - name: Build godot-cpp for Windows
-        if: steps.cache-godotcpp-windows.outputs.cache-hit != 'true'
+      - name: Build project
+        env:
+          CC: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-gcc' || '' }}
+          CXX: ${{ matrix.platform == 'windows' && '/usr/bin/x86_64-w64-mingw32-g++' || '' }}
         run: |
-          cd godot-cpp
-          export CC=/usr/bin/x86_64-w64-mingw32-gcc
-          export CXX=/usr/bin/x86_64-w64-mingw32-g++
-          scons platform=windows arch=x86_64 generate_bindings=yes target=template_release
-          scons platform=windows arch=x86_64 target=template_debug
+          scons platform=${{ matrix.platform }} use_mingw=${{ matrix.platform == 'windows' }} target=template_release arch=${{ matrix.arch }}
 
-      - name: Build project for Windows
+      - name: Package addon
         run: |
-          export CC=/usr/bin/x86_64-w64-mingw32-gcc
-          export CXX=/usr/bin/x86_64-w64-mingw32-g++
-          scons platform=windows use_mingw=yes target=template_release arch=x86_64
-
-      - name: Package Windows addon
-        run: |
-          mkdir -p package-windows/addons/Gedis/bin
-          cp -r addons/Gedis/* package-windows/addons/Gedis/
-          cp addons/Gedis/bin/libgedis.dll package-windows/addons/Gedis/bin/
-          cd package-windows
-          zip -r ../gedis-windows-x86_64.zip .
+          mkdir -p package/addons/Gedis/bin
+          cp -r addons/Gedis/* package/addons/Gedis/
+          cp addons/Gedis/bin/libgedis.${{ matrix.extension }} package/addons/Gedis/bin/
+          cd package
+          zip -r ../gedis-${{ matrix.platform }}-${{ matrix.arch }}.zip .
           cd ..
 
-      - name: Upload Windows artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gedis-windows-x86_64
-          path: gedis-windows-x86_64.zip
+          name: gedis-${{ matrix.platform }}-${{ matrix.arch }}
+          path: gedis-${{ matrix.platform }}-${{ matrix.arch }}.zip
 
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-linux-and-windows]
+    needs: [build-addon]
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download all artifacts
@@ -122,6 +159,8 @@ jobs:
           unzip artifacts/gedis-linux-x86_64/gedis-linux-x86_64.zip -d release_package
           unzip artifacts/gedis-windows-x86_64/gedis-windows-x86_64.zip -d temp_windows
           cp -r temp_windows/addons/Gedis/bin/* release_package/addons/Gedis/bin/
+          unzip artifacts/gedis-macos-universal/gedis-macos-universal.zip -d temp_macos
+          cp -r temp_macos/addons/Gedis/bin/* release_package/addons/Gedis/bin/
           cd release_package
           zip -r ../gedis-release.zip .
 
