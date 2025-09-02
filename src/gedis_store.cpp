@@ -164,6 +164,7 @@ godot::Variant GedisStore::decr(const godot::String& key) {
 godot::TypedArray<godot::String> GedisStore::keys(const godot::String& pattern) {
     godot::TypedArray<godot::String> result;
     std::string pattern_str = pattern.utf8().get_data();
+    int64_t now = time(0);
     
     // Convert glob pattern to regex
     std::string regex_pattern = "";
@@ -198,17 +199,33 @@ godot::TypedArray<godot::String> GedisStore::keys(const godot::String& pattern) 
     
     try {
         std::regex pattern_regex("^" + regex_pattern + "$");
-        for (const auto& [key, val] : store) {
-            if (std::regex_match(key, pattern_regex)) {
-                result.append(godot::String(key.c_str()));
+        for (auto it = store.begin(); it != store.end();) {
+            // Check if key has expired
+            if (it->second->expiration != -1 && it->second->expiration <= now) {
+                delete it->second;
+                it = store.erase(it);
+                continue;
             }
+            
+            if (std::regex_match(it->first, pattern_regex)) {
+                result.append(godot::String(it->first.c_str()));
+            }
+            ++it;
         }
     } catch (const std::regex_error& e) {
         // If regex fails, fall back to exact match
-        for (const auto& [key, val] : store) {
-            if (key == pattern_str) {
-                result.append(godot::String(key.c_str()));
+        for (auto it = store.begin(); it != store.end();) {
+            // Check if key has expired
+            if (it->second->expiration != -1 && it->second->expiration <= now) {
+                delete it->second;
+                it = store.erase(it);
+                continue;
             }
+            
+            if (it->first == pattern_str) {
+                result.append(godot::String(it->first.c_str()));
+            }
+            ++it;
         }
     }
     

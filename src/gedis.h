@@ -2,6 +2,9 @@
 #define GEDIS_H
 
 #include <godot_cpp/core/object.hpp>
+#include <godot_cpp/variant/array.hpp>
+#include <set>
+#include <map>
 #include "gedis_store.h"
 
 namespace godot {
@@ -11,6 +14,22 @@ class Gedis : public Object {
 
 private:
     GedisStore store;
+    static std::set<Gedis*> instances;
+    static std::map<Gedis*, int> instance_ids;
+    static int next_instance_id;
+    static bool debugger_registered;
+    String instance_name;
+    int instance_id;
+    
+    // Debugger communication
+    static bool _register_debugger();
+    static bool _capture_debugger_message(const String &message, const Array &data);
+    static void _send_instances_update();
+    static Gedis* _get_instance_by_id(int id);
+    static bool _debug_all_messages(const String &message, const Array &data);
+    
+public:
+    static Gedis* get_instance_by_id(int id);
 
 protected:
     static void _bind_methods();
@@ -18,6 +37,11 @@ protected:
 public:
     Gedis();
     ~Gedis();
+
+    // Instance management
+    void set_instance_name(const String &name);
+    String get_instance_name() const;
+    static Array get_all_instances();
 
     void set(const String &key, const Variant &value);
     Variant get(const String &key);
