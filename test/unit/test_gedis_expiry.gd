@@ -9,7 +9,7 @@ func after_each():
 	g.free()
 
 func test_expire():
-	g.set("key", "value")
+	g.set_value("key", "value")
 	assert_true(g.expire("key", 1), "Expire should return true for an existing key")
 
 	# Wait for a maximum of 2 seconds for the key to expire.
@@ -22,26 +22,26 @@ func test_expire():
 	assert_false(g.key_exists("key"), "Key should not exist after expiry")
 
 func test_ttl_with_expiry():
-	g.set("key", "value")
+	g.set_value("key", "value")
 	g.expire("key", 2)
 	var ttl = g.ttl("key")
 	assert_true(ttl > 0 and ttl <= 2, "TTL should be between 0 and 2")
 
 func test_ttl_without_expiry():
-	g.set("key", "value")
+	g.set_value("key", "value")
 	assert_eq(g.ttl("key"), -1, "TTL should be -1 for a key with no expiry")
 
 func test_ttl_for_nonexistent_key():
 	assert_eq(g.ttl("nonexistent"), -2, "TTL should be -2 for a nonexistent key")
 
 func test_persist():
-	g.set("key", "value")
+	g.set_value("key", "value")
 	g.expire("key", 5)
 	assert_true(g.persist("key"), "Persist should return true for a key with an expiry")
 	assert_eq(g.ttl("key"), -1, "TTL should be -1 after persist")
 
 func test_persist_on_non_expiring_key():
-	g.set("key", "value")
+	g.set_value("key", "value")
 	assert_false(g.persist("key"), "Persist should return false for a key without an expiry")
 
 func test_persist_on_nonexistent_key():
