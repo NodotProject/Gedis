@@ -33,13 +33,6 @@ const DOUBLE_TEMPLATES = {
 	SCRIPT = 'res://addons/gut/double_templates/script_template.txt',
 }
 
-## This dictionary defaults to all the native classes that we cannot call new
-## on.  It is further populated during a run so that we only have to create
-## a new instance once to get the class name string.
-static var gdscript_native_class_names_by_type = {
-	Tween:"Tween"
-}
-
 
 static var GutScene = load('res://addons/gut/GutScene.tscn')
 static var LazyLoader = load('res://addons/gut/lazy_loader.gd')
@@ -166,9 +159,9 @@ static var avail_fonts = ['AnonymousPro', 'CourierPrime', 'LobsterTwo', 'Default
 
 static var version_numbers = VersionNumbers.new(
 	# gut_versrion (source of truth)
-	'9.5.0',
-	# required_godot_ver4sion
-	'4.4.0'
+	'9.4.0',
+	# required_godot_version
+	'4.2.0'
 )
 
 
@@ -440,14 +433,10 @@ static func is_null_or_empty(text):
 static func get_native_class_name(thing):
 	var to_return = null
 	if(is_native_class(thing)):
-		if(gdscript_native_class_names_by_type.has(thing)):
-			to_return = gdscript_native_class_names_by_type[thing]
-		else:
-			var newone = thing.new()
-			to_return = newone.get_class()
-			if(!newone is RefCounted):
-				newone.free()
-			gdscript_native_class_names_by_type[thing] = to_return
+		var newone = thing.new()
+		to_return = newone.get_class()
+		if(!newone is RefCounted):
+			newone.free()
 	return to_return
 
 
@@ -602,3 +591,4 @@ static func get_display_size():
 # THE SOFTWARE.
 #
 # ##############################################################################
+

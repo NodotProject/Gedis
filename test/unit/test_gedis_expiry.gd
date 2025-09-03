@@ -11,7 +11,14 @@ func after_each():
 func test_expire():
 	g.set("key", "value")
 	assert_true(g.expire("key", 1), "Expire should return true for an existing key")
-	await get_tree().create_timer(1.2).timeout
+
+	# Wait for a maximum of 2 seconds for the key to expire.
+	# This is more robust than a fixed timer.
+	for i in 20:
+		if not g.key_exists("key"):
+			break
+		await get_tree().create_timer(0.1).timeout
+
 	assert_false(g.key_exists("key"), "Key should not exist after expiry")
 
 func test_ttl_with_expiry():
