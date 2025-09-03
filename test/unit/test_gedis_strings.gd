@@ -6,10 +6,13 @@ func before_each():
 	# Fresh instance per test
 	gedis = Gedis.new()
 
+func after_each():
+	gedis.free()
+
 func test_set_get():
-	gedis.set("a", "1")
-	assert_eq(gedis.get("a"), "1", "get should return what was set")
-	assert_eq(gedis.get("missing"), null, "get should return null when missing")
+	gedis.set_value("a", "1")
+	assert_eq(gedis.get_value("a"), "1", "get_value should return what was set")
+	assert_eq(gedis.get_value("missing"), null, "get_value should return null when missing")
 
 func test_incr_decr():
 	assert_eq(gedis.incr("n"), 1, "incr on non-existent key should return 1")
@@ -17,9 +20,9 @@ func test_incr_decr():
 	assert_eq(gedis.decr("n"), 1, "decr should decrement existing value")
 
 func test_del_exists_and_keys():
-	gedis.set("user:1", "ok")
-	gedis.set("user:2", "ok")
-	gedis.set("foo", "123")
+	gedis.set_value("user:1", "ok")
+	gedis.set_value("user:2", "ok")
+	gedis.set_value("foo", "123")
 	assert_eq(gedis.exists(["user:1"]), 1, "user:1 should exist")
 	assert_eq(gedis.exists(["foo"]), 1, "foo should exist")
 	assert_eq(gedis.exists(["nope"]), 0, "nope should not exist")

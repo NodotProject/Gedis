@@ -21,6 +21,8 @@ static var _next_instance_id: int = 0
 var _instance_id: int = -1
 var _instance_name: String = ""
 
+static var _debugger_registered = false
+
 func _init() -> void:
 	# assign id and register
 	_instance_id = _next_instance_id
@@ -30,6 +32,14 @@ func _init() -> void:
 
 func _ready() -> void:
 	set_process(true)
+	if Engine.is_editor_hint():
+		return
+	
+	if not _debugger_registered:
+		if Engine.has_singleton("EngineDebugger"):
+			EngineDebugger.register_message_capture("gedis", Callable(Gedis, "_on_debugger_message"))
+			EngineDebugger.send_message("gedis:ping", [])
+			_debugger_registered = true
 
 func _exit_tree() -> void:
 	# unregister instance
@@ -40,6 +50,65 @@ func _exit_tree() -> void:
 
 func _process(_delta: float) -> void:
 	_purge_expired()
+
+static func _on_debugger_message(message: String, data: Array) -> bool:
+	# EngineDebugger will call this with the suffix (the part after "gedis:")
+	# so message will be e.g. "request_instances" or "request_instance_data".
+	if not Engine.has_singleton("EngineDebugger"):
+		return false
+
+	match message:
+		"request_instances":
+			var instances_data = []
+			for instance_info in Gedis.get_all_instances():
+				instances_data.append({
+					"id": instance_info["id"],
+					"name": instance_info["name"]
+				})
+			EngineDebugger.send_message("gedis:instances_data", instances_data)
+			return true
+
+		"request_instance_data":
+			if data.size() < 2:
+				return false
+			var instance_id = data[0]
+			var command = data[1]
+
+			# Find the target instance in the static registry.
+			var target_instance = null
+			for inst in _instances:
+				if is_instance_valid(inst) and inst._instance_id == instance_id:
+					target_instance = inst
+					break
+
+			if target_instance == null:
+				print("Gedis: target instance not found for id", instance_id)
+				return false
+
+			match command:
+				"snapshot":
+					var pattern = data[2] if data.size() > 2 else "*"
+					var snapshot_data = target_instance.snapshot(pattern)
+					EngineDebugger.send_message("gedis:snapshot_data", [snapshot_data])
+					return true
+				"dump":
+					if data.size() < 3:
+						return false
+					var key = data[2]
+					var key_value_data = target_instance.dump(key)
+					EngineDebugger.send_message("gedis:key_value_data", [key_value_data])
+					return true
+				"set":
+					if data.size() < 4:
+						return false
+					var key = data[2]
+					var value = data[3]
+					target_instance.set_value(key, value)
+					var key_value_data = target_instance.dump(key)
+					EngineDebugger.send_message("gedis:key_value_data", [key_value_data])
+					return true
+
+	return false
 
 func _now() -> float:
 	return Time.get_unix_time_from_system()
@@ -76,11 +145,11 @@ func _touch_type(key: String, type_bucket: Dictionary) -> void:
 # -----------------
 # String/number API
 # -----------------
-func set(key: StringName, value: Variant) -> void:
+func set_value(key: StringName, value: Variant) -> void:
 	_touch_type(str(key), _store)
 	_store[str(key)] = value
 
-func get(key: StringName, default_value: Variant = null) -> Variant:
+func get_value(key: StringName, default_value: Variant = null) -> Variant:
 	if _is_expired(str(key)):
 		return default_value
 	return _store.get(str(key), default_value)
@@ -122,14 +191,12 @@ func key_exists(key: String) -> bool:
 	return bool(exists(key))
 
 func incr(key: String, amount: int = 1) -> int:
-	# Avoid calling the engine's built-in 'get' which can conflict with this script method.
-	# Read directly from _store and respect expiry semantics.
 	var k := str(key)
 	var current: int = 0
 	if _is_expired(k):
 		current = 0
 	else:
-		var raw = _store.get(k, 0)
+		var raw = get_value(k, 0)
 		match typeof(raw):
 			TYPE_NIL:
 				current = 0
@@ -174,12 +241,12 @@ func keys(pattern: String = "*") -> Array:
 
 func mset(dict: Dictionary) -> void:
 	for k in dict.keys():
-		set(str(k), dict[k])
+		set_value(str(k), dict[k])
 
 func mget(keys: Array) -> Array:
 	var out: Array = []
 	for k in keys:
-		out.append(get(str(k), null))
+		out.append(get_value(str(k), null))
 	return out
 
 # Debugger-like helpers: type/dump/snapshot
@@ -218,7 +285,9 @@ func dump(key: String) -> Dictionary:
 func snapshot(pattern: String = "*") -> Dictionary:
 	var out: Dictionary = {}
 	for k in keys(pattern):
-		out[str(k)] = dump(str(k))
+		var key_data = dump(str(k))
+		key_data["ttl"] = ttl(str(k))
+		out[str(k)] = key_data
 	return out
 
 # ----------------
@@ -626,7 +695,7 @@ static func get_all_instances() -> Array:
 		if is_instance_valid(inst):
 			var info: Dictionary = {}
 			info["id"] = inst._instance_id
-			info["name"] = inst._instance_name
+			info["name"] = inst.name if inst.name else inst._instance_name
 			info["object"] = inst
 			result.append(info)
 	return result

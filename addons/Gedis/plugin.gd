@@ -7,51 +7,37 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 	var pending_requests = {} # session_id -> { "command": String, "instance_id": int, "context": any }
 	
 	func _has_capture(capture):
-		# Handle messages with the prefix "gedis:"
-		return capture.begins_with("gedis:") or capture == "gedis"
-		
-	func _capture(message, data, session_id):
-		match message:
-			"gedis:instances_update":
-				_update_instances(data, session_id)
-				return true
-			"gedis:snapshot_data":
-				# Backend sends snapshot wrapped in an Array: [Dictionary]
-				if typeof(data) == TYPE_ARRAY and data.size() > 0:
-					_update_snapshot_data(data[0], session_id)
-				else:
-					_update_snapshot_data({}, session_id)
-				return true
-			"gedis:key_value_data":
-				# Backend sends key/value wrapped in an Array: [Dictionary]
-				if typeof(data) == TYPE_ARRAY and data.size() > 0:
-					_update_key_value_data(data[0], session_id)
-				else:
-					_update_key_value_data({}, session_id)
-				return true
-			"gedis:instance_response":
-				# Expected payloads:
-				#  [ id, payload ] or [ id, command, payload ]
-				if typeof(data) == TYPE_ARRAY and data.size() >= 3:
-					var resp_id = data[0]
-					var resp_command = data[1]
-					var payload = data[2]
-					
-					if resp_command == "snapshot":
-						_update_snapshot_data(payload, session_id)
-					elif resp_command == "dump":
-						_update_key_value_data(payload, session_id)
-					elif resp_command == "keys":
-						full_snapshot_data[session_id] = payload
-						_populate_key_list(session_id)
-					else:
-						# Fallback: try to show as key/value
-						_update_key_value_data(payload, session_id)
-					
-					pending_requests.erase(session_id)
-				return true
-		return false
+		return capture == "gedis"
 	
+	func _capture(message, data, session_id):
+		# message is the full message string received by the editor (e.g. "gedis:instances_data")
+		# data is the Array payload sent from the game. Engines and editors may wrap values
+		# differently (sometimes the payload is passed as a single element array), so normalize.
+		var parts = message.split(":")
+		var kind = parts[1] if parts.size() > 1 else ""
+		
+		match kind:
+			"ping":
+				_request_instances_update(session_id)
+			"instances_data":
+				# instances may be either sent as the array itself or wrapped as [instances]
+				var instances = data
+				if data.size() == 1 and typeof(data[0]) == TYPE_ARRAY:
+					instances = data[0]
+				_update_instances(instances, session_id)
+			"snapshot_data":
+				# snapshot is expected to be a Dictionary; it may be wrapped in an Array
+				var snapshot = data[0] if data.size() > 0 else {}
+				_update_snapshot_data(snapshot, session_id)
+			"key_value_data":
+				# key/value payload may be wrapped similarly
+				var kv = data[0] if data.size() > 0 else {}
+				_update_key_value_data(kv, session_id)
+			_:
+				# unrecognized message
+				return false
+		return true
+
 	func _setup_session(session_id):
 		# Create the dashboard UI for this session
 		var dashboard = _create_dashboard_ui(session_id)
@@ -92,7 +78,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		var fetch_keys_button = Button.new()
 		fetch_keys_button.text = "Fetch Keys"
 		top_panel.add_child(fetch_keys_button)
-		fetch_keys_button.pressed.connect(func(): _on_fetch_keys_pressed(session_id))
+		fetch_keys_button.pressed.connect(func(): _fetch_keys_for_selected_instance(session_id))
 		
 		# Search box
 		var search_panel = HBoxContainer.new()
@@ -136,27 +122,27 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		key_value_view.editable = false
 		h_split.add_child(key_value_view)
 		
-		# TODO: Fix edit and save functionality
+		# TODO: Add edit/save functionality
 		# Bottom panel with edit/save buttons
-		#var bottom_panel = HBoxContainer.new()
-		#dashboard.add_child(bottom_panel)
-		#
-		#var edit_button = Button.new()
-		#edit_button.name = "edit_button"
-		#edit_button.text = "Edit"
-		#edit_button.disabled = true
-		#bottom_panel.add_child(edit_button)
-		#edit_button.pressed.connect(func(): _on_edit_pressed(session_id))
-		#
-		#var save_button = Button.new()
-		#save_button.name = "save_button"
-		#save_button.text = "Save"
-		#save_button.disabled = true
-		#bottom_panel.add_child(save_button)
-		#save_button.pressed.connect(func(): _on_save_pressed(session_id))
+		# var bottom_panel = HBoxContainer.new()
+		# dashboard.add_child(bottom_panel)
+		
+		# var edit_button = Button.new()
+		# edit_button.name = "edit_button"
+		# edit_button.text = "Edit"
+		# edit_button.disabled = true
+		# bottom_panel.add_child(edit_button)
+		# edit_button.pressed.connect(func(): _on_edit_pressed(session_id))
+		
+		# var save_button = Button.new()
+		# save_button.name = "save_button"
+		# save_button.text = "Save"
+		# save_button.disabled = true
+		# bottom_panel.add_child(save_button)
+		# save_button.pressed.connect(func(): _on_save_pressed(session_id))
 		
 		return dashboard
-	
+
 	func _on_session_started(session_id):
 		_request_instances_update(session_id)
 	
@@ -198,39 +184,30 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 			
 			if instance_selector.get_item_count() > 0:
 				instance_selector.select(0)
-				# Manually select an instance to fetch keys
+				# The select() method does not trigger the item_selected signal, so we must call the handler manually.
+				_fetch_keys_for_selected_instance(session_id)
 		else:
 			status_label.text = "No Gedis instances found in running game"
 			status_label.add_theme_color_override("font_color", Color.ORANGE)
 			_clear_views(session_id)
 	
-	func _on_instance_selected(index, session_id):
-			if not session_id in dashboard_tabs:
-				return
-			
-			var dashboard = dashboard_tabs[session_id]
-			var instance_selector = dashboard.find_child("instance_selector", true, false)
-			var search_box = dashboard.find_child("search_box", true, false)
-			
-			if instance_selector and index >= 0 and index < instance_selector.get_item_count():
-				var instance_id = instance_selector.get_item_id(index)
-				var session = get_session(session_id)
-				# Request snapshot via debugger RPC instead of trying to resolve native object
-				pending_requests[session_id] = {"command": "snapshot", "instance_id": instance_id}
-				if session and session.is_active():
-					session.send_message("gedis:request_instance_data", [instance_id, "snapshot", "*"])
-	
-	func _on_fetch_keys_pressed(session_id):
-			# Manual fetch triggered by the "Fetch Keys" button.
-			var dashboard = dashboard_tabs[session_id]
-			var instance_selector = dashboard.find_child("instance_selector", true, false)
-			var selected_index = instance_selector.get_selected()
-			
-			var instance_id = instance_selector.get_item_id(selected_index)
-			var session = get_session(session_id)
-			pending_requests[session_id] = {"command": "snapshot", "instance_id": instance_id}
-			if session and session.is_active():
-				session.send_message("gedis:request_instance_data", [instance_id, "snapshot", "*"])
+	func _on_instance_selected(_index, session_id):
+		_fetch_keys_for_selected_instance(session_id)
+
+	func _fetch_keys_for_selected_instance(session_id):
+		if not session_id in dashboard_tabs:
+			return
+
+		var dashboard = dashboard_tabs[session_id]
+		var instance_selector = dashboard.find_child("instance_selector", true, false)
+		if not instance_selector or instance_selector.get_selected() < 0:
+			return
+
+		var instance_id = instance_selector.get_item_id(instance_selector.get_selected())
+		var session = get_session(session_id)
+		pending_requests[session_id] = {"command": "snapshot", "instance_id": instance_id}
+		if session and session.is_active():
+			session.send_message("gedis:request_instance_data", [instance_id, "snapshot", "*"])
 
 	func _on_filter_pressed(session_id):
 		if not session_id in dashboard_tabs:
@@ -265,7 +242,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		var regex = RegEx.new()
 		if not filter_text.is_empty():
 			var pattern = filter_text.replace("*", ".*").replace("?", ".")
-			regex.compile("^" + pattern + "$")
+			regex.compile(pattern)
 
 		for redis_key in data_to_display.keys():
 			if filter_text.is_empty() or regex.search(redis_key):
@@ -404,10 +381,12 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		if save_button:
 			save_button.disabled = true
 
-var debugger_plugin = GedisDebuggerPlugin.new()
+var debugger_plugin
 
 func _enter_tree():
+	debugger_plugin = GedisDebuggerPlugin.new()
 	add_debugger_plugin(debugger_plugin)
 
 func _exit_tree():
 	remove_debugger_plugin(debugger_plugin)
+	debugger_plugin = null
