@@ -1,7 +1,7 @@
 # Gedis
 
 <p align="center">
-    <img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/7724b2b2-2d63-4786-9078-8123aca0bb2d" />
+    <img width="512" height="512" alt="image" src="https://github.com/NodotProject/gedis/blob/main/addons/Gedis/icon.png?raw=true" />
 </p>
 
 <p align="center">
