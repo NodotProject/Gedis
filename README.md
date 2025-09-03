@@ -160,6 +160,12 @@ func _on_button_pressed():
     gedis.publish("player:logout", "Bob logged out")
    ```
 
+## Debugger
+
+Gedis comes with a debugger interface!
+
+![Gedis Debugger](debugger.png)
+
 ## API Reference
 
 | Method                           | Description                                                |
