@@ -19,4 +19,4 @@ jobs:
 
     - name: Run unit tests
       run: |
-        ./godot --headless --verbose -s res://addons/gut/gut_cmdln.gd -gdir=res://test -gexit -ginclude_subdirs
+        ./godot --headless --import --verbose -s res://addons/gut/gut_cmdln.gd -gdir=res://test -gexit -ginclude_subdirs
