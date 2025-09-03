@@ -12,9 +12,9 @@ jobs:
 
     - name: Download Godot 4 Headless
       run: |
-        wget https://github.com/godotengine/godot/releases/download/4.1.1-stable/Godot_v4.1.1-stable_linux.x86_64.zip
-        unzip Godot_v4.1.1-stable_linux.x86_64.zip
-        mv Godot_v4.1.1-stable_linux.x86_64 godot
+        wget http://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+        unzip Godot_v4.4.1-stable_linux.x86_64.zip
+        mv Godot_v4.4.1-stable_linux.x86_64 godot
         chmod +x godot
 
     - name: Run unit tests
