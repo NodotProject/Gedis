@@ -18,7 +18,4 @@ jobs:
         chmod +x godot
 
     - name: Run unit tests
-      run: |
-        echo "[gdscript]
-        warnings/inferred_declaration=0" > project.godot
-        ./godot --headless --verbose -s res://addons/gut/gut_cmdln.gd -gdir=res://test -gexit -ginclude_subdirs
+      run: godot --headless --verbose -s res://addons/gut/gut_cmdln.gd -gdir=res://test -gexit -ginclude_subdirs
