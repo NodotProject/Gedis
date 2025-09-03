@@ -5,6 +5,9 @@ var g
 func before_each():
 	self.g = Gedis.new()
 
+func after_each():
+	g.free()
+
 func test_lpush_rpush_and_len():
 	assert_eq(g.rpush("l", "x"), 1)
 	assert_eq(g.lpush("l", "y"), 2)

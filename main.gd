@@ -21,9 +21,9 @@ func _ready():
 	
 func setup_sample_data():
 	# Add some sample data to demonstrate the plugin
-	my_gedis.set("player:name", "Alice")
-	my_gedis.set("player:level", "10")
-	my_gedis.set("player:score", "1500")
+	my_gedis.set_value("player:name", "Alice")
+	my_gedis.set_value("player:level", "10")
+	my_gedis.set_value("player:score", "1500")
 	
 	# Hash example
 	my_gedis.hset("player:stats", "health", "100")
@@ -40,8 +40,8 @@ func setup_sample_data():
 	my_gedis.sadd("player:achievements", "level_10")
 	
 	# Shared game state
-	shared_gedis.set("game:state", "playing")
-	shared_gedis.set("game:players_online", "42")
+	shared_gedis.set_value("game:state", "playing")
+	shared_gedis.set_value("game:players_online", "42")
 	shared_gedis.hset("game:config", "max_players", "100")
 	shared_gedis.hset("game:config", "difficulty", "normal")
 	

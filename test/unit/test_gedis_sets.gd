@@ -5,6 +5,9 @@ var g
 func before_each():
 	self.g = Gedis.new()
 
+func after_each():
+	g.free()
+
 func test_sadd_srem_smembers_sismember():
 	assert_eq(g.sadd("s", "a"), 1)
 	assert_eq(g.sadd("s", "a"), 0, "second add is no-op")

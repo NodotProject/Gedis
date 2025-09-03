@@ -14,13 +14,13 @@
 
 ## Overview
 
-Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set("score", 10)`.
+Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set_value("score", 10)`.
 
 **Redis-like? What the heck is Redis?** - See [Redis in 100 Seconds](https://www.youtube.com/watch?v=G1rOthIU-uo).
 
 ## Features
 
-- **Strings**: Basic key-value storage (`set`, `get`, `incr`, `decr`).
+- **Strings**: Basic key-value storage (`set_value`, `get_value`, `incr`, `decr`).
 - **Hashes**: Store object-like structures with fields and values (`hset`, `hget`, `hgetall`).
 - **Lists**: Ordered collections of strings, useful for queues and stacks (`lpush`, `rpush`, `lpop`).
 - **Sets**: Unordered collections of unique strings (`sadd`, `srem`, `smembers`).
@@ -46,11 +46,11 @@ var gedis = Gedis.new()
 
 ```gdscript
 # Set and get a value
-gedis.set("player_name", "Alice")
-var name = gedis.get("player_name") # "Alice"
+gedis.set_value("player_name", "Alice")
+var name = gedis.get_value("player_name") # "Alice"
 
 # Increment/decrement a numeric value
-gedis.set("score", 100)
+gedis.set_value("score", 100)
 gedis.incr("score") # 101
 gedis.decr("score") # 99
 ```
@@ -101,7 +101,7 @@ var all_items = gedis.smembers("inventory") # ["sword", "shield"] or ["shield", 
 
 ```gdscript
 # Create a temporary key
-gedis.set("session_token", "xyz123")
+gedis.set_value("session_token", "xyz123")
 gedis.expire("session_token", 60) # Expires in 60 seconds
 
 # Check the remaining time
@@ -165,8 +165,8 @@ func _on_button_pressed():
 | Method                           | Description                                                |
 | -------------------------------- | ---------------------------------------------------------- |
 | **Strings**                      |                                                            |
-| `set(key, value)`                | Sets the string value of a key.                            |
-| `get(key)`                       | Gets the string value of a key.                            |
+| `set_value(key, value)`          | Sets the string value of a key.                            |
+| `get_value(key)`                 | Gets the string value of a key.                            |
 | `del(keys)`                      | Deletes one or more keys (accepts Array).                  |
 | `exists(keys)`                   | Checks if keys exist (accepts Array).                      |
 | `key_exists(key)`                | Checks if a single key exists.                             |

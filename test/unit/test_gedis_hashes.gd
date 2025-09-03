@@ -5,6 +5,9 @@ var g
 func before_each():
 	self.g = Gedis.new()
 
+func after_each():
+	g.free()
+
 func test_hset_hget_and_default():
 	g.hset("h", "a", 10)
 	g.hset("h", "b", 20)
