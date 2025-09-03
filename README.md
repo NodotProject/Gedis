@@ -16,6 +16,8 @@
 
 Gedis is a high-performance, in-memory key-value datastore for Godot projects, inspired by Redis. It provides a rich set of data structures and commands. Simply create an instance with `var gedis = Gedis.new()` and start using it: `gedis.set_value("score", 10)`.
 
+![https://www.youtube.com/watch?v=tjiwAmH2-mE](video.png)
+
 **Redis-like? What the heck is Redis?** - See [Redis in 100 Seconds](https://www.youtube.com/watch?v=G1rOthIU-uo).
 
 ## Features
