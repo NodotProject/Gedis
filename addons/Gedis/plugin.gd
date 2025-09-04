@@ -1,6 +1,8 @@
 @tool
 extends EditorPlugin
 
+const GedisDebuggerPanel = preload("res://addons/Gedis/debugger/gedis_debugger_panel.tscn")
+
 class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 	var dashboard_tabs = {} # session_id -> dashboard_control
 	var full_snapshot_data = {} # session_id -> full_snapshot_data
@@ -39,8 +41,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		return true
 
 	func _setup_session(session_id):
-		# Create the dashboard UI for this session
-		var dashboard = _create_dashboard_ui(session_id)
+		var dashboard = GedisDebuggerPanel.instantiate()
 		dashboard.name = "Gedis"
 		
 		var session = get_session(session_id)
@@ -49,101 +50,30 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		session.add_session_tab(dashboard)
 		
 		dashboard_tabs[session_id] = dashboard
-	
-	func _create_dashboard_ui(session_id):
-		var dashboard = VBoxContainer.new()
-		
-		# Status label
-		var status_label = Label.new()
-		status_label.name = "status_label"
-		status_label.text = "Waiting for game connection..."
-		status_label.add_theme_color_override("font_color", Color.ORANGE)
-		dashboard.add_child(status_label)
-		
-		# Top panel with instance selector and refresh
-		var top_panel = HBoxContainer.new()
-		dashboard.add_child(top_panel)
-		
-		var instance_selector = OptionButton.new()
-		instance_selector.name = "instance_selector"
-		instance_selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		top_panel.add_child(instance_selector)
-		instance_selector.item_selected.connect(func(index): _on_instance_selected(index, session_id))
-		
-		var refresh_button = Button.new()
-		refresh_button.text = "Refresh Instances"
-		top_panel.add_child(refresh_button)
-		refresh_button.pressed.connect(func(): _request_instances_update(session_id))
-		
-		var fetch_keys_button = Button.new()
-		fetch_keys_button.text = "Fetch Keys"
-		top_panel.add_child(fetch_keys_button)
-		fetch_keys_button.pressed.connect(func(): _fetch_keys_for_selected_instance(session_id))
-		
-		# Search box
-		var search_panel = HBoxContainer.new()
-		dashboard.add_child(search_panel)
-		
-		var search_box = LineEdit.new()
-		search_box.name = "search_box"
-		search_box.placeholder_text = "Filter keys..."
-		search_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		search_panel.add_child(search_box)
-		
-		var filter_button = Button.new()
-		filter_button.name = "filter_button"
-		filter_button.text = "Filter"
-		search_panel.add_child(filter_button)
-		filter_button.pressed.connect(func(): _on_filter_pressed(session_id))
-		
-		# Split container for key list and value view
-		var h_split = HSplitContainer.new()
-		h_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		dashboard.add_child(h_split)
-		
-		# Key list tree
-		var key_list = Tree.new()
-		key_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		key_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		key_list.name = "key_list"
-		key_list.columns = 3
-		key_list.column_titles_visible = true
-		key_list.set_column_title(0, "Key")
-		key_list.set_column_title(1, "Type")
-		key_list.set_column_title(2, "TTL")
-		h_split.add_child(key_list)
-		key_list.item_selected.connect(func(): _on_key_selected(session_id))
-		
-		# Value view
-		var key_value_view = TextEdit.new()
-		key_value_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		key_value_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		key_value_view.name = "key_value_view"
-		key_value_view.editable = false
-		h_split.add_child(key_value_view)
-		
-		# TODO: Add edit/save functionality
-		# Bottom panel with edit/save buttons
-		# var bottom_panel = HBoxContainer.new()
-		# dashboard.add_child(bottom_panel)
-		
-		# var edit_button = Button.new()
-		# edit_button.name = "edit_button"
-		# edit_button.text = "Edit"
-		# edit_button.disabled = true
-		# bottom_panel.add_child(edit_button)
-		# edit_button.pressed.connect(func(): _on_edit_pressed(session_id))
-		
-		# var save_button = Button.new()
-		# save_button.name = "save_button"
-		# save_button.text = "Save"
-		# save_button.disabled = true
-		# bottom_panel.add_child(save_button)
-		# save_button.pressed.connect(func(): _on_save_pressed(session_id))
-		
-		return dashboard
 
 	func _on_session_started(session_id):
+		var dashboard = dashboard_tabs[session_id]
+		
+		var instance_selector = dashboard.find_child("instance_selector", true, false)
+		if instance_selector:
+			instance_selector.item_selected.connect(func(index): _on_instance_selected(index, session_id))
+		
+		var refresh_button = dashboard.find_child("RefreshButton", true, false)
+		if refresh_button:
+			refresh_button.pressed.connect(func(): _request_instances_update(session_id))
+		
+		var fetch_keys_button = dashboard.find_child("FetchKeysButton", true, false)
+		if fetch_keys_button:
+			fetch_keys_button.pressed.connect(func(): _fetch_keys_for_selected_instance(session_id))
+		
+		var filter_button = dashboard.find_child("filter_button", true, false)
+		if filter_button:
+			filter_button.pressed.connect(func(): _on_filter_pressed(session_id))
+		
+		var key_list = dashboard.find_child("key_list", true, false)
+		if key_list:
+			key_list.item_selected.connect(func(): _on_key_selected(session_id))
+		
 		_request_instances_update(session_id)
 	
 	func _on_session_stopped(session_id):

@@ -1,0 +1,60 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6w7w7w7w7w7"]
+
+[sub_resource type="Theme" id="Theme_1"]
+Label/colors/font_color = Color(1, 0.647059, 0, 1)
+
+[node name="Dashboard" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1152.0
+offset_bottom = -648.0
+
+[node name="status_label" type="Label" parent="."]
+layout_mode = 2
+theme = SubResource("Theme_1")
+text = "Waiting for game connection..."
+
+[node name="TopPanel" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="instance_selector" type="OptionButton" parent="TopPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RefreshButton" type="Button" parent="TopPanel"]
+layout_mode = 2
+text = "Refresh Instances"
+
+[node name="FetchKeysButton" type="Button" parent="TopPanel"]
+layout_mode = 2
+text = "Fetch Keys"
+
+[node name="SearchPanel" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="search_box" type="LineEdit" parent="SearchPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Filter keys..."
+
+[node name="filter_button" type="Button" parent="SearchPanel"]
+layout_mode = 2
+text = "Filter"
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="key_list" type="Tree" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 3
+column_titles_visible = true
+
+[node name="key_value_view" type="TextEdit" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+editable = false
