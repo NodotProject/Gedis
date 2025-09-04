@@ -280,17 +280,14 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 			var dashboard = dashboard_tabs[session_id]
 			var key_list = dashboard.find_child("key_list", true, false)
 			var key_value_view = dashboard.find_child("key_value_view", true, false)
-			var edit_button = dashboard.find_child("edit_button", true, false)
-			var save_button = dashboard.find_child("save_button", true, false)
 			var instance_selector = dashboard.find_child("instance_selector", true, false)
 			
-			if not key_list or not key_value_view or not edit_button or not save_button or not instance_selector:
+			if not key_list or not key_value_view or not instance_selector:
 				return
 			
 			var selected_item = key_list.get_selected()
 			if not selected_item:
 				key_value_view.text = ""
-				edit_button.disabled = true
 				return
 			
 			var selected_key = selected_item.get_text(0)
@@ -301,8 +298,6 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 				if session and session.is_active():
 					session.send_message("gedis:request_instance_data", [instance_id, "dump", selected_key])
 			
-			edit_button.disabled = false
-			save_button.disabled = true
 			key_value_view.editable = false
 	
 	
