@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://e8pq1st2w4gh"
-path="res://.godot/imported/icon.png-c68ef9c02c787235be987bb01b49c46f.ctex"
+uid="uid://5oyhs3l8apcm"
+path="res://.godot/imported/video.png-f9e5c0b849b6ecca3d09bbec6b2f4357.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/Gedis/icon.png"
-dest_files=["res://.godot/imported/icon.png-c68ef9c02c787235be987bb01b49c46f.ctex"]
+source_file="res://video.png"
+dest_files=["res://.godot/imported/video.png-f9e5c0b849b6ecca3d09bbec6b2f4357.ctex"]
 
 [params]
 

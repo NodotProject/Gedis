@@ -29,17 +29,10 @@ func _init() -> void:
 	_next_instance_id += 1
 	_instance_name = "Gedis_%d" % _instance_id
 	_instances.append(self)
+	_ensure_debugger_is_registered()
 
 func _ready() -> void:
 	set_process(true)
-	if Engine.is_editor_hint():
-		return
-	
-	if not _debugger_registered:
-		if Engine.has_singleton("EngineDebugger"):
-			EngineDebugger.register_message_capture("gedis", Callable(Gedis, "_on_debugger_message"))
-			EngineDebugger.send_message("gedis:ping", [])
-			_debugger_registered = true
 
 func _exit_tree() -> void:
 	# unregister instance
@@ -50,6 +43,18 @@ func _exit_tree() -> void:
 
 func _process(_delta: float) -> void:
 	_purge_expired()
+
+static func _ensure_debugger_is_registered():
+	if Engine.is_editor_hint():
+		return
+	
+	if not _debugger_registered:
+		if Engine.has_singleton("EngineDebugger"):
+			var debugger = Engine.get_singleton("EngineDebugger")
+			debugger.register_message_capture("gedis", Callable(Gedis, "_on_debugger_message"))
+			if debugger.is_active():
+				debugger.send_message("gedis:ping", [])
+			_debugger_registered = true
 
 static func _on_debugger_message(message: String, data: Array) -> bool:
 	# EngineDebugger will call this with the suffix (the part after "gedis:")
@@ -65,7 +70,9 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 					"id": instance_info["id"],
 					"name": instance_info["name"]
 				})
-			EngineDebugger.send_message("gedis:instances_data", instances_data)
+			var debugger = Engine.get_singleton("EngineDebugger")
+			if debugger and debugger.is_active():
+				debugger.send_message("gedis:instances_data", instances_data)
 			return true
 
 		"request_instance_data":
@@ -84,19 +91,23 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 			if target_instance == null:
 				print("Gedis: target instance not found for id", instance_id)
 				return false
+			
+			var debugger = Engine.get_singleton("EngineDebugger")
+			if not debugger or not debugger.is_active():
+				return false
 
 			match command:
 				"snapshot":
 					var pattern = data[2] if data.size() > 2 else "*"
 					var snapshot_data = target_instance.snapshot(pattern)
-					EngineDebugger.send_message("gedis:snapshot_data", [snapshot_data])
+					debugger.send_message("gedis:snapshot_data", [snapshot_data])
 					return true
 				"dump":
 					if data.size() < 3:
 						return false
 					var key = data[2]
 					var key_value_data = target_instance.dump(key)
-					EngineDebugger.send_message("gedis:key_value_data", [key_value_data])
+					debugger.send_message("gedis:key_value_data", [key_value_data])
 					return true
 				"set":
 					if data.size() < 4:
@@ -105,7 +116,7 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 					var value = data[3]
 					target_instance.set_value(key, value)
 					var key_value_data = target_instance.dump(key)
-					EngineDebugger.send_message("gedis:key_value_data", [key_value_data])
+					debugger.send_message("gedis:key_value_data", [key_value_data])
 					return true
 
 	return false
