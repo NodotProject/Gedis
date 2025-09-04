@@ -191,11 +191,12 @@ Gedis comes with a debugger interface!
 | `hvals(key)`                     | Gets all the values in a hash.                             |
 | `hlen(key)`                      | Gets the number of fields in a hash.                       |
 | **Lists**                        |                                                            |
-| `lpush(key, values)`             | Prepends values to a list (accepts single value or Array). |
-| `rpush(key, values)`             | Appends values to a list (accepts single value or Array).  |
+| `lpush(key, values)`             | Prepends values to a list. If `values` is an Array, it's concatenated. |
+| `rpush(key, values)`             | Appends values to a list. If `values` is an Array, it's concatenated. |
 | `lpop(key)`                      | Removes and gets the first element in a list.              |
 | `rpop(key)`                      | Removes and gets the last element in a list.               |
 | `llen(key)`                      | Gets the length of a list.                                 |
+| `lget(key)`                      | Gets all elements from a list.                             |
 | `lrange(key, start, stop)`       | Gets a range of elements from a list.                      |
 | `lindex(key, index)`             | Gets an element from a list by index.                      |
 | `lset(key, index, value)`        | Sets the value of a list element by index.                 |

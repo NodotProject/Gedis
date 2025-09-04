@@ -402,14 +402,20 @@ func hlen(key: String) -> int:
 func lpush(key: String, value) -> int:
 	_touch_type(key, _lists)
 	var a: Array = _lists.get(key, [])
-	a.insert(0, value)
+	if typeof(value) == TYPE_ARRAY:
+		a = value + a
+	else:
+		a.insert(0, value)
 	_lists[key] = a
 	return a.size()
 
 func rpush(key: String, value) -> int:
 	_touch_type(key, _lists)
 	var a: Array = _lists.get(key, [])
-	a.append(value)
+	if typeof(value) == TYPE_ARRAY:
+		a += value
+	else:
+		a.append(value)
 	_lists[key] = a
 	return a.size()
 
@@ -442,6 +448,11 @@ func llen(key: String) -> int:
 		return 0
 	var a: Array = _lists.get(key, [])
 	return a.size()
+
+func lget(key: String) -> Array:
+	if _is_expired(key):
+		return []
+	return _lists.get(key, [])
 
 func lrange(key: String, start: int, stop: int) -> Array:
 	if _is_expired(key):
