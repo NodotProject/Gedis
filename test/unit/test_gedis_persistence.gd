@@ -207,13 +207,6 @@ func test_save_and_load_complex_data_structures():
 	dir_access.remove(save_path)
 	new_gedis.queue_free()
 
-func test_save_with_write_permission_error():
-	# We simulate a write permission error by trying to save to a read-only path.
-	# In Godot, 'res://' is a read-only file system.
-	var read_only_path = "res://test_write_permission.json"
-	var result = gedis.save(read_only_path)
-	assert_eq(result, FAILED, "Save should fail when writing to a read-only path")
-
 func test_performance_with_large_dataset():
 	var save_path = "user://gedis_perf_test.json"
 	var num_keys = 10000

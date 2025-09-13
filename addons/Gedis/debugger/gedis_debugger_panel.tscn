@@ -1,9 +1,12 @@
-[gd_scene load_steps=2 format=3 uid="uid://c6w7w7w7w7w7"]
+[gd_scene load_steps=3 format=3 uid="uid://c6w7w7w7w7w7"]
+
+[ext_resource type="Script" path="res://addons/Gedis/debugger/gedis_debugger_panel.gd" id="1_z8w8w"]
 
 [sub_resource type="Theme" id="Theme_1"]
 Label/colors/font_color = Color(1, 0.647059, 0, 1)
 
 [node name="Dashboard" type="VBoxContainer"]
+script = ExtResource("1_z8w8w")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -42,19 +45,35 @@ placeholder_text = "Filter keys..."
 layout_mode = 2
 text = "Filter"
 
-[node name="HSplitContainer" type="HSplitContainer" parent="."]
+[node name="TabContainer" type="TabContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="key_list" type="Tree" parent="HSplitContainer"]
+[node name="Keys" type="VBoxContainer" parent="TabContainer"]
+layout_mode = 2
+
+[node name="HSplitContainer" type="HSplitContainer" parent="TabContainer/Keys"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="key_list" type="Tree" parent="TabContainer/Keys/HSplitContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 3
 column_titles_visible = true
 
-[node name="key_value_view" type="TextEdit" parent="HSplitContainer"]
+[node name="key_value_view" type="TextEdit" parent="TabContainer/Keys/HSplitContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 editable = false
+
+[node name="PubSub" type="VBoxContainer" parent="TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="PubSubTree" type="Tree" parent="TabContainer/PubSub"]
+layout_mode = 2
+size_flags_vertical = 3
+hide_root = true
