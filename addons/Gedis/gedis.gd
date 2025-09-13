@@ -11,6 +11,8 @@ var _sorted_sets: GedisSortedSets
 var _pubsub: GedisPubSub
 var _debugger_component: GedisDebugger
 var _utils: GedisUtils
+var _persistence_backends: Dictionary = {}
+var _default_persistence_backend: String = ""
 
 # Instance registry
 static var _instances: Array = []
@@ -39,6 +41,7 @@ func _init() -> void:
 	_debugger_component = GedisDebugger.new(self)
 	
 	GedisDebugger._ensure_debugger_is_registered()
+
 
 func _ready() -> void:
 	set_process(true)
@@ -253,6 +256,54 @@ func persist(key: String) -> bool:
 ## Deletes all keys from the database.
 func flushall() -> void:
 	_core.flushall()
+
+
+# Persistence
+## Registers a new persistence backend.
+func register_persistence_backend(name: String, backend: GedisPersistenceBackend) -> void:
+	_persistence_backends[name] = backend
+
+
+## Sets the default persistence backend.
+func set_default_persistence_backend(name: String) -> bool:
+	if _persistence_backends.has(name):
+		_default_persistence_backend = name
+		return true
+	return false
+
+
+## Saves the current state to a file using the default persistence backend.
+func save(path: String, options: Dictionary = {}) -> int:
+	if _default_persistence_backend.is_empty():
+		push_error("No default persistence backend configured.")
+		return FAILED
+
+	var backend: GedisPersistenceBackend = _persistence_backends[_default_persistence_backend]
+	var dump_options = options.duplicate()
+	if dump_options.has("path"):
+		dump_options.erase("path")
+	
+	var data = _core.dump(dump_options)
+	
+	var save_options = {"path": path}
+	return backend.save(data, save_options)
+
+
+## Loads the state from a file using the default persistence backend.
+func load(path: String, options: Dictionary = {}) -> int:
+	if _default_persistence_backend.is_empty():
+		push_error("No default persistence backend configured.")
+		return FAILED
+
+	var backend: GedisPersistenceBackend = _persistence_backends[_default_persistence_backend]
+	var load_options = {"path": path}
+	var data = backend.load(load_options)
+
+	if data.is_empty():
+		return FAILED
+
+	_core.restore(data)
+	return OK
 
 # Debugger
 ## Returns the type of the value stored at a key.
