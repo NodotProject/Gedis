@@ -7,7 +7,7 @@ var _strings: GedisStrings
 var _hashes: GedisHashes
 var _lists: GedisLists
 var _sets: GedisSets
-var _sorted_sets: GedisSortedSets = preload("res://addons/Gedis/core/gedis_sorted_sets.gd").new()
+var _sorted_sets: GedisSortedSets
 var _pubsub: GedisPubSub
 var _debugger_component: GedisDebugger
 var _utils: GedisUtils
@@ -34,6 +34,7 @@ func _init() -> void:
 	_hashes = GedisHashes.new(self)
 	_lists = GedisLists.new(self)
 	_sets = GedisSets.new(self)
+	_sorted_sets = GedisSortedSets.new(self)
 	_pubsub = GedisPubSub.new(self)
 	_debugger_component = GedisDebugger.new(self)
 	
@@ -165,16 +166,16 @@ func smove(source: String, destination: String, member) -> bool:
 
 # Sorted Sets
 func zadd(key: String, member: String, score: int):
-	return _sorted_sets.add(member, score)
+	return _sorted_sets.add(key, member, score)
 
 func zrem(key: String, member: String):
-	return _sorted_sets.remove(member)
+	return _sorted_sets.remove(key, member)
 
 func zrangebyscore(key: String, min: int, max: int):
-	return _sorted_sets.range_by_score(min, max)
+	return _sorted_sets.range_by_score(key, min, max)
 
 func zpopready(key: String, now: int):
-	return _sorted_sets.pop_ready(now)
+	return _sorted_sets.pop_ready(key, now)
 
 # Pub/Sub
 func publish(channel: String, message) -> void:

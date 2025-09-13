@@ -79,3 +79,23 @@ func test_empty_zset_operations():
 	assert_true(gedis.zpopready("myzset", 100).is_empty(), "Pop on empty set should be empty")
 	gedis.zrem("myzset", "non_existent") # Should not crash
 	assert_true(gedis.zrangebyscore("myzset", 0, 100).is_empty(), "Removing from empty set should result in an empty set")
+
+func test_multiple_sorted_sets_are_isolated():
+	gedis.zadd("zset1", "a", 1)
+	gedis.zadd("zset1", "b", 2)
+	
+	gedis.zadd("zset2", "x", 10)
+	gedis.zadd("zset2", "y", 20)
+	
+	var zset1_members = gedis.zrangebyscore("zset1", 0, 100)
+	assert_eq(zset1_members, ["a", "b"], "zset1 should have its own members")
+	
+	var zset2_members = gedis.zrangebyscore("zset2", 0, 100)
+	assert_eq(zset2_members, ["x", "y"], "zset2 should have its own members")
+	
+	gedis.zrem("zset1", "a")
+	zset1_members = gedis.zrangebyscore("zset1", 0, 100)
+	assert_eq(zset1_members, ["b"], "Removing from zset1 should not affect zset2")
+	
+	zset2_members = gedis.zrangebyscore("zset2", 0, 100)
+	assert_eq(zset2_members, ["x", "y"], "zset2 should remain unchanged")
