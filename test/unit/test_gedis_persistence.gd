@@ -172,3 +172,76 @@ func test_save_and_load_with_include_filter():
 	var dir_access = DirAccess.open("user://")
 	dir_access.remove(save_path)
 	new_gedis.queue_free()
+
+func test_save_and_load_complex_data_structures():
+	var save_path = "user://gedis_test_complex.json"
+	var complex_data = {
+		"nested_dict": {
+			"a": 1,
+			"b": [1, 2, 3]
+		},
+		"nested_array": [
+			{"id": 1, "value": "one"},
+			{"id": 2, "value": "two"}
+		]
+	}
+	gedis.set_value("complex_key", complex_data)
+	
+	var result = gedis.save(save_path)
+	assert_eq(result, OK, "Save with complex data should succeed")
+	
+	var new_gedis = Gedis.new()
+	add_child(new_gedis)
+	var backend = GedisJSONSnapshotBackend.new()
+	new_gedis.register_persistence_backend("json", backend)
+	new_gedis.set_default_persistence_backend("json")
+	
+	result = new_gedis.load(save_path)
+	assert_eq(result, OK, "Load with complex data should succeed")
+	
+	var loaded_data = new_gedis.get_value("complex_key")
+	assert_eq(loaded_data["nested_dict"]["a"], 1, "Nested dictionary value should be correct")
+	assert_eq(loaded_data["nested_array"][1]["value"], "two", "Nested array value should be correct")
+	
+	var dir_access = DirAccess.open("user://")
+	dir_access.remove(save_path)
+	new_gedis.queue_free()
+
+func test_save_with_write_permission_error():
+	# We simulate a write permission error by trying to save to a read-only path.
+	# In Godot, 'res://' is a read-only file system.
+	var read_only_path = "res://test_write_permission.json"
+	var result = gedis.save(read_only_path)
+	assert_eq(result, FAILED, "Save should fail when writing to a read-only path")
+
+func test_performance_with_large_dataset():
+	var save_path = "user://gedis_perf_test.json"
+	var num_keys = 10000
+	
+	for i in range(num_keys):
+		gedis.set_value("key:" + str(i), "value:" + str(i))
+		
+	var start_time = Time.get_ticks_msec()
+	var result = gedis.save(save_path)
+	var save_time = Time.get_ticks_msec() - start_time
+	
+	assert_eq(result, OK, "Performance save should succeed")
+	print("Save time for %d keys: %d ms" % [num_keys, save_time])
+	
+	var new_gedis = Gedis.new()
+	add_child(new_gedis)
+	var backend = GedisJSONSnapshotBackend.new()
+	new_gedis.register_persistence_backend("json", backend)
+	new_gedis.set_default_persistence_backend("json")
+	
+	start_time = Time.get_ticks_msec()
+	result = new_gedis.load(save_path)
+	var load_time = Time.get_ticks_msec() - start_time
+	
+	assert_eq(result, OK, "Performance load should succeed")
+	assert_eq(new_gedis.keys().size(), num_keys, "All keys should be loaded")
+	print("Load time for %d keys: %d ms" % [num_keys, load_time])
+	
+	var dir_access = DirAccess.open("user://")
+	dir_access.remove(save_path)
+	new_gedis.queue_free()
