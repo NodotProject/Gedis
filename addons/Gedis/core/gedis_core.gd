@@ -29,6 +29,23 @@ func _touch_type(key: String, type_bucket: Dictionary) -> void:
 		_sets.erase(key)
 		_sorted_sets.erase(key)
 
+func key_exists(key: String) -> bool:
+	return _store.has(key) or _hashes.has(key) or _lists.has(key) or _sets.has(key) or _sorted_sets.has(key)
+
+func _get_all_keys() -> Dictionary:
+	var all: Dictionary = {}
+	for k in _store.keys():
+		all[str(k)] = true
+	for k in _hashes.keys():
+		all[str(k)] = true
+	for k in _lists.keys():
+		all[str(k)] = true
+	for k in _sets.keys():
+		all[str(k)] = true
+	for k in _sorted_sets.keys():
+		all[str(k)] = true
+	return all
+
 func flushall() -> void:
 	_store.clear()
 	_hashes.clear()

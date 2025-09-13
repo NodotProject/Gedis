@@ -95,6 +95,8 @@ func type(key: String) -> String:
 		return "list"
 	if _gedis._core._sets.has(key):
 		return "set"
+	if _gedis._core._sorted_sets.has(key):
+		return "sorted_set"
 	return "none"
 
 func dump(key: String) -> Dictionary:
@@ -112,6 +114,8 @@ func dump(key: String) -> Dictionary:
 			d["value"] = _gedis._core._lists.get(key, []).duplicate()
 		"set":
 			d["value"] = _gedis._core._sets.get(key, {}).keys()
+		"sorted_set":
+			d["value"] = _gedis._core._sorted_sets.get(key, {}).duplicate(true)
 		_:
 			d["value"] = null
 	return d

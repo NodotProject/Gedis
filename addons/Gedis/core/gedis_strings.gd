@@ -41,14 +41,14 @@ func exists(keys) -> Variant:
 	if typeof(keys) == TYPE_ARRAY:
 		var cnt = 0
 		for k in keys:
-			if not _gedis._expiry._is_expired(str(k)) and (_gedis._core._store.has(str(k)) or _gedis._core._hashes.has(str(k)) or _gedis._core._lists.has(str(k)) or _gedis._core._sets.has(str(k))):
+			if not _gedis._expiry._is_expired(str(k)) and _gedis._core.key_exists(str(k)):
 				cnt += 1
 		return cnt
 	else:
 		var k = str(keys)
 		if _gedis._expiry._is_expired(k):
 			return false
-		return _gedis._core._store.has(k) or _gedis._core._hashes.has(k) or _gedis._core._lists.has(k) or _gedis._core._sets.has(k)
+		return _gedis._core.key_exists(k)
 
 # key_exists: explicit single-key boolean (keeps parity with C++ API)
 func key_exists(key: String) -> bool:
@@ -87,15 +87,7 @@ func decr(key: String, amount: int = 1) -> int:
 	return incr(key, -int(amount))
 
 func keys(pattern: String = "*") -> Array:
-	var all: Dictionary = {}
-	for k in _gedis._core._store.keys():
-		all[str(k)] = true
-	for k in _gedis._core._hashes.keys():
-		all[str(k)] = true
-	for k in _gedis._core._lists.keys():
-		all[str(k)] = true
-	for k in _gedis._core._sets.keys():
-		all[str(k)] = true
+	var all: Dictionary = _gedis._core._get_all_keys()
 	var rx := _gedis._utils._glob_to_regex(pattern)
 	var out: Array = []
 	for k in all.keys():
