@@ -186,8 +186,8 @@ Gedis comes with a debugger interface!
 | Method                           | Description                                                |
 | -------------------------------- | ---------------------------------------------------------- |
 | **Strings**                      |                                                            |
-| `set_value(key, value)`          | Sets the string value of a key.                            |
-| `get_value(key)`                 | Gets the string value of a key.                            |
+| `set_value(key, value)`          | Sets the value of a key.                            |
+| `get_value(key)`                 | Gets the value of a key.                            |
 | `del(keys)`                      | Deletes one or more keys (accepts Array).                  |
 | `exists(keys)`                   | Checks if keys exist (accepts Array).                      |
 | `key_exists(key)`                | Checks if a single key exists.                             |
