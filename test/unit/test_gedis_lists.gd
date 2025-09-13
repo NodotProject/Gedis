@@ -12,6 +12,10 @@ func test_lpush_rpush_and_len():
 	assert_eq(g.rpush("l", "x"), 1)
 	assert_eq(g.lpush("l", "y"), 2)
 	assert_eq(g.llen("l"), 2)
+	g.rpush("l", ["a", "b"])
+	assert_eq(g.lget("l"), ["y", "x", "a", "b"])
+	g.lpush("l", ["1", "2"])
+	assert_eq(g.lget("l"), ["1", "2", "y", "x", "a", "b"])
 
 func test_lpop_rpop_and_empty():
 	g.rpush("l", 1)
@@ -28,6 +32,12 @@ func test_lrange():
 	g.rpush("l", 3)
 	assert_eq(g.lrange("l", 0, 1), [1, 2])
 	assert_eq(g.lrange("l", 0, -1), [1, 2, 3])
+
+func test_lget():
+	g.rpush("l", 1)
+	g.rpush("l", 2)
+	g.rpush("l", 3)
+	assert_eq(g.lget("l"), [1, 2, 3])
 
 func test_lindex():
 	g.rpush("l", 1)

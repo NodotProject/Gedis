@@ -37,6 +37,11 @@ func setup_sample_data():
 	my_gedis.sadd("player:achievements", "first_kill")
 	my_gedis.sadd("player:achievements", "level_10")
 	
+	# Sorted set example
+	my_gedis.zadd("player:leaderboard", "Alice", 1500)
+	my_gedis.zadd("player:leaderboard", "Bob", 2500)
+	my_gedis.zadd("player:leaderboard", "Charlie", 1000)
+	
 	# Shared game state
 	shared_gedis.set_value("game:state", "playing")
 	shared_gedis.set_value("game:players_online", "42")

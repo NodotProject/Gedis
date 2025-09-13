@@ -28,6 +28,7 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 - **Sets**: Unordered collections of unique strings (`sadd`, `srem`, `smembers`).
 - **Key Expiry**: Set a time-to-live (TTL) on keys for automatic deletion (`expire`, `ttl`).
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
+- **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`).
 
 ## Installation
 
@@ -97,6 +98,18 @@ var has_shield = gedis.sismember("inventory", "shield") # true
 
 # Get all items
 var all_items = gedis.smembers("inventory") # ["sword", "shield"] or ["shield", "sword"]
+```
+
+### Sorted Sets
+
+```gdscript
+# Use a sorted set for a leaderboard
+gedis.zadd("leaderboard", "Alice", 100)
+gedis.zadd("leaderboard", "Bob", 95)
+gedis.zadd("leaderboard", "Charlie", 110)
+
+# Get players with scores between 90 and 105
+var top_players = gedis.zrange("leaderboard", 90, 105) # ["Bob", "Alice"]
 ```
 
 ### Key Expiry
@@ -173,8 +186,8 @@ Gedis comes with a debugger interface!
 | Method                           | Description                                                |
 | -------------------------------- | ---------------------------------------------------------- |
 | **Strings**                      |                                                            |
-| `set_value(key, value)`          | Sets the string value of a key.                            |
-| `get_value(key)`                 | Gets the string value of a key.                            |
+| `set_value(key, value)`          | Sets the value of a key.                            |
+| `get_value(key)`                 | Gets the value of a key.                            |
 | `del(keys)`                      | Deletes one or more keys (accepts Array).                  |
 | `exists(keys)`                   | Checks if keys exist (accepts Array).                      |
 | `key_exists(key)`                | Checks if a single key exists.                             |
@@ -191,11 +204,12 @@ Gedis comes with a debugger interface!
 | `hvals(key)`                     | Gets all the values in a hash.                             |
 | `hlen(key)`                      | Gets the number of fields in a hash.                       |
 | **Lists**                        |                                                            |
-| `lpush(key, values)`             | Prepends values to a list (accepts single value or Array). |
-| `rpush(key, values)`             | Appends values to a list (accepts single value or Array).  |
+| `lpush(key, values)`             | Prepends values to a list. If `values` is an Array, it's concatenated. |
+| `rpush(key, values)`             | Appends values to a list. If `values` is an Array, it's concatenated. |
 | `lpop(key)`                      | Removes and gets the first element in a list.              |
 | `rpop(key)`                      | Removes and gets the last element in a list.               |
 | `llen(key)`                      | Gets the length of a list.                                 |
+| `lget(key)`                      | Gets all elements from a list.                             |
 | `lrange(key, start, stop)`       | Gets a range of elements from a list.                      |
 | `lindex(key, index)`             | Gets an element from a list by index.                      |
 | `lset(key, index, value)`        | Sets the value of a list element by index.                 |
@@ -208,6 +222,11 @@ Gedis comes with a debugger interface!
 | `scard(key)`                     | Gets the number of members in a set.                       |
 | `spop(key)`                      | Removes and returns a random member from a set.            |
 | `smove(source, dest, member)`    | Moves a member from one set to another.                    |
+| **Sorted Sets**                  |                                                            |
+| `zadd(key, member, score)`       | Adds a member with a score to a sorted set.                |
+| `zrem(key, member)`              | Removes a member from a sorted set.                        |
+| `zrange(key, min, max)`   | Gets members from a sorted set within a score range.       |
+| `zpopready(key, now)`            | Removes and returns members with scores up to a value.     |
 | **Expiry**                       |                                                            |
 | `expire(key, seconds)`           | Sets a key's time to live in seconds.                      |
 | `ttl(key)`                       | Gets the remaining time to live of a key.                  |
