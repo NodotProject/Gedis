@@ -28,7 +28,7 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 - **Sets**: Unordered collections of unique strings (`sadd`, `srem`, `smembers`).
 - **Key Expiry**: Set a time-to-live (TTL) on keys for automatic deletion (`expire`, `ttl`).
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
-- **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrangebyscore`).
+- **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`).
 
 ## Installation
 
@@ -109,7 +109,7 @@ gedis.zadd("leaderboard", "Bob", 95)
 gedis.zadd("leaderboard", "Charlie", 110)
 
 # Get players with scores between 90 and 105
-var top_players = gedis.zrangebyscore("leaderboard", 90, 105) # ["Bob", "Alice"]
+var top_players = gedis.zrange("leaderboard", 90, 105) # ["Bob", "Alice"]
 ```
 
 ### Key Expiry
@@ -225,7 +225,7 @@ Gedis comes with a debugger interface!
 | **Sorted Sets**                  |                                                            |
 | `zadd(key, member, score)`       | Adds a member with a score to a sorted set.                |
 | `zrem(key, member)`              | Removes a member from a sorted set.                        |
-| `zrangebyscore(key, min, max)`   | Gets members from a sorted set within a score range.       |
+| `zrange(key, min, max)`   | Gets members from a sorted set within a score range.       |
 | `zpopready(key, now)`            | Removes and returns members with scores up to a value.     |
 | **Expiry**                       |                                                            |
 | `expire(key, seconds)`           | Sets a key's time to live in seconds.                      |

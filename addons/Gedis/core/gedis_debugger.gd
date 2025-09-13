@@ -115,7 +115,14 @@ func dump(key: String) -> Dictionary:
 		"set":
 			d["value"] = _gedis._core._sets.get(key, {}).keys()
 		"sorted_set":
-			d["value"] = _gedis._core._sorted_sets.get(key, {}).duplicate(true)
+			var data = _gedis._core._sorted_sets.get(key, {})
+			var value = []
+			if data.has("sorted_set"):
+				# The internal representation is [score, member] but for visualization
+				# it's more intuitive to show [member, score].
+				for entry in data.sorted_set:
+					value.append([entry[1], entry[0]])
+			d["value"] = value
 		_:
 			d["value"] = null
 	return d

@@ -208,7 +208,7 @@ func zrem(key: String, member: String):
 	return _sorted_sets.remove(key, member)
 
 ## Gets members from a sorted set within a score range.
-func zrangebyscore(key: String, min: int, max: int):
+func zrange(key: String, min: int, max: int):
 	return _sorted_sets.range_by_score(key, min, max)
 
 ## Removes and returns members with scores up to a certain value.
