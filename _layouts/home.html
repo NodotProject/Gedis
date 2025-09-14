@@ -7,8 +7,10 @@ layout: default
 
 <div class="mx-auto text-center prose prose-{{site.theme-color}}">
   <div>
-    <img class="object-cover mx-auto h-36 w-36 rounded-full" src="{{site.baseurl}}/assets/img/{{site.author-image}}"
+    {% if site.author-image %}
+    <img class="object-cover mx-auto h-36 w-36 rounded-full" src="{{ '/assets/img/' | append: site.author-image | relative_url }}"
       alt="author profile image">
+    {% endif %}
     <h1>{{site.author}}</h1>
   </div>
   {% if site.author-bio %}
