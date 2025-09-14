@@ -55,3 +55,56 @@ func flushall() -> void:
 	_expiry.clear()
 	_subscribers.clear()
 	_psubscribers.clear()
+
+
+func dump(options: Dictionary = {}) -> Dictionary:
+	var state := {
+		"store": _store.duplicate(true),
+		"hashes": _hashes.duplicate(true),
+		"lists": _lists.duplicate(true),
+		"sets": _sets.duplicate(true),
+		"sorted_sets": _sorted_sets.duplicate(true),
+		"expiry": _expiry.duplicate(true),
+	}
+
+	var include: Array = options.get("include", [])
+	var exclude: Array = options.get("exclude", [])
+
+	if not include.is_empty():
+		for bucket_name in state:
+			var bucket: Dictionary = state[bucket_name]
+			for key in bucket.keys():
+				var keep = false
+				for prefix in include:
+					if key.begins_with(prefix):
+						keep = true
+						break
+				if not keep:
+					bucket.erase(key)
+
+	if not exclude.is_empty():
+		for bucket_name in state:
+			var bucket: Dictionary = state[bucket_name]
+			for key in bucket.keys():
+				for prefix in exclude:
+					if key.begins_with(prefix):
+						bucket.erase(key)
+						break
+	return state
+
+
+func restore(state: Dictionary) -> void:
+	flushall()
+
+	_store = state.get("store", {})
+	_hashes = state.get("hashes", {})
+	_lists = state.get("lists", {})
+	_sets = state.get("sets", {})
+	_sorted_sets = state.get("sorted_sets", {})
+	_expiry = state.get("expiry", {})
+
+	# Discard expired keys
+	var now: float = Time.get_unix_time_from_system()
+	for key in _expiry.keys():
+		if _expiry[key] < now:
+			_delete_all_types_for_key(key)

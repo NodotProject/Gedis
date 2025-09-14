@@ -7,11 +7,14 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 	var dashboard_tabs = {} # session_id -> dashboard_control
 	var full_snapshot_data = {} # session_id -> full_snapshot_data
 	var pending_requests = {} # session_id -> { "command": String, "instance_id": int, "context": any }
+	var _pubsub_events = {} # session_id -> []
 	
 	func _has_capture(capture):
 		return capture == "gedis"
 	
 	func _capture(message, data, session_id):
+		if not _pubsub_events.has(session_id):
+			_pubsub_events[session_id] = []
 		# message is the full message string received by the editor (e.g. "gedis:instances_data")
 		# data is the Array payload sent from the game. Engines and editors may wrap values
 		# differently (sometimes the payload is passed as a single element array), so normalize.
@@ -21,28 +24,42 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		match kind:
 			"ping":
 				_request_instances_update(session_id)
+				return true
 			"instances_data":
 				# instances may be either sent as the array itself or wrapped as [instances]
 				var instances = data
 				if data.size() == 1 and typeof(data[0]) == TYPE_ARRAY:
 					instances = data[0]
 				_update_instances(instances, session_id)
+				return true
 			"snapshot_data":
 				# snapshot is expected to be a Dictionary; it may be wrapped in an Array
 				var snapshot = data[0] if data.size() > 0 else {}
 				_update_snapshot_data(snapshot, session_id)
+				return true
 			"key_value_data":
 				# key/value payload may be wrapped similarly
 				var kv = data[0] if data.size() > 0 else {}
 				_update_key_value_data(kv, session_id)
-			_:
-				# unrecognized message
-				return false
-		return true
+				return true
+			"pubsub_data":
+				var channels_data = data[0] if data.size() > 0 else {}
+				var patterns_data = data[1] if data.size() > 1 else {}
+				_update_pubsub_tree(session_id, channels_data, patterns_data)
+				return true
+			"pubsub_event":
+				if not session_id in _pubsub_events:
+					_pubsub_events[session_id] = []
+				_pubsub_events[session_id].append({"message": data[0], "data": [data[1], data[2]]})
+				_populate_pubsub_events(session_id)
+				_fetch_pubsub_for_selected_instance(session_id) # Refresh tree on event
+				return true
+		return false
 
 	func _setup_session(session_id):
 		var dashboard = GedisDebuggerPanel.instantiate()
 		dashboard.name = "Gedis"
+		dashboard.plugin = self
 		
 		var session = get_session(session_id)
 		session.started.connect(func(): _on_session_started(session_id))
@@ -50,6 +67,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		session.add_session_tab(dashboard)
 		
 		dashboard_tabs[session_id] = dashboard
+		_pubsub_events[session_id] = []
 
 	func _on_session_started(session_id):
 		var dashboard = dashboard_tabs[session_id]
@@ -116,6 +134,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 				instance_selector.select(0)
 				# The select() method does not trigger the item_selected signal, so we must call the handler manually.
 				_fetch_keys_for_selected_instance(session_id)
+				_fetch_pubsub_for_selected_instance(session_id)
 		else:
 			status_label.text = "No Gedis instances found in running game"
 			status_label.add_theme_color_override("font_color", Color.ORANGE)
@@ -123,6 +142,7 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 	
 	func _on_instance_selected(_index, session_id):
 		_fetch_keys_for_selected_instance(session_id)
+		_fetch_pubsub_for_selected_instance(session_id)
 
 	func _fetch_keys_for_selected_instance(session_id):
 		if not session_id in dashboard_tabs:
@@ -138,6 +158,21 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		pending_requests[session_id] = {"command": "snapshot", "instance_id": instance_id}
 		if session and session.is_active():
 			session.send_message("gedis:request_instance_data", [instance_id, "snapshot", "*"])
+
+	func _fetch_pubsub_for_selected_instance(session_id):
+		if not session_id in dashboard_tabs:
+			return
+
+		var dashboard = dashboard_tabs[session_id]
+		var instance_selector = dashboard.find_child("instance_selector", true, false)
+		if not instance_selector or instance_selector.get_selected() < 0:
+			return
+
+		var instance_id = instance_selector.get_item_id(instance_selector.get_selected())
+		var session = get_session(session_id)
+		pending_requests[session_id] = {"command": "pubsub", "instance_id": instance_id}
+		if session and session.is_active():
+			session.send_message("gedis:request_instance_data", [instance_id, "pubsub"])
 
 	func _on_filter_pressed(session_id):
 		if not session_id in dashboard_tabs:
@@ -305,6 +340,61 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 			edit_button.disabled = true
 		if save_button:
 			save_button.disabled = true
+
+	func _populate_pubsub_events(session_id):
+		var dashboard = dashboard_tabs[session_id]
+		var events_tree = dashboard.find_child("PubSubEventsTree", true, false)
+		if not events_tree:
+			return
+		events_tree.clear()
+		var root = events_tree.create_item()
+		for event in _pubsub_events.get(session_id, []):
+			var event_item = events_tree.create_item(root)
+			event_item.set_text(0, event.message)
+			event_item.set_text(1, JSON.stringify(event.data))
+
+	func _update_pubsub_tree(session_id, channels_data, patterns_data):
+		var dashboard = dashboard_tabs[session_id]
+		var pub_sub_tree = dashboard.find_child("PubSubTree", true, false)
+		if not pub_sub_tree:
+			return
+
+		pub_sub_tree.clear()
+		var root = pub_sub_tree.create_item()
+
+		var channels_item = pub_sub_tree.create_item(root)
+		channels_item.set_text(0, "Channels")
+		for channel_name in channels_data:
+			var subscribers = channels_data[channel_name]
+			var channel_item = pub_sub_tree.create_item(channels_item)
+			channel_item.set_text(0, channel_name)
+			for sub in subscribers:
+				var sub_item = pub_sub_tree.create_item(channel_item)
+				sub_item.set_text(0, str(sub))
+
+		var patterns_item = pub_sub_tree.create_item(root)
+		patterns_item.set_text(0, "Patterns")
+		for pattern_name in patterns_data:
+			var subscribers = patterns_data[pattern_name]
+			var pattern_item = pub_sub_tree.create_item(patterns_item)
+			pattern_item.set_text(0, pattern_name)
+			for sub in subscribers:
+				var sub_item = pub_sub_tree.create_item(pattern_item)
+				sub_item.set_text(0, str(sub))
+
+	func send_message_to_game(message: String, data: Array):
+		var session_id = get_current_session_id()
+		if session_id != -1:
+			var session = get_session(session_id)
+			if session and session.is_active():
+				session.send_message("gedis:" + message, data)
+
+	func get_current_session_id():
+		for session_id in dashboard_tabs:
+			var session = get_session(session_id)
+			if session and session.is_active():
+				return session_id
+		return -1
 
 var debugger_plugin
 
