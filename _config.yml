@@ -18,8 +18,6 @@ author-image: false
 show-nav-menu: true
 
 nav-menu:
-- text: About
-  permalink: about
 - text: Installation
   permalink: installation
 - text: Usage
