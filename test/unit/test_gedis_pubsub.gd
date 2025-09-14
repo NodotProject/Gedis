@@ -161,13 +161,13 @@ func test_list_pattern_subscribers():
 func test_subscribe_signal():
 	watch_signals(gedis._pubsub)
 	gedis.subscribe("channel1", subscriber)
-	assert_signal_emitted_with_args(gedis._pubsub, "subscribed", ["channel1", subscriber])
+	assert_signal_emitted_with_parameters(gedis._pubsub, "subscribed", ["channel1", subscriber])
 
 func test_unsubscribe_signal():
 	watch_signals(gedis._pubsub)
 	gedis.subscribe("channel1", subscriber)
 	gedis.unsubscribe("channel1", subscriber)
-	assert_signal_emitted_with_args(gedis._pubsub, "unsubscribed", ["channel1", subscriber])
+	assert_signal_emitted_with_parameters(gedis._pubsub, "unsubscribed", ["channel1", subscriber])
 
 func test_gedis_level_pubsub_signal():
 	var channel = "test_channel"
@@ -176,7 +176,8 @@ func test_gedis_level_pubsub_signal():
 	# Connect directly to the Gedis instance signal
 	gedis.pubsub_message.connect(subscriber._on_pubsub_message)
 	
-	gedis.subscribe(channel, subscriber)
+	var dummy_subscriber = Object.new()
+	gedis.subscribe(channel, dummy_subscriber)
 	gedis.publish(channel, message)
 	await get_tree().create_timer(0.1).timeout
 	
@@ -194,7 +195,8 @@ func test_gedis_level_psub_signal():
 	# Connect directly to the Gedis instance signal
 	gedis.psub_message.connect(subscriber._on_psub_message)
 
-	gedis.psubscribe(pattern, subscriber)
+	var dummy_subscriber = Object.new()
+	gedis.psubscribe(pattern, dummy_subscriber)
 	gedis.publish(channel, message)
 	await get_tree().create_timer(0.1).timeout
 
