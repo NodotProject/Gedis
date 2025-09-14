@@ -1,9 +1,8 @@
 ---
-layout: default
+layout: page
 title: API Reference
+permalink: api-reference
 ---
-
-## API Reference
 
 | Method                           | Description                                                |
 | -------------------------------- | ---------------------------------------------------------- |

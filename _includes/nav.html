@@ -1,0 +1,37 @@
+<nav class="flex flex-wrap items-center justify-center px-2 mb-6">
+    <div class="container px-4 mx-auto flex flex-wrap items-center justify-center">
+        <div class="w-full relative flex justify-center">
+            <button type="button" onclick="toggleNavbar('navbar')"
+                class="rounded-md inline-flex items-center justify-center text-gray-500 md:hidden"
+                aria-expanded="false">
+                <span class="sr-only">Open menu</span>
+                <!-- Heroicon name: outline/menu -->
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="flex hidden md:block" id="navbar">
+            <div class="flex flex-col md:flex-row mr-auto w-full">
+                {% if page.url != "/" %} <!-- don't show Home in menu for Homepage -->
+                <a class="text-sm text-gray-500 hover:text-gray-900 px-3 py-2 lg:py-1 mx-auto uppercase"
+                    href="{{site.baseurl}}/">
+                    Home
+                </a>
+                {% endif %}
+
+                <!-- dynamic menu based on navigation info in _config.yml -->
+                {% for link in site.nav-menu %}
+                    {% if page.permalink != {{link.permalink}} %} <!-- don't show current page in menu -->
+                    <a class="text-sm text-gray-500 hover:text-gray-900 px-3 py-2 lg:py-1 mx-auto uppercase"
+                        href="{{site.baseurl}}/{{link.permalink}}">
+                        {{link.text}}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</nav>
