@@ -370,7 +370,6 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 			channel_item.set_text(0, channel_name)
 			for sub in subscribers:
 				var sub_item = pub_sub_tree.create_item(channel_item)
-				print(sub.get_property_list())
 				sub_item.set_text(0, str(sub))
 
 		var patterns_item = pub_sub_tree.create_item(root)
