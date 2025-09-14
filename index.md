@@ -4,8 +4,6 @@ title: Home
 permalink: /
 ---
 
-# Gedis
-
 <p align="center">
     <img width="512" height="512" alt="image" src="https://github.com/NodotProject/gedis/blob/main/addons/Gedis/icon.png?raw=true" />
 </p>
