@@ -1,2 +1,14 @@
 theme: jekyll-theme-cayman
 title: Gedis Documentation
+nav_order:
+  - index.md
+  - installation.md
+  - usage-examples.md
+  - debugger.md
+  - key-expiry-and-keyspace-events.md
+  - pub-sub-system.md
+  - persistence.md
+  - customizable-time-sources.md
+  - api-reference.md
+  - contribution-instructions.md
+  - license.md
