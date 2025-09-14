@@ -1,29 +1,41 @@
----
----
 <!DOCTYPE html>
 <html lang="en-US">
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/typography@0.5.2/dist/typography.min.js"></script>
   </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
-        
-        <p>{{ site.description | default: site.github.project_tagline }}</p>
-        
-      </header>
-      <section>
+  <body class="bg-gray-100 font-sans">
+    <div class="flex">
+      <!-- Sidebar -->
+      <aside class="fixed top-0 left-0 h-full w-64 bg-white shadow-md p-5 overflow-y-auto hidden md:block">
+        <h1 class="text-2xl font-bold mb-4"><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
+        <p class="text-gray-600 mb-8">{{ site.description | default: site.github.project_tagline }}</p>
+        <nav>
+          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Documentation</h2>
+          <ul>
+            {% for p in site.pages %}
+              {% if p.title and p.url != '/' and p.name != 'README.md' and p.name != 'license.md' %}
+                <li>
+                  <a href="{{ p.url | relative_url }}" class="block py-1 {% if p.url == page.url %}text-black font-bold{% else %}text-gray-700 hover:text-black{% endif %}">
+                    {{ p.title }}
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        </nav>
+      </aside>
 
-      {{ content }}
-
-      </section>
-      <footer>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
+      <!-- Main Content -->
+      <main class="flex-1 md:ml-64 p-8">
+        <div class="max-w-4xl mx-auto bg-white p-8 shadow-md rounded-lg prose prose-lg">
+          {{ content }}
+        </div>
+      </main>
     </div>
   </body>
+</html>
 </html>
