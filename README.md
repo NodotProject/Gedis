@@ -306,9 +306,11 @@ Gedis comes with a debugger interface!
 | `zadd(key, member, score)`       | Adds a member with a score to a sorted set.                |
 | `zrem(key, member)`              | Removes a member from a sorted set.                        |
 | `zrange(key, min, max)`   | Gets members from a sorted set within a score range.       |
+| `zrevrange(key, start, stop, withscores=false)` | Returns the specified range of elements in the sorted set stored at `key`, with scores ordered from high to low. |
 | `zpopready(key, now)`            | Removes and returns members with scores up to a value.     |
 | **Expiry**                       |                                                            |
 | `expire(key, seconds)`           | Sets a key's time to live in seconds.                      |
+| `setex(key, seconds, value)`     | Set `key` to hold `value` and set `key` to timeout after a given number of `seconds`. |
 | `ttl(key)`                       | Gets the remaining time to live of a key.                  |
 | `persist(key)`                   | Removes the expiration from a key.                         |
 | **Pub/Sub**                      |                                                            |

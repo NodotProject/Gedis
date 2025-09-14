@@ -46,3 +46,17 @@ func test_persist_on_non_expiring_key():
 
 func test_persist_on_nonexistent_key():
 	assert_false(g.persist("nonexistent"), "Persist should return false for a nonexistent key")
+
+func test_setex():
+	g.setex("mykey", 2, "myvalue")
+	assert_eq(g.get_value("mykey"), "myvalue", "Value should be set correctly")
+	var ttl = g.ttl("mykey")
+	assert_true(ttl > 0 and ttl <= 2, "TTL should be set correctly")
+
+	# Wait for expiry
+	for i in 25: # 2.5 seconds max wait
+		if not g.key_exists("mykey"):
+			break
+		await get_tree().create_timer(0.1).timeout
+
+	assert_false(g.key_exists("mykey"), "Key should expire after the given time")

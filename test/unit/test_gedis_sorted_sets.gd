@@ -99,3 +99,58 @@ func test_multiple_sorted_sets_are_isolated():
 	
 	zset2_members = gedis.zrange("zset2", 0, 100)
 	assert_eq(zset2_members, ["x", "y"], "zset2 should remain unchanged")
+
+
+func test_zrevrange_basic():
+	gedis.zadd("myzset", "member1", 10)
+	gedis.zadd("myzset", "member2", 20)
+	gedis.zadd("myzset", "member3", 30)
+	gedis.zadd("myzset", "member4", 40)
+	
+	var result = gedis.zrevrange("myzset", 0, 100)
+	assert_eq(result, ["member4", "member3", "member2", "member1"], "Should return members in reverse sorted order")
+
+func test_zrevrange_with_scores():
+	gedis.zadd("myzset", "member1", 10)
+	gedis.zadd("myzset", "member2", 20)
+	gedis.zadd("myzset", "member3", 30)
+	
+	var result = gedis.zrevrange("myzset", 0, 100, true)
+	assert_eq(result, [["member3", 30], ["member2", 20], ["member1", 10]], "Should return members and scores in reverse sorted order")
+
+func test_zrevrange_subset():
+	gedis.zadd("myzset", "member1", 10)
+	gedis.zadd("myzset", "member2", 20)
+	gedis.zadd("myzset", "member3", 30)
+	gedis.zadd("myzset", "member4", 40)
+	
+	var result = gedis.zrevrange("myzset", 15, 35)
+	assert_eq(result, ["member3", "member2"], "Should return a subset of members in reverse sorted order")
+
+func test_zrevrange_empty_set():
+	var result = gedis.zrevrange("myzset", 0, 100)
+	assert_true(result.is_empty(), "Should return an empty array for an empty set")
+
+func test_zrevrange_out_of_bounds():
+	gedis.zadd("myzset", "member1", 10)
+	gedis.zadd("myzset", "member2", 20)
+	
+	var result = gedis.zrevrange("myzset", 100, 200)
+	assert_true(result.is_empty(), "Should return an empty array for out-of-bounds indices")
+
+func test_zrevrange_with_inf():
+	gedis.zadd("myzset", "member1", 10)
+	gedis.zadd("myzset", "member2", 20)
+	gedis.zadd("myzset", "member3", 30)
+	gedis.zadd("myzset", "member4", 40)
+	
+	var result = gedis.zrevrange("myzset", 0, INF)
+	assert_eq(result, ["member4", "member3", "member2", "member1"], "Should return all members in reverse sorted order when using INF")
+
+func test_zrevrange_with_inf_and_scores():
+	gedis.zadd("myzset", "member1", 10)
+	gedis.zadd("myzset", "member2", 20)
+	gedis.zadd("myzset", "member3", 30)
+	
+	var result = gedis.zrevrange("myzset", 0, INF, true)
+	assert_eq(result, [["member3", 30], ["member2", 20], ["member1", 10]], "Should return all members and scores in reverse sorted order when using INF")
