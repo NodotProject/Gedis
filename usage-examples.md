@@ -196,3 +196,4 @@ file_to_load.close()
 
 new_gedis.restore(loaded_dump)
 var player_name = new_gedis.get_value("player_name") # "Bob"
+```
