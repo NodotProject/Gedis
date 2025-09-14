@@ -39,9 +39,17 @@ func _init() -> void:
 	_sorted_sets = GedisSortedSets.new(self)
 	_pubsub = GedisPubSub.new(self)
 	_debugger_component = GedisDebugger.new(self)
+
+	_pubsub.pubsub_message.connect(_on_pubsub_message)
+	_pubsub.psub_message.connect(_on_psub_message)
 	
 	GedisDebugger._ensure_debugger_is_registered()
 
+func _on_pubsub_message(channel: String, message: Variant) -> void:
+	pubsub_message.emit(channel, message)
+
+func _on_psub_message(pattern: String, channel: String, message: Variant) -> void:
+	psub_message.emit(pattern, channel, message)
 
 func _ready() -> void:
 	set_process(true)
@@ -57,6 +65,9 @@ func _process(_delta: float) -> void:
 	_expiry._purge_expired()
 
 # --- Public API ---
+
+signal pubsub_message(channel, message)
+signal psub_message(pattern, channel, message)
 
 ## Sets a value for a key
 func set_value(key: StringName, value: Variant) -> void:
@@ -238,6 +249,22 @@ func psubscribe(pattern: String, subscriber: Object) -> void:
 ## Unsubscribes from channels matching a pattern.
 func punsubscribe(pattern: String, subscriber: Object) -> void:
 	_pubsub.punsubscribe(pattern, subscriber)
+
+## Returns a list of all active channels.
+func list_channels() -> Array:
+	return _pubsub.list_channels()
+
+## Returns a list of subscribers for a given channel.
+func list_subscribers(channel: String) -> Array:
+	return _pubsub.list_subscribers(channel)
+
+## Returns a list of all active patterns.
+func list_patterns() -> Array:
+	return _pubsub.list_patterns()
+
+## Returns a list of subscribers for a given pattern.
+func list_pattern_subscribers(pattern: String) -> Array:
+	return _pubsub.list_pattern_subscribers(pattern)
 
 # Expiry
 ## Sets a key's time to live in seconds.
