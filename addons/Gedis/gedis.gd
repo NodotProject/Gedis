@@ -73,6 +73,11 @@ signal psub_message(pattern, channel, message)
 func set_value(key: StringName, value: Variant) -> void:
 	_strings.set_value(key, value)
 
+## Sets a key to a value with an expiration time in seconds.
+func setex(key: StringName, seconds: int, value: Variant) -> void:
+	set_value(key, value)
+	expire(key, seconds)
+
 ## Gets the string value of a key.
 func get_value(key: StringName, default_value: Variant = null) -> Variant:
 	return _strings.get_value(key, default_value)
@@ -222,8 +227,12 @@ func zrem(key: String, member: String):
 	return _sorted_sets.remove(key, member)
 
 ## Gets members from a sorted set within a score range.
-func zrange(key: String, min: int, max: int):
-	return _sorted_sets.range_by_score(key, min, max)
+func zrange(key: String, start, stop, withscores: bool = false):
+	return _sorted_sets.zrange(key, start, stop, withscores)
+
+## Gets members from a sorted set within a score range, in reverse order.
+func zrevrange(key: String, start, stop, withscores: bool = false):
+	return _sorted_sets.zrevrange(key, start, stop, withscores)
 
 ## Removes and returns members with scores up to a certain value.
 func zpopready(key: String, now: int):
@@ -302,8 +311,8 @@ func set_default_persistence_backend(name: String) -> bool:
 ## Saves the current state to a file using the default persistence backend.
 func save(path: String, options: Dictionary = {}) -> int:
 	if _default_persistence_backend.is_empty():
-		push_error("No default persistence backend configured.")
-		return FAILED
+		register_persistence_backend("json", GedisJSONSnapshotBackend.new())
+		set_default_persistence_backend("json")
 
 	var backend: GedisPersistenceBackend = _persistence_backends[_default_persistence_backend]
 	var dump_options = options.duplicate()
@@ -319,8 +328,8 @@ func save(path: String, options: Dictionary = {}) -> int:
 ## Loads the state from a file using the default persistence backend.
 func load(path: String, options: Dictionary = {}) -> int:
 	if _default_persistence_backend.is_empty():
-		push_error("No default persistence backend configured.")
-		return FAILED
+		register_persistence_backend("json", GedisJSONSnapshotBackend.new())
+		set_default_persistence_backend("json")
 
 	var backend: GedisPersistenceBackend = _persistence_backends[_default_persistence_backend]
 	var load_options = {"path": path}

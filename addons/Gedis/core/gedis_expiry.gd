@@ -50,3 +50,7 @@ func persist(key: String) -> bool:
 		_gedis._core._expiry.erase(key)
 		return true
 	return false
+
+func setex(key: String, seconds: int, value: Variant) -> void:
+	_gedis.set_value(key, value)
+	expire(key, seconds)
