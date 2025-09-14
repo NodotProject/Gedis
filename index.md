@@ -12,7 +12,7 @@ permalink: /
     An in-memory, Redis-like datastore for Godot.
 </p>
 
-[![](https://dcbadge.vercel.app/api/server/Rx9CZX4sjG)](https://discord.gg/Rx9CZX4sjG) [![](https://img.shields.io/mastodon/follow/110106863700290562?domain=https%3A%2F%2Fmastodon.gamedev.place&label=MASTODON&style=for-the-badge)](https://mastodon.gamedev.place/@krazyjakee) [![](https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ?label=YOUTUBE&style=for-the-badge)](https://www.youtube.com/@GodotNodot)
+<a href="https://discord.gg/Rx9CZX4sjG"><img src="https://dcbadge.vercel.app/api/server/Rx9CZX4sjG" alt="Discord"></a><a href="https://mastodon.gamedev.place/@krazyjakee"><img src="https://img.shields.io/mastodon/follow/110106863700290562?domain=https%3A%2F%2Fmastodon.gamedev.place&label=MASTODON&style=for-the-badge" alt="Mastodon"></a><a href="https://www.youtube.com/@GodotNodot"><img src="https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ?label=YOUTUBE&style=for-the-badge" alt="Youtube"></a><a href="https://github.com/sponsors/krazyjakee"><img src="https://img.shields.io/github/sponsors/krazyjakee" alt="GitHub Sponsors"></a><a href="https://github.com/NodotProject/Gedis"><img src="https://img.shields.io/github/stars/NodotProject/Gedis" alt="GitHub Stars"></a>
 
 ![Stats](https://repobeats.axiom.co/api/embed/2a34f9ee10e86a04db97091d90c892c07c8314d1.svg "Repobeats analytics image")
 
