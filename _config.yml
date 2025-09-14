@@ -22,9 +22,9 @@ nav-menu:
   permalink: about
 - text: Installation
   permalink: installation
-- text: Usage Examples
+- text: Usage
   permalink: usage-examples
-- text: API Reference
+- text: Reference
   permalink: api-reference
 - text: Contribution
   permalink: contribution-instructions
