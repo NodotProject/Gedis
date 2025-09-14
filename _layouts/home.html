@@ -5,21 +5,8 @@ layout: default
   {% include nav.html%}
 {% endif %}
 
-<div class="mx-auto text-center prose prose-{{site.theme-color}}">
-  <div>
-    {% if site.author-image %}
-    <img class="object-cover mx-auto h-36 w-36 rounded-full" src="{{ '/assets/img/' | append: site.author-image | relative_url }}"
-      alt="author profile image">
-    {% endif %}
-    <h1>{{site.author}}</h1>
-  </div>
-  {% if site.author-bio %}
-    <p class="text-gray-500 pb-4">{{site.author-bio}}</p>
-  {% endif %}
-  <div class="px-4 pt-4 prose prose-{{site.theme-color}}">
-      <h1 class="text-center mt-6 mb-6">{{ page.title }}</h1>
-      {{content}}
-  </div>
+<div class="px-4 pt-4 prose prose-{{site.theme-color}}">
+    {{content}}
 </div>
 
 {% include social-media.html %}
