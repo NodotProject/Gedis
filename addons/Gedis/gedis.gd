@@ -11,6 +11,8 @@ var _sorted_sets: GedisSortedSets
 var _pubsub: GedisPubSub
 var _debugger_component: GedisDebugger
 var _utils: GedisUtils
+var _persistence_backends: Dictionary = {}
+var _default_persistence_backend: String = ""
 
 # Instance registry
 static var _instances: Array = []
@@ -37,8 +39,17 @@ func _init() -> void:
 	_sorted_sets = GedisSortedSets.new(self)
 	_pubsub = GedisPubSub.new(self)
 	_debugger_component = GedisDebugger.new(self)
+
+	_pubsub.pubsub_message.connect(_on_pubsub_message)
+	_pubsub.psub_message.connect(_on_psub_message)
 	
 	GedisDebugger._ensure_debugger_is_registered()
+
+func _on_pubsub_message(channel: String, message: Variant) -> void:
+	pubsub_message.emit(channel, message)
+
+func _on_psub_message(pattern: String, channel: String, message: Variant) -> void:
+	psub_message.emit(pattern, channel, message)
 
 func _ready() -> void:
 	set_process(true)
@@ -54,6 +65,9 @@ func _process(_delta: float) -> void:
 	_expiry._purge_expired()
 
 # --- Public API ---
+
+signal pubsub_message(channel, message)
+signal psub_message(pattern, channel, message)
 
 ## Sets a value for a key
 func set_value(key: StringName, value: Variant) -> void:
@@ -236,6 +250,22 @@ func psubscribe(pattern: String, subscriber: Object) -> void:
 func punsubscribe(pattern: String, subscriber: Object) -> void:
 	_pubsub.punsubscribe(pattern, subscriber)
 
+## Returns a list of all active channels.
+func list_channels() -> Array:
+	return _pubsub.list_channels()
+
+## Returns a list of subscribers for a given channel.
+func list_subscribers(channel: String) -> Array:
+	return _pubsub.list_subscribers(channel)
+
+## Returns a list of all active patterns.
+func list_patterns() -> Array:
+	return _pubsub.list_patterns()
+
+## Returns a list of subscribers for a given pattern.
+func list_pattern_subscribers(pattern: String) -> Array:
+	return _pubsub.list_pattern_subscribers(pattern)
+
 # Expiry
 ## Sets a key's time to live in seconds.
 func expire(key: String, seconds: int) -> bool:
@@ -253,6 +283,54 @@ func persist(key: String) -> bool:
 ## Deletes all keys from the database.
 func flushall() -> void:
 	_core.flushall()
+
+
+# Persistence
+## Registers a new persistence backend.
+func register_persistence_backend(name: String, backend: GedisPersistenceBackend) -> void:
+	_persistence_backends[name] = backend
+
+
+## Sets the default persistence backend.
+func set_default_persistence_backend(name: String) -> bool:
+	if _persistence_backends.has(name):
+		_default_persistence_backend = name
+		return true
+	return false
+
+
+## Saves the current state to a file using the default persistence backend.
+func save(path: String, options: Dictionary = {}) -> int:
+	if _default_persistence_backend.is_empty():
+		push_error("No default persistence backend configured.")
+		return FAILED
+
+	var backend: GedisPersistenceBackend = _persistence_backends[_default_persistence_backend]
+	var dump_options = options.duplicate()
+	if dump_options.has("path"):
+		dump_options.erase("path")
+	
+	var data = _core.dump(dump_options)
+	
+	var save_options = {"path": path}
+	return backend.save(data, save_options)
+
+
+## Loads the state from a file using the default persistence backend.
+func load(path: String, options: Dictionary = {}) -> int:
+	if _default_persistence_backend.is_empty():
+		push_error("No default persistence backend configured.")
+		return FAILED
+
+	var backend: GedisPersistenceBackend = _persistence_backends[_default_persistence_backend]
+	var load_options = {"path": path}
+	var data = backend.load(load_options)
+
+	if data.is_empty():
+		return FAILED
+
+	_core.restore(data)
+	return OK
 
 # Debugger
 ## Returns the type of the value stored at a key.

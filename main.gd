@@ -51,6 +51,25 @@ func setup_sample_data():
 	# Set expiration on some keys (5 minutes)
 	my_gedis.expire("player:score", 300)
 	shared_gedis.expire("game:players_online", 60)
+	
+	# Add some pub/sub subscriptions
+	setup_pubsub()
+
+func setup_pubsub():
+	# Subscribe to a channel
+	my_gedis.subscribe("player:events", self)
+	my_gedis.pubsub_message.connect(_on_player_event)
+
+	# Subscribe to a pattern
+	shared_gedis.psubscribe("game:*", self)
+	shared_gedis.psubscribe("system:*", self)
+	shared_gedis.psub_message.connect(_on_game_event)
+
+func _on_player_event(channel, message):
+	print("Player event on ", channel, ": ", message)
+
+func _on_game_event(pattern, channel, message):
+	print("Game event on ", channel, " (matched pattern '", pattern, "'): ", message)
 
 func _exit_tree():
 	# Clean up instances - they will automatically unregister from the debugger

@@ -5,6 +5,19 @@ var _gedis: Gedis
 
 func _init(gedis: Gedis):
 	_gedis = gedis
+	if _gedis and _gedis._pubsub:
+		_gedis._pubsub.subscribed.connect(_on_subscribed)
+		_gedis._pubsub.unsubscribed.connect(_on_unsubscribed)
+
+func _on_subscribed(channel: String, subscriber: Object):
+	var debugger = Engine.get_singleton("EngineDebugger")
+	if debugger and debugger.is_active():
+		debugger.send_message("gedis:pubsub_event", ["subscribed", channel, str(subscriber)])
+
+func _on_unsubscribed(channel: String, subscriber: Object):
+	var debugger = Engine.get_singleton("EngineDebugger")
+	if debugger and debugger.is_active():
+		debugger.send_message("gedis:pubsub_event", ["unsubscribed", channel, str(subscriber)])
 
 static func _ensure_debugger_is_registered():
 	if Engine.is_editor_hint():
@@ -51,7 +64,6 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 					break
 
 			if target_instance == null:
-				print("Gedis: target instance not found for id", instance_id)
 				return false
 			
 			var debugger = Engine.get_singleton("EngineDebugger")
@@ -79,6 +91,19 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 					target_instance.set_value(key, value)
 					var key_value_data = target_instance.dump(key)
 					debugger.send_message("gedis:key_value_data", [key_value_data])
+					return true
+				"pubsub":
+					var channels = target_instance._pubsub.list_channels()
+					var channels_data = {}
+					for channel in channels:
+						channels_data[channel] = target_instance._pubsub.list_subscribers(channel)
+					
+					var patterns = target_instance._pubsub.list_patterns()
+					var patterns_data = {}
+					for pattern in patterns:
+						patterns_data[pattern] = target_instance._pubsub.list_pattern_subscribers(pattern)
+					
+					debugger.send_message("gedis:pubsub_data", [channels_data, patterns_data])
 					return true
 
 	return false

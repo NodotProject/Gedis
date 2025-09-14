@@ -121,3 +121,86 @@ func test_psubscribe_multiple_patterns():
 	
 	assert_eq(subscriber.received_pmessages.size(), 3, "Should have received one more pmessage")
 	assert_eq(subscriber.received_pmessages[2].channel, channel2, "The channel of the last message should be from the still subscribed pattern")
+
+func test_list_channels():
+	gedis.subscribe("channel1", subscriber)
+	gedis.subscribe("channel2", subscriber)
+	var channels = gedis.list_channels()
+	assert_eq(channels.size(), 2, "Should list two channels")
+	assert_has(channels, "channel1", "Should contain channel1")
+	assert_has(channels, "channel2", "Should contain channel2")
+
+func test_list_subscribers():
+	var subscriber2 = Subscriber.new()
+	gedis.subscribe("channel1", subscriber)
+	gedis.subscribe("channel1", subscriber2)
+	var subscribers = gedis.list_subscribers("channel1")
+	assert_eq(subscribers.size(), 2, "Should list two subscribers for channel1")
+	assert_has(subscribers, subscriber, "Should contain subscriber")
+	assert_has(subscribers, subscriber2, "Should contain subscriber2")
+	subscriber2.free()
+
+func test_list_patterns():
+	gedis.psubscribe("pattern:*", subscriber)
+	gedis.psubscribe("another_pattern:*", subscriber)
+	var patterns = gedis.list_patterns()
+	assert_eq(patterns.size(), 2, "Should list two patterns")
+	assert_has(patterns, "pattern:*", "Should contain pattern:*")
+	assert_has(patterns, "another_pattern:*", "Should contain another_pattern:*")
+
+func test_list_pattern_subscribers():
+	var subscriber2 = Subscriber.new()
+	gedis.psubscribe("pattern:*", subscriber)
+	gedis.psubscribe("pattern:*", subscriber2)
+	var subscribers = gedis.list_pattern_subscribers("pattern:*")
+	assert_eq(subscribers.size(), 2, "Should list two subscribers for pattern:*")
+	assert_has(subscribers, subscriber, "Should contain subscriber")
+	assert_has(subscribers, subscriber2, "Should contain subscriber2")
+	subscriber2.free()
+
+func test_subscribe_signal():
+	watch_signals(gedis._pubsub)
+	gedis.subscribe("channel1", subscriber)
+	assert_signal_emitted_with_args(gedis._pubsub, "subscribed", ["channel1", subscriber])
+
+func test_unsubscribe_signal():
+	watch_signals(gedis._pubsub)
+	gedis.subscribe("channel1", subscriber)
+	gedis.unsubscribe("channel1", subscriber)
+	assert_signal_emitted_with_args(gedis._pubsub, "unsubscribed", ["channel1", subscriber])
+
+func test_gedis_level_pubsub_signal():
+	var channel = "test_channel"
+	var message = "Hello, Gedis!"
+	
+	# Connect directly to the Gedis instance signal
+	gedis.pubsub_message.connect(subscriber._on_pubsub_message)
+	
+	gedis.subscribe(channel, subscriber)
+	gedis.publish(channel, message)
+	await get_tree().create_timer(0.1).timeout
+	
+	assert_eq(subscriber.received_messages.size(), 1, "Should receive one message on Gedis signal")
+	assert_eq(subscriber.received_messages[0].channel, channel)
+	assert_eq(subscriber.received_messages[0].message, message)
+
+	gedis.pubsub_message.disconnect(subscriber._on_pubsub_message)
+
+func test_gedis_level_psub_signal():
+	var pattern = "test:*"
+	var channel = "test:channel"
+	var message = "Hello, psub Gedis!"
+
+	# Connect directly to the Gedis instance signal
+	gedis.psub_message.connect(subscriber._on_psub_message)
+
+	gedis.psubscribe(pattern, subscriber)
+	gedis.publish(channel, message)
+	await get_tree().create_timer(0.1).timeout
+
+	assert_eq(subscriber.received_pmessages.size(), 1, "Should receive one pmessage on Gedis signal")
+	assert_eq(subscriber.received_pmessages[0].pattern, pattern)
+	assert_eq(subscriber.received_pmessages[0].channel, channel)
+	assert_eq(subscriber.received_pmessages[0].message, message)
+
+	gedis.psub_message.disconnect(subscriber._on_psub_message)
