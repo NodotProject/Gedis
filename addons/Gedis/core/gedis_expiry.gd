@@ -23,6 +23,7 @@ func _purge_expired() -> void:
 		if _gedis._core._expiry[key] <= _now():
 			to_remove.append(key)
 	for k in to_remove:
+		_gedis.publish("gedis:keyspace:" + k, "expired")
 		_gedis._core._delete_all_types_for_key(k)
 
 # ----------------

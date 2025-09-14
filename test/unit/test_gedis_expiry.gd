@@ -1,11 +1,20 @@
 extends GutTest
 
 var g
+var _received_messages = []
+
+func _on_pubsub_message(channel, message):
+	_received_messages.append({"channel": channel, "message": message})
 
 func before_each():
 	g = Gedis.new()
+	add_child(g)
+	g.pubsub_message.connect(_on_pubsub_message)
+	_received_messages.clear()
 
 func after_each():
+	g.pubsub_message.disconnect(_on_pubsub_message)
+	remove_child(g)
 	g.free()
 
 func test_expire():
@@ -60,3 +69,22 @@ func test_setex():
 		await get_tree().create_timer(0.1).timeout
 
 	assert_false(g.key_exists("mykey"), "Key should expire after the given time")
+
+
+func test_an_event_is_published_when_a_key_expires():
+	g.subscribe("gedis:keyspace:mykey", self)
+	g.setex("mykey", 1, "value")
+	await get_tree().create_timer(1.1).timeout
+	assert_eq(_received_messages.size(), 2)
+	assert_eq(_received_messages[0].message, "set")
+	assert_eq(_received_messages[1].message, "expired")
+
+
+func test_no_event_is_published_when_a_key_is_persisted():
+	g.subscribe("gedis:keyspace:mykey", self)
+	g.setex("mykey", 1, "value")
+	g.persist("mykey")
+	await get_tree().create_timer(1.1).timeout
+	assert_eq(_received_messages.size(), 1, "Should only receive the set message")
+	assert_eq(_received_messages[0].message, "set")
+	assert_true(g.key_exists("mykey"), "Key should still exist after being persisted")

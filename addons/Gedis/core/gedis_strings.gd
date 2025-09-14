@@ -12,6 +12,7 @@ func _init(gedis: Gedis):
 func set_value(key: StringName, value: Variant) -> void:
 	_gedis._core._touch_type(str(key), _gedis._core._store)
 	_gedis._core._store[str(key)] = value
+	_gedis.publish("gedis:keyspace:" + str(key), "set")
 
 func get_value(key: StringName, default_value: Variant = null) -> Variant:
 	if _gedis._expiry._is_expired(str(key)):
@@ -26,12 +27,15 @@ func del(keys) -> int:
 			if _gedis._expiry._is_expired(str(k)):
 				continue
 			if exists(str(k)):
+				_gedis.publish("gedis:keyspace:" + str(k), "del")
 				_gedis._core._delete_all_types_for_key(str(k))
 				count += 1
 		return count
 	else:
 		var k = str(keys)
 		var existed := int(exists(k))
+		if existed > 0:
+			_gedis.publish("gedis:keyspace:" + k, "del")
 		_gedis._core._delete_all_types_for_key(k)
 		return existed
 
