@@ -23,14 +23,13 @@
     - [Lists](#lists)
     - [Sets](#sets)
     - [Sorted Sets](#sorted-sets)
-    - [Key Expiry & Keyspace Events](#key-expiry--keyspace-events)
+    - [Key Expiry](#key-expiry)
     - [Pub/Sub System](#pubsub-system)
     - [Pattern-Based Subscriptions](#pattern-based-subscriptions)
 - [Persistence](#persistence)
     - [Usage Examples](#usage-examples-1)
     - [High-Level Save/Load](#high-level-saveload)
     - [Low-Level Dump/Restore](#low-level-dumprestore)
-- [Customizable Time Sources](#customizable-time-sources)
 - [Debugger](#debugger)
 - [API Reference](#api-reference)
 - [Contribution Instructions](#contribution-instructions)
@@ -136,7 +135,7 @@ gedis.zadd("leaderboard", "Charlie", 110)
 var top_players = gedis.zrange("leaderboard", 90, 105) # ["Bob", "Alice"]
 ```
 
-### Key Expiry & Keyspace Events
+### Key Expiry
 
 ```gdscript
 # Create a temporary key
@@ -149,34 +148,6 @@ var time_left = gedis.ttl("session_token") # e.g., 59
 # Make the key permanent again
 gedis.persist("session_token")
 var time_left_after_persist = gedis.ttl("session_token") # -1 (no expiry)
-```
-
-#### Keyspace Events
-
-Gedis can publish events when keys are created, modified, or deleted, allowing you to react to changes in your data. This is part of the Pub/Sub system. The following events are available:
-
-*   `set`: Published when a key is created or overwritten.
-*   `del`: Published when a key is deleted.
-*   `expired`: Published when a key's TTL runs out.
-
-Events are published to the channel `gedis:keyspace:<key_name>`.
-
-```gdscript
-# Subscribe to the expiry event for a specific key
-gedis.subscribe("gedis:keyspace:my_temporary_key", self)
-gedis.connect("pubsub_message", _on_key_expired)
-
-func _on_key_expired(channel, message):
-   match message:
-        "set":
-            print("Key was set!")
-        "del":
-            print("Key was deleted!")
-        "expired":
-            print("Key has expired!")
-
-# Set a key with a short expiry
-gedis.setex("my_temporary_key", 1, "some_value")
 ```
 
 ### Pub/Sub System
@@ -282,47 +253,6 @@ file_to_load.close()
 
 new_gedis.restore(loaded_dump)
 var player_name = new_gedis.get_value("player_name") # "Bob"
-```
-
-## Customizable Time Sources
-
-Gedis uses a time source system to handle key expiry, which allows you to customize how time is measured. This is particularly useful for testing or for synchronizing with different in-game or real-world clocks. By default, Gedis uses `GedisUnixTimeSource`, which is based on the system's UNIX timestamp.
-
-You can set a new time source at any time using the `set_time_source()` method.
-
-### GedisUnixTimeSource (Default)
-
-This time source uses the real-world UNIX timestamp (`Time.get_unix_time_from_system()`). It is the default and is suitable for most applications where expiry should be tied to real-world time.
-
-```gdscript
-var gedis = Gedis.new()
-# No need to set it, as it's the default.
-# But if you wanted to be explicit:
-gedis.set_time_source(GedisUnixTimeSource.new())
-```
-
-### GedisProcessDeltaTimeSource
-
-This time source is based on the elapsed game time since the project started, and it respects `Engine.time_scale`. This is useful if you want key expiry to be tied to in-game time, which might be paused or slowed down.
-
-```gdscript
-var gedis = Gedis.new()
-gedis.set_time_source(GedisProcessDeltaTimeSource.new())
-
-gedis.set_value("power_up", "double_points")
-gedis.expire("power_up", 10) # Expires in 10 seconds of in-game time
-```
-
-### GedisTickTimeSource
-
-This time source measures time in ticks, where each tick is a frame. It's useful for scenarios where you want expiry to be based on a specific number of frames rather than seconds.
-
-```gdscript
-var gedis = Gedis.new()
-gedis.set_time_source(GedisTickTimeSource.new())
-
-gedis.set_value("temporary_effect", "active")
-gedis.expire("temporary_effect", 300) # Expires after 300 frames
 ```
 
 ## Debugger

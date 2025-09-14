@@ -1,41 +1,88 @@
 <!DOCTYPE html>
-<html lang="en-US">
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.tailwindcss.com/typography@0.5.2/dist/typography.min.js"></script>
-  </head>
-  <body class="bg-gray-100 font-sans">
-    <div class="flex">
-      <!-- Sidebar -->
-      <aside class="fixed top-0 left-0 h-full w-64 bg-white shadow-md p-5 overflow-y-auto hidden md:block">
-        <h1 class="text-2xl font-bold mb-4"><a href="{{ "/" | absolute_url }}">{{ site.title | default: site.github.repository_name }}</a></h1>
-        <p class="text-gray-600 mb-8">{{ site.description | default: site.github.project_tagline }}</p>
-        <nav>
-          <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Documentation</h2>
-          <ul>
-            {% for file in site.nav_order %}
-              {% assign p = site.pages | where: "name", file | first %}
-              {% if p.title %}
-                <li>
-                  <a href="{{ p.url | relative_url }}" class="block py-1 {% if p.url == page.url %}text-black font-bold{% else %}text-gray-700 hover:text-black{% endif %}">
-                    {{ p.title }}
-                  </a>
-                </li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </nav>
-      </aside>
+<html lang="{{ site.lang | default: " en-US" }}">
 
-      <!-- Main Content -->
-      <main class="flex-1 md:ml-64 p-8">
-        <div class="max-w-4xl mx-auto bg-white p-8 shadow-md rounded-lg prose prose-lg">
-          {{ content | markdownify }}
-        </div>
-      </main>
-    </div>
-  </body>
+<head>
+
+  <!-- google analytics -->
+  {% if site.google-analytics %}
+    {% include google-analytics.html %}
+  {% endif %}
+
+  <!-- Jekyll SEO plugin -->
+  {% seo %}
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <title>{{ site.title }}</title>
+
+  <!-- TailwindCSS and Inter Font-->
+  <link rel="stylesheet" href="{{site.baseurl}}/assets/css/main.css">
+  <link rel="stylesheet" href="{{site.baseurl}}/assets/css/tailwind.css">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+  <!-- fontawesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+    integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+  
+    <!-- highlight.js -->
+   <link rel="stylesheet"
+    href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github-dark-dimmed.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+  
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+    };
+  </script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+ </head>
+
+<body class="font-sans mx-auto max-w-prose">
+  <div class="pt-12 pb-4">
+    {{ content }}
+  </div>
+</body>
+
+<script>
+  /* Funtion for getting the current year in the footer */
+  (function () {
+    if (document.getElementById("get-current-year")) {
+      document.getElementById(
+        "get-current-year"
+      ).innerHTML = new Date().getFullYear();
+    }
+  })();
+
+  /* Function for opning navbar on mobile */
+  function toggleNavbar(collapseID) {
+      document.getElementById(collapseID).classList.toggle("hidden");
+      document.getElementById(collapseID).classList.toggle("block");
+    }
+    /* Function for dropdowns */
+    function openDropdown(event, dropdownID) {
+      let element = event.target;
+      while (element.nodeName !== "A") {
+        element = element.parentNode;
+      }
+      document.getElementById(dropdownID).classList.toggle("hidden");
+      document.getElementById(dropdownID).classList.toggle("block");
+    }
+
+  /* Function for show/hide table of content */
+  function toggleTOC() {
+    var toc = document.getElementById('toc');
+        if (toc.style.display == "block"){ // if toc hidden, display it 
+            toc.style.display = "none";
+        }
+        else{ // if toc displayed, hidden it
+            toc.style.display = "block";
+        }
+    }
+</script>
+
 </html>

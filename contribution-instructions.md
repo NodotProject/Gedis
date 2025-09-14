@@ -1,9 +1,8 @@
 ---
-layout: default
+layout: page
 title: Contribution Instructions
+permalink: contribution-instructions
 ---
-
-## Contribution Instructions
 
 This addon is implemented in GDScript and does not require native compilation. To work on or test the addon, follow these steps:
 
@@ -22,3 +21,7 @@ This addon is implemented in GDScript and does not require native compilation. T
 3.  **Contribute**:
 
     Create a branch, make your changes, and open a pull request describing the work.
+
+## License
+
+MIT — see LICENSE for details.

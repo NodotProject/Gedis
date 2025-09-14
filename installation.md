@@ -1,9 +1,8 @@
 ---
-layout: default
+layout: page
 title: Installation
+permalink: installation
 ---
-
-## Installation
 
 1.  Copy the entire `addons/Gedis` folder into your Godot project's `addons` directory.
 2.  In Godot, go to **Project -> Project Settings -> Plugins** and enable the "Gedis" plugin.
