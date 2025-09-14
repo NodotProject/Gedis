@@ -1,5 +1,5 @@
 # change the followings to match your Github username and repo name
-baseurl: "/gedis" # the name of your github repo
+baseurl: "/Gedis" # the name of your github repo
 url: "https://nodotproject.github.io" # the url of your github pages
 
 # site information used in page title, meta data etc.
