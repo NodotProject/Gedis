@@ -4,6 +4,24 @@ title: Usage Examples
 permalink: usage-examples
 ---
 
+## Table of Contents
+
+- [Strings](#strings)
+- [Hashes](#hashes)
+- [Lists](#lists)
+- [Sets](#sets)
+- [Sorted Sets](#sorted-sets)
+- [Key Expiry](#key-expiry)
+- [Time Source Abstraction](#time-source-abstraction)
+- [Keyspace Notifications](#keyspace-notifications)
+- [Pub/Sub System](#pubsub-system)
+- [Pattern-Based Subscriptions](#pattern-based-subscriptions)
+- [Persistence](#persistence)
+  - [High-Level Save/Load](#high-level-saveload)
+  - [Low-Level Dump/Restore](#low-level-dumprestore)
+- [Creating a Custom Persistence Backend](#creating-a-custom-persistence-backend)
+- [Creating a Custom Time Source](#creating-a-custom-time-source)
+
 First, create an instance of Gedis in your script:
 
 ```gdscript
@@ -247,4 +265,54 @@ file_to_load.close()
 
 new_gedis.restore(loaded_dump)
 var player_name = new_gedis.get_value("player_name") # "Bob"
+```
+### Creating a Custom Persistence Backend
+
+You can create your own persistence backend by extending the `GedisPersistenceBackend` class and implementing the `save` and `load` methods.
+
+```gdscript
+class_name MyCustomBackend extends GedisPersistenceBackend
+
+func save(data: Dictionary, options: Dictionary) -> int:
+    # Implement your custom save logic here
+    # For example, save to a binary file
+    var path = options.get("path", "user://gedis.dat")
+    var file = FileAccess.open(path, FileAccess.WRITE)
+    if not file:
+        return FAILED
+    file.store_var(data)
+    file.close()
+    return OK
+
+func load(options: Dictionary) -> Dictionary:
+    # Implement your custom load logic here
+    var path = options.get("path", "user://gedis.dat")
+    if not FileAccess.file_exists(path):
+        return {}
+    var file = FileAccess.open(path, FileAccess.READ)
+    if not file:
+        return {}
+    var data = file.get_var()
+    file.close()
+    return data
+```
+
+### Creating a Custom Time Source
+
+You can create your own time source by extending the `GedisTimeSource` class and implementing the `get_time` method.
+
+```gdscript
+class_name MyCustomTimeSource extends GedisTimeSource
+
+var custom_time = 0
+
+func _init(start_time = 0):
+    custom_time = start_time
+
+func get_time() -> int:
+    # Return the current time in milliseconds
+    return custom_time
+
+func advance_time(ms: int):
+    custom_time += ms
 ```
