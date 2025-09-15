@@ -69,7 +69,6 @@ func _process(_delta: float) -> void:
 # --- Time Source ---
 func set_time_source(p_time_source: GedisTimeSource) -> void:
 	_time_source = p_time_source
-	_expiry = GedisExpiry.new(self)
 
 func get_time_source() -> GedisTimeSource:
 	return _time_source

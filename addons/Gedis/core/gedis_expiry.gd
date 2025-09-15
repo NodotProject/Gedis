@@ -2,14 +2,12 @@ extends RefCounted
 class_name GedisExpiry
 
 var _gedis: Gedis
-var _time_source: GedisTimeSource
 
 func _init(p_gedis: Gedis):
 	_gedis = p_gedis
-	_time_source = p_gedis.get_time_source()
 
-func _now() -> float:
-	return _time_source.get_time()
+func _now() -> int:
+	return _gedis.get_time_source().get_time()
 
 func _is_expired(key: String) -> bool:
 	if _gedis._core._expiry.has(key) and _gedis._core._expiry[key] <= _now():
