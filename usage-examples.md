@@ -92,6 +92,57 @@ var time_left = gedis.ttl("session_token") # e.g., 59
 gedis.persist("session_token")
 var time_left_after_persist = gedis.ttl("session_token") # -1 (no expiry)
 ```
+### Time Source Abstraction
+
+Gedis now uses a time source abstraction to handle key expiry, making it more flexible for different use cases. The `GedisTimeSource` class provides a unified interface for time, and you can switch between different time sources depending on your needs.
+
+-   `GedisUnixTimeSource` (default): Uses Unix timestamps, which is suitable for most cases.
+-   `GedisTickTimeSource`: Uses Godot's internal tick time, which is useful for testing or when you need to control time manually.
+-   `GedisProcessDeltaTimeSource`: Uses the delta time from the `_process` function, which is ideal for games that pause.
+
+You can set a different time source using the `set_time_source()` method. Expiry times are now specified in milliseconds.
+
+```gdscript
+# Create a new Gedis instance
+var gedis = Gedis.new()
+
+# Set a different time source (e.g., tick-based)
+var tick_time_source = GedisTickTimeSource.new()
+gedis.set_time_source(tick_time_source)
+
+# Set a key to expire in 5 seconds (5000 milliseconds)
+gedis.set_value("my_key", "my_value")
+gedis.expire("my_key", 5000)
+```
+
+### Keyspace Notifications
+
+Gedis now supports keyspace notifications, allowing you to subscribe to events related to specific keys. When a key is set, deleted, or expires, a message is published to a dedicated channel.
+
+The channel format is `gedis:keyspace:<key>`, and the possible messages are `set`, `del`, and `expired`.
+
+```gdscript
+# Subscriber script
+var gedis = Gedis.new()
+
+func _ready():
+    # Subscribe to events for the key "player_health"
+    gedis.subscribe("gedis:keyspace:player_health", self)
+    gedis.connect("pubsub_message", _on_keyspace_event)
+
+func _on_keyspace_event(channel, message):
+    print("Keyspace event on channel '%s': %s" % [channel, message])
+
+# Publisher script
+var gedis = Gedis.new()
+
+func _on_some_event():
+    # This will trigger a "set" message
+    gedis.set_value("player_health", 100)
+
+    # This will trigger a "del" message
+    gedis.del("player_health")
+```
 
 ### Pub/Sub System
 

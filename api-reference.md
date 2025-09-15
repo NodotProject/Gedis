@@ -50,7 +50,7 @@ permalink: api-reference
 | `zrevrange(key, start, stop, withscores=false)` | Returns the specified range of elements in the sorted set stored at `key`, with scores ordered from high to low. |
 | `zpopready(key, now)`            | Removes and returns members with scores up to a value.     |
 | **Expiry**                       |                                                            |
-| `expire(key, seconds)`           | Sets a key's time to live in seconds.                      |
+| `expire(key, milliseconds)`      | Sets a key's time to live in milliseconds.                 |
 | `setex(key, seconds, value)`     | Set `key` to hold `value` and set `key` to timeout after a given number of `seconds`. |
 | `ttl(key)`                       | Gets the remaining time to live of a key.                  |
 | `persist(key)`                   | Removes the expiration from a key.                         |
@@ -65,3 +65,5 @@ permalink: api-reference
 | `load(path, backend)`            | Loads the dataset from a file.                             |
 | `dump(backend)`                  | Dumps the dataset to a serialised object.                  |
 | `restore(data, backend)`         | Restores the dataset from a serialised object.             |
+| **Time Source**                  |                                                            |
+| `set_time_source(time_source)`   | Sets the time source for key expiry.                       |
