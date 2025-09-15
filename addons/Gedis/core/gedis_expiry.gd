@@ -3,11 +3,11 @@ class_name GedisExpiry
 
 var _gedis: Gedis
 
-func _init(gedis: Gedis):
-	_gedis = gedis
+func _init(p_gedis: Gedis):
+	_gedis = p_gedis
 
-func _now() -> float:
-	return Time.get_unix_time_from_system()
+func _now() -> int:
+	return _gedis.get_time_source().get_time()
 
 func _is_expired(key: String) -> bool:
 	if _gedis._core._expiry.has(key) and _gedis._core._expiry[key] <= _now():
@@ -21,6 +21,7 @@ func _purge_expired() -> void:
 		if _gedis._core._expiry[key] <= _now():
 			to_remove.append(key)
 	for k in to_remove:
+		_gedis.publish("gedis:keyspace:" + k, "expired")
 		_gedis._core._delete_all_types_for_key(k)
 
 # ----------------
@@ -29,7 +30,7 @@ func _purge_expired() -> void:
 func expire(key: String, seconds: int) -> bool:
 	if not _gedis.exists(key):
 		return false
-	_gedis._core._expiry[key] = _now() + float(seconds)
+	_gedis._core._expiry[key] = _now() + (float(seconds) * 1000.0)
 	return true
 
 # TTL returns:
@@ -41,7 +42,7 @@ func ttl(key: String) -> int:
 		return -2
 	if not _gedis._core._expiry.has(key):
 		return -1
-	return max(0, int(ceil(_gedis._core._expiry[key] - _now())))
+	return max(0, int(ceil((_gedis._core._expiry[key] - _now()) / 1000.0)))
 
 func persist(key: String) -> bool:
 	if not _gedis.exists(key):

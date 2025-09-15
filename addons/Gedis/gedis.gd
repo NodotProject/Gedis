@@ -3,6 +3,7 @@ class_name Gedis extends Node
 # Component instances
 var _core: GedisCore
 var _expiry: GedisExpiry
+var _time_source: GedisTimeSource
 var _strings: GedisStrings
 var _hashes: GedisHashes
 var _lists: GedisLists
@@ -31,6 +32,7 @@ func _init() -> void:
 	# Instantiate components
 	_core = GedisCore.new()
 	_utils = GedisUtils.new()
+	_time_source = GedisUnixTimeSource.new()
 	_expiry = GedisExpiry.new(self)
 	_strings = GedisStrings.new(self)
 	_hashes = GedisHashes.new(self)
@@ -63,6 +65,13 @@ func _exit_tree() -> void:
 
 func _process(_delta: float) -> void:
 	_expiry._purge_expired()
+
+# --- Time Source ---
+func set_time_source(p_time_source: GedisTimeSource) -> void:
+	_time_source = p_time_source
+
+func get_time_source() -> GedisTimeSource:
+	return _time_source
 
 # --- Public API ---
 
