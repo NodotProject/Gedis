@@ -45,3 +45,19 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 Gedis comes with a debugger interface!
 
 ![Gedis Debugger](debugger.png)
+
+## 💖 Support Me
+Hi! I’m krazyjakee 🎮, creator and maintain­er of the *NodotProject* - a suite of open‑source Godot tools (e.g. Nodot, Gedis etc) that empower game developers to build faster and maintain cleaner code.
+
+I’m looking for sponsors to help sustain and grow the project: more dev time, better docs, more features, and deeper community support. Your support means more stable, polished tools used by indie makers and studios alike.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/krazyjakee)
+
+Every contribution helps maintain and improve this project. And encourage me to make more projects like this!
+
+*This is optional support. The tool remains free and open-source regardless.*
+
+---
+
+**Created with ❤️ for Godot Developers**  
+For contributions, please open issues on GitHub
