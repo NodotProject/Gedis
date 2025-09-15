@@ -13,11 +13,11 @@ permalink: /
 </p>
 
 <p align="center">
-    <a href="https://discord.gg/Rx9CZX4sjG"><img src="https://img.shields.io/discord/1089846386566111322" alt="Discord"></a>
-    <a href="https://mastodon.gamedev.place/@krazyjakee"><img src="https://img.shields.io/mastodon/follow/110106863700290562" alt="Mastodon"></a>
-    <a href="https://www.youtube.com/@GodotNodot"><img src="https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ" alt="Youtube"></a>
-    <a href="https://github.com/sponsors/krazyjakee"><img src="https://img.shields.io/github/sponsors/krazyjakee" alt="GitHub Sponsors"></a>
-    <a href="https://github.com/NodotProject/Gedis"><img src="https://img.shields.io/github/stars/NodotProject/Gedis" alt="GitHub Stars"></a>
+    <a href="https://discord.gg/Rx9CZX4sjG"><img class="inline" src="https://img.shields.io/discord/1089846386566111322" alt="Discord"></a>
+    <a href="https://mastodon.gamedev.place/@krazyjakee"><img class="inline" src="https://img.shields.io/mastodon/follow/110106863700290562" alt="Mastodon"></a>
+    <a href="https://www.youtube.com/@GodotNodot"><img class="inline" src="https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ" alt="Youtube"></a>
+    <a href="https://github.com/sponsors/krazyjakee"><img class="inline" src="https://img.shields.io/github/sponsors/krazyjakee" alt="GitHub Sponsors"></a>
+    <a href="https://github.com/NodotProject/Gedis"><img class="inline" src="https://img.shields.io/github/stars/NodotProject/Gedis" alt="GitHub Stars"></a>
 </p>
 
 ![Stats](https://repobeats.axiom.co/api/embed/2a34f9ee10e86a04db97091d90c892c07c8314d1.svg "Repobeats analytics image")
