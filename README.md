@@ -42,7 +42,19 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
 - **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`).
 
+<p align="center">
+    <a href="https://nodotproject.github.io/Gedis/"><img src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+</p>
+
 ## Installation
+
+### From AssetLib
+
+You can install Gedis directly from the Godot Asset Library: Gedis
+
+Then, enable the plugin in **Project -> Project Settings -> Plugins**.
+
+### Manual Installation
 
 1.  Copy the entire `addons/Gedis` folder into your Godot project's `addons` directory.
 2.  In Godot, go to **Project -> Project Settings -> Plugins** and enable the "Gedis" plugin.
