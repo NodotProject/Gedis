@@ -3,10 +3,10 @@
   <!-- divider -->
   <div class="relative my-8">
     <div class="absolute inset-0 flex items-center" aria-hidden="true">
-      <div class="w-full border-t border-gray-200"></div>
+      <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
     </div>
     <div class="relative flex justify-center ">
-      <span class="bg-white px-2 text-gray-200">
+      <span class="bg-white dark:bg-gray-900 px-2 text-gray-200 dark:text-gray-700">
         <i class="text-xs far fa-square"></i>
       </span>
     </div>
@@ -14,7 +14,7 @@
 
   <!-- footer msg -->
   <div class="flex flex-wrap items-center justify-center">
-    <div class="text-sm text-gray-300">
+    <div class="text-sm text-gray-300 dark:text-gray-600">
       © <span id="get-current-year"></span>
       {% if site.footer-msg %}
       <a href="{{site.footer-msg-link}}" class="!no-underline">
