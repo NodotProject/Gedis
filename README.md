@@ -8,6 +8,10 @@
     An in-memory, Redis-like datastore for Godot.
 </p>
 
+<p align="center">
+    <a href="https://nodotproject.github.io/Gedis/"><img src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+</p>
+
 [![Discord](https://img.shields.io/discord/1089846386566111322)](https://discord.gg/Rx9CZX4sjG) [![Mastodon](https://img.shields.io/mastodon/follow/110106863700290562?domain=mastodon.gamedev.place)](https://mastodon.gamedev.place/@krazyjakee) [![Youtube](https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ)](https://www.youtube.com/@GodotNodot) [![GitHub Sponsors](https://img.shields.io/github/sponsors/krazyjakee)](https://github.com/sponsors/krazyjakee) [![GitHub Stars](https://img.shields.io/github/stars/NodotProject/Gedis)](https://github.com/NodotProject/Gedis)
 
 ![Stats](https://repobeats.axiom.co/api/embed/2a34f9ee10e86a04db97091d90c892c07c8314d1.svg "Repobeats analytics image")
@@ -63,6 +67,22 @@ This addon is implemented in GDScript and does not require native compilation. T
 3.  **Contribute**:
 
     Create a branch, make your changes, and open a pull request describing the work.
+
+## 💖 Support Me
+Hi! I’m krazyjakee 🎮, creator and maintain­er of the *NodotProject* - a suite of open‑source Godot tools (e.g. Nodot, Gedis etc) that empower game developers to build faster and maintain cleaner code.
+
+I’m looking for sponsors to help sustain and grow the project: more dev time, better docs, more features, and deeper community support. Your support means more stable, polished tools used by indie makers and studios alike.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/krazyjakee)
+
+Every contribution helps maintain and improve this project. And encourage me to make more projects like this!
+
+*This is optional support. The tool remains free and open-source regardless.*
+
+---
+
+**Created with ❤️ for Godot Developers**  
+For contributions, please open issues on GitHub
 
 ## License
 
