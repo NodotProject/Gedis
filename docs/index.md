@@ -1,4 +1,8 @@
-# Gedis
+---
+layout: home
+title: Home
+permalink: /
+---
 
 <p align="center">
     <img width="512" height="512" alt="image" src="https://github.com/NodotProject/gedis/blob/main/addons/Gedis/icon.png?raw=true" />
@@ -9,20 +13,14 @@
 </p>
 
 <p align="center">
-    <a href="https://nodotproject.github.io/Gedis/"><img src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+    <a href="https://discord.gg/Rx9CZX4sjG"><img class="inline" src="https://img.shields.io/discord/1089846386566111322" alt="Discord"></a>
+    <a href="https://mastodon.gamedev.place/@krazyjakee"><img class="inline" src="https://img.shields.io/mastodon/follow/110106863700290562?domain=mastodon.gamedev.place" alt="Mastodon"></a>
+    <a href="https://www.youtube.com/@GodotNodot"><img class="inline" src="https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ" alt="Youtube"></a>
+    <a href="https://github.com/sponsors/krazyjakee"><img class="inline" src="https://img.shields.io/github/sponsors/krazyjakee" alt="GitHub Sponsors"></a>
+    <a href="https://github.com/NodotProject/Gedis"><img class="inline" src="https://img.shields.io/github/stars/NodotProject/Gedis" alt="GitHub Stars"></a>
 </p>
 
-[![Discord](https://img.shields.io/discord/1089846386566111322)](https://discord.gg/Rx9CZX4sjG) [![Mastodon](https://img.shields.io/mastodon/follow/110106863700290562?domain=mastodon.gamedev.place)](https://mastodon.gamedev.place/@krazyjakee) [![Youtube](https://img.shields.io/youtube/channel/subscribers/UColWkNMgHseKyU7D1QGeoyQ)](https://www.youtube.com/@GodotNodot) [![GitHub Sponsors](https://img.shields.io/github/sponsors/krazyjakee)](https://github.com/sponsors/krazyjakee) [![GitHub Stars](https://img.shields.io/github/stars/NodotProject/Gedis)](https://github.com/NodotProject/Gedis)
-
 ![Stats](https://repobeats.axiom.co/api/embed/2a34f9ee10e86a04db97091d90c892c07c8314d1.svg "Repobeats analytics image")
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Installation](#installation)
-- [Contribution Instructions](#contribution-instructions)
-- [License](#license)
 
 ## Overview
 
@@ -42,43 +40,11 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
 - **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`, `zscore`, `zrank`).
 
-<p align="center">
-    <a href="https://nodotproject.github.io/Gedis/"><img src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
-</p>
+## Debugger
 
-## Installation
+Gedis comes with a debugger interface!
 
-### From AssetLib
-
-You can install Gedis directly from the Godot Asset Library: Gedis
-
-Then, enable the plugin in **Project -> Project Settings -> Plugins**.
-
-### Manual Installation
-
-1.  Copy the entire `addons/Gedis` folder into your Godot project's `addons` directory.
-2.  In Godot, go to **Project -> Project Settings -> Plugins** and enable the "Gedis" plugin.
-3.  The plugin will register an autoloaded singleton named `Gedis`, which is now available globally in your scripts.
-
-## Contribution Instructions
-
-This addon is implemented in GDScript and does not require native compilation. To work on or test the addon, follow these steps:
-
-1.  **Clone the repository**:
-
-    ```sh
-    git clone --recursive https://github.com/NodotProject/Gedis.git
-    cd Gedis
-    ```
-
-2.  **Develop & Test**:
-
-    - The addon code lives under `addons/Gedis`. Copy that folder into your Godot project's `addons` directory to test changes.
-    - Run the project's test suite with `./run_tests.sh`.
-
-3.  **Contribute**:
-
-    Create a branch, make your changes, and open a pull request describing the work.
+![Gedis Debugger](debugger.png)
 
 ## 💖 Support Me
 Hi! I’m krazyjakee 🎮, creator and maintain­er of the *NodotProject* - a suite of open‑source Godot tools (e.g. Nodot, Gedis etc) that empower game developers to build faster and maintain cleaner code.
@@ -95,7 +61,3 @@ Every contribution helps maintain and improve this project. And encourage me to 
 
 **Created with ❤️ for Godot Developers**  
 For contributions, please open issues on GitHub
-
-## License
-
-MIT — see LICENSE for details.

@@ -70,6 +70,11 @@ class GedisDebuggerPlugin extends EditorDebuggerPlugin:
 		_pubsub_events[session_id] = []
 
 	func _on_session_started(session_id):
+		full_snapshot_data[session_id] = {}
+		_clear_views(session_id)
+		_populate_pubsub_events(session_id)
+		_update_pubsub_tree(session_id, {}, {})
+		
 		var dashboard = dashboard_tabs[session_id]
 		
 		var instance_selector = dashboard.find_child("instance_selector", true, false)

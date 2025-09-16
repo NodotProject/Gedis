@@ -1,51 +1,98 @@
 extends GutTest
 
-var g
+var gedis = null
+
+func before_all():
+	gedis = Gedis.new()
+	gedis.flushdb()
+
+func after_all():
+	gedis.free()
 
 func before_each():
-	self.g = Gedis.new()
+	gedis.flushdb()
 
-func after_each():
-	g.free()
+func test_hincrby_field_does_not_exist():
+	gedis.hset("key1", "field1", 10)
+	var result = gedis.hincrby("key1", "field2", 5)
+	assert_eq(result, 5)
+	assert_eq(gedis.hget("key1", "field2"), 5)
 
-func test_hset_hget_and_default():
-	g.hset("h", "a", 10)
-	g.hset("h", "b", 20)
-	assert_eq(g.hget("h", "a"), 10)
-	assert_eq(g.hget("h", "missing", 99), 99)
+func test_hincrby_field_exists():
+	gedis.hset("key1", "field1", 10)
+	var result = gedis.hincrby("key1", "field1", 5)
+	assert_eq(result, 15)
+	assert_eq(gedis.hget("key1", "field1"), 15)
 
-func test_hdel_and_hgetall():
-	g.hset("h", "a", 10)
-	g.hset("h", "b", 20)
-	assert_eq(g.hdel("h", "a"), 1)
-	assert_eq(g.hdel("h", "a"), 0)
-	var all = g.hgetall("h")
-	assert_eq(all.size(), 1)
-	assert_true(all.has("b"))
+func test_hincrbyfloat_field_does_not_exist():
+	gedis.hset("key1", "field1", 10.5)
+	var result = gedis.hincrbyfloat("key1", "field2", 5.5)
+	assert_eq(result, 5.5)
+	assert_eq(gedis.hget("key1", "field2"), 5.5)
 
+func test_hincrbyfloat_field_exists():
+	gedis.hset("key1", "field1", 10.5)
+	var result = gedis.hincrbyfloat("key1", "field1", 5.5)
+	assert_eq(result, 16.0)
+	assert_eq(gedis.hget("key1", "field1"), 16.0)
+
+func test_hmget_all_fields_exist():
+	gedis.hset("key1", "field1", "value1")
+	gedis.hset("key1", "field2", "value2")
+	var result = gedis.hmget("key1", ["field1", "field2"])
+	assert_eq(result, ["value1", "value2"])
+
+func test_hmget_some_fields_exist():
+	gedis.hset("key1", "field1", "value1")
+	var result = gedis.hmget("key1", ["field1", "field2"])
+	assert_eq(result, ["value1", null])
+
+func test_hmset():
+	gedis.hmset("key1", {"field1": "value1", "field2": "value2"})
+	assert_eq(gedis.hget("key1", "field1"), "value1")
+	assert_eq(gedis.hget("key1", "field2"), "value2")
+
+func test_hdel_single_field():
+	gedis.hset("key1", "field1", "value1")
+	var result = gedis.hdel("key1", "field1")
+	assert_eq(result, 1)
+	assert_null(gedis.hget("key1", "field1"))
+
+func test_hdel_multiple_fields():
+	gedis.hset("key1", "field1", "value1")
+	gedis.hset("key1", "field2", "value2")
+	var result = gedis.hdel("key1", ["field1", "field2"])
+	assert_eq(result, 2)
+	assert_null(gedis.hget("key1", "field1"))
+	assert_null(gedis.hget("key1", "field2"))
+
+func test_hgetall():
+	gedis.hset("key1", "field1", "value1")
+	gedis.hset("key1", "field2", "value2")
+	var result = gedis.hgetall("key1")
+	assert_eq(result, {"field1": "value1", "field2": "value2"})
+
+func test_hexists_field_exists():
+	gedis.hset("key1", "field1", "value1")
+	assert_true(gedis.hexists("key1", "field1"))
+
+func test_hexists_field_does_not_exist():
+	assert_false(gedis.hexists("key1", "field1"))
 
 func test_hkeys():
-	g.hset("h", "a", 10)
-	g.hset("h", "b", 20)
-	var keys = g.hkeys("h")
-	assert_eq(keys.size(), 2)
-	assert_true(keys.has("a"))
-	assert_true(keys.has("b"))
+	gedis.hset("key1", "field1", "value1")
+	gedis.hset("key1", "field2", "value2")
+	var result = gedis.hkeys("key1")
+	assert_eq(result, ["field1", "field2"])
 
 func test_hvals():
-	g.hset("h", "a", 10)
-	g.hset("h", "b", 20)
-	var vals = g.hvals("h")
-	assert_eq(vals.size(), 2)
-	assert_true(vals.has(10))
-	assert_true(vals.has(20))
-
-func test_hexists():
-	g.hset("h", "a", 10)
-	assert_true(g.hexists("h", "a"))
-	assert_false(g.hexists("h", "b"))
+	gedis.hset("key1", "field1", "value1")
+	gedis.hset("key1", "field2", "value2")
+	var result = gedis.hvals("key1")
+	assert_eq(result, ["value1", "value2"])
 
 func test_hlen():
-	g.hset("h", "a", 10)
-	g.hset("h", "b", 20)
-	assert_eq(g.hlen("h"), 2)
+	gedis.hset("key1", "field1", "value1")
+	gedis.hset("key1", "field2", "value2")
+	var result = gedis.hlen("key1")
+	assert_eq(result, 2)

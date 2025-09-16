@@ -121,7 +121,7 @@ func type(key: String) -> String:
 	if _gedis._core._sets.has(key):
 		return "set"
 	if _gedis._core._sorted_sets.has(key):
-		return "sorted_set"
+		return "zset"
 	return "none"
 
 func dump(key: String) -> Dictionary:
@@ -130,6 +130,7 @@ func dump(key: String) -> Dictionary:
 		return {}
 	var d: Dictionary = {}
 	d["type"] = t
+	d["ttl"] = _gedis.ttl(key)
 	match t:
 		"string":
 			d["value"] = _gedis._core._store.get(key, null)
@@ -139,7 +140,7 @@ func dump(key: String) -> Dictionary:
 			d["value"] = _gedis._core._lists.get(key, []).duplicate()
 		"set":
 			d["value"] = _gedis._core._sets.get(key, {}).keys()
-		"sorted_set":
+		"zset":
 			var data = _gedis._core._sorted_sets.get(key, {})
 			var value = []
 			if data.has("sorted_set"):
