@@ -108,6 +108,26 @@ func restore(state: Dictionary) -> void:
 	for key in _expiry.keys():
 		if _expiry[key] < now:
 			_delete_all_types_for_key(key)
+
+func restore_key(key: String, data: Dictionary) -> void:
+	_delete_all_types_for_key(key)
+	var value = data["value"]
+	var type = data["type"]
+
+	if type == "string":
+		_store[key] = value
+	elif type == "hash":
+		_hashes[key] = value
+	elif type == "list":
+		_lists[key] = value
+	elif type == "set":
+		_sets[key] = value
+	elif type == "sorted_set":
+		_sorted_sets[key] = value
+	
+	if data.has("expiry"):
+		_expiry[key] = data["expiry"]
+		
 func rename(key: String, newkey: String) -> int:
 	if not key_exists(key):
 		return ERR_DOES_NOT_EXIST

@@ -123,3 +123,39 @@ func test_ltrim_out_of_bounds():
 	gedis.rpush("key1", ["a", "b", "c"])
 	assert_true(gedis.ltrim("key1", 1, 5))
 	assert_eq(gedis.lget("key1"), ["b", "c"])
+
+func test_lmove():
+	gedis.rpush("source", ["one", "two", "three"])
+	gedis.rpush("destination", ["four", "five", "six"])
+
+	# LEFT to LEFT
+	assert_eq(gedis.lmove("source", "destination", "LEFT", "LEFT"), "one")
+	assert_eq(gedis.lget("source"), ["two", "three"])
+	assert_eq(gedis.lget("destination"), ["one", "four", "five", "six"])
+
+	# LEFT to RIGHT
+	assert_eq(gedis.lmove("source", "destination", "LEFT", "RIGHT"), "two")
+	assert_eq(gedis.lget("source"), ["three"])
+	assert_eq(gedis.lget("destination"), ["one", "four", "five", "six", "two"])
+
+	# RIGHT to LEFT
+	gedis.rpush("source2", ["seven", "eight", "nine"])
+	assert_eq(gedis.lmove("source2", "destination", "RIGHT", "LEFT"), "nine")
+	assert_eq(gedis.lget("source2"), ["seven", "eight"])
+	assert_eq(gedis.lget("destination"), ["nine", "one", "four", "five", "six", "two"])
+
+	# RIGHT to RIGHT
+	assert_eq(gedis.lmove("source2", "destination", "RIGHT", "RIGHT"), "eight")
+	assert_eq(gedis.lget("source2"), ["seven"])
+	assert_eq(gedis.lget("destination"), ["nine", "one", "four", "five", "six", "two", "eight"])
+
+func test_lmove_source_not_found():
+	gedis.rpush("destination", ["one", "two", "three"])
+	assert_null(gedis.lmove("nonexistent", "destination", "LEFT", "LEFT"))
+	assert_eq(gedis.lget("destination"), ["one", "two", "three"])
+
+func test_lmove_destination_not_found():
+	gedis.rpush("source", ["one", "two", "three"])
+	assert_eq(gedis.lmove("source", "nonexistent", "LEFT", "LEFT"), "one")
+	assert_eq(gedis.lget("source"), ["two", "three"])
+	assert_eq(gedis.lget("nonexistent"), ["one"])

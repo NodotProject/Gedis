@@ -15,3 +15,15 @@ func load(options: Dictionary) -> Dictionary:
 	# It should load the data from the persistence layer and return it as a Dictionary.
 	push_error("load() not implemented in the persistence backend.")
 	return {}
+
+func serialize(data: Dictionary) -> String:
+	# This method should be implemented by the child class.
+	# It should serialize the data to a string.
+	push_error("serialize() not implemented in the persistence backend.")
+	return ""
+
+func deserialize(data: String) -> Dictionary:
+	# This method should be implemented by the child class.
+	# It should deserialize the data from a string.
+	push_error("deserialize() not implemented in the persistence backend.")
+	return {}

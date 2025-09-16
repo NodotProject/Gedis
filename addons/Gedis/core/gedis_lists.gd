@@ -166,9 +166,9 @@ func lmove(source: String, destination: String, from: String, to: String):
 		return null
 
 	var element
-	if from == "LEFT":
+	if from.to_upper() == "LEFT":
 		element = source_list.pop_front()
-	elif from == "RIGHT":
+	elif from.to_upper() == "RIGHT":
 		element = source_list.pop_back()
 	else:
 		return null
@@ -176,13 +176,13 @@ func lmove(source: String, destination: String, from: String, to: String):
 	_gedis._core._touch_type(destination, _gedis._core._lists)
 	var dest_list: Array = _gedis._core._lists.get(destination, [])
 
-	if to == "LEFT":
+	if to.to_upper() == "LEFT":
 		dest_list.insert(0, element)
-	elif to == "RIGHT":
+	elif to.to_upper() == "RIGHT":
 		dest_list.append(element)
 	else:
 		# Invalid 'to', restore source list and return error
-		if from == "LEFT":
+		if from.to_upper() == "LEFT":
 			source_list.insert(0, element)
 		else:
 			source_list.append(element)

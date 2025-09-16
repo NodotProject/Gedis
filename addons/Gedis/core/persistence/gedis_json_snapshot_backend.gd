@@ -59,9 +59,49 @@ func load(options: Dictionary) -> Dictionary:
 	# Deserialize variants from strings
 	for bucket_name in loaded_data:
 		var bucket = loaded_data[bucket_name]
+		if typeof(bucket) == TYPE_DICTIONARY:
+			for key in bucket:
+				var value = bucket[key]
+				if typeof(value) == TYPE_STRING and value.begins_with("@"):
+					bucket[key] = str_to_var(value)
+		elif typeof(bucket) == TYPE_STRING and bucket.begins_with("@"):
+			loaded_data[bucket_name] = str_to_var(bucket)
+	
+	return loaded_data
+
+func serialize(data: Dictionary) -> String:
+	var serializable_data = {}
+	for bucket_name in data:
+		var bucket = data[bucket_name]
+		var serializable_bucket = {}
 		for key in bucket:
 			var value = bucket[key]
-			if typeof(value) == TYPE_STRING and value.begins_with("@"):
-				bucket[key] = str_to_var(value)
+			if typeof(value) in [TYPE_OBJECT, TYPE_RID, TYPE_CALLABLE, TYPE_SIGNAL]:
+				serializable_bucket[key] = var_to_str(value)
+			else:
+				serializable_bucket[key] = value
+		serializable_data[bucket_name] = serializable_bucket
+	
+	return JSON.stringify(serializable_data, "\t")
+
+func deserialize(data: String) -> Dictionary:
+	var json = JSON.new()
+	var error = json.parse(data)
+	if error != OK:
+		push_error("Failed to parse JSON from string")
+		return {}
+
+	var loaded_data: Dictionary = json.get_data()
+
+	# Deserialize variants from strings
+	for bucket_name in loaded_data:
+		var bucket = loaded_data[bucket_name]
+		if typeof(bucket) == TYPE_DICTIONARY:
+			for key in bucket:
+				var value = bucket[key]
+				if typeof(value) == TYPE_STRING and value.begins_with("@"):
+					bucket[key] = str_to_var(value)
+		elif typeof(bucket) == TYPE_STRING and bucket.begins_with("@"):
+			loaded_data[bucket_name] = str_to_var(bucket)
 	
 	return loaded_data

@@ -255,6 +255,11 @@ func ltrim(key: String, start: int, stop: int) -> bool:
 ## Inserts a value into a list before or after a pivot value.
 func linsert(key: String, position: String, pivot, value) -> int:
 	return _lists.linsert(key, position, pivot, value)
+
+## Atomically returns and removes the first/last element of the list stored at source and pushes the element at the first/last element of the list stored at destination.
+func lmove(source: String, destination: String, from: String, to: String):
+	return _lists.lmove(source, destination, from, to)
+	
 # Sets
 ## Adds one or more members to a set.
 func sadd(key: String, member) -> int:
@@ -470,6 +475,26 @@ func load(path: String, options: Dictionary = {}) -> int:
 		return FAILED
 
 	_core.restore(data)
+	return OK
+
+## Restores a key from a serialized value.
+func restore(key: String, data: String, backend: String = "") -> int:
+	var persistence_backend: GedisPersistenceBackend
+	if backend.is_empty():
+		if _default_persistence_backend.is_empty():
+			register_persistence_backend("json", GedisJSONSnapshotBackend.new())
+			set_default_persistence_backend("json")
+		persistence_backend = _persistence_backends[_default_persistence_backend]
+	elif _persistence_backends.has(backend):
+		persistence_backend = _persistence_backends[backend]
+	else:
+		return FAILED
+
+	var deserialized_data = persistence_backend.deserialize(data)
+	if deserialized_data.is_empty():
+		return FAILED
+	
+	_core.restore_key(key, deserialized_data)
 	return OK
 
 # Debugger
