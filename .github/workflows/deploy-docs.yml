@@ -1,33 +1,50 @@
-name: Deploy Docs to gh-pages
+name: Deploy Documentation to gh-pages
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout
+      - name: Checkout main branch
         uses: actions/checkout@v3
-
-      - name: Set up Ruby
-        uses: actions/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: bundle install
+      - name: Sync Docs to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Build Jekyll site
-        run: bundle exec jekyll build
+          # Fetch and switch to gh-pages
+          git fetch origin gh-pages
+          git checkout gh-pages
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          keep_files: true
+          # Grab Docs/ folder from main
+          git checkout origin/main -- Docs/
+
+          # Copy contents to root and clean up
+          if [ -d "Docs" ]; then
+            cp -a Docs/. .
+            rm -rf Docs/
+          else
+            echo "Docs/ directory not found."
+            exit 0
+          fi
+
+          # Stage all changes
+          git add -A
+
+          # Commit & push if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "Deploy Docs: Sync documentation from main branch"
+            git push --force-with-lease origin gh-pages
+          else
+            echo "No changes to commit."
+          fi
