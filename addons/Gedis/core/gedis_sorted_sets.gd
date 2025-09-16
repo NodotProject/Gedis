@@ -146,6 +146,7 @@ func _zrange(key: String, start, stop, withscores: bool, reverse: bool) -> Array
 # @param max_score: The maximum score of the range.
 # @param withscores: Whether to return scores along with members.
 # @return: An array of members, or an array of [member, score] pairs if withscores is true.
+# Returns a range of members from the sorted set, ordered by score.
 func zrangebyscore(key: String, min_score, max_score, withscores: bool = false) -> Array:
 	if _gedis._expiry._is_expired(key):
 		return []
@@ -170,6 +171,7 @@ func zrangebyscore(key: String, min_score, max_score, withscores: bool = false) 
 # @param max_score: The maximum score of the range.
 # @param withscores: Whether to return scores along with members.
 # @return: An array of members, or an array of [member, score] pairs if withscores is true.
+# Returns a range of members from the sorted set, ordered by score in reverse.
 func zrevrangebyscore(key: String, min_score, max_score, withscores: bool = false) -> Array:
 	var result = zrangebyscore(key, min_score, max_score, withscores)
 	result.reverse()
@@ -205,6 +207,11 @@ func pop_ready(key: String, now: int) -> Array:
 	return ready_members
 
 
+# Returns the score of a member in the sorted set.
+# ---
+# @param key: The key of the sorted set.
+# @param member: The member to get the score of.
+# @return: The score of the member, or null if the member does not exist.
 func zscore(key: String, member: String) -> Variant:
 	if _gedis._expiry._is_expired(key):
 		return null
@@ -218,6 +225,12 @@ func zscore(key: String, member: String) -> Variant:
 	return data.member_scores[member]
 
 
+# Returns the rank of a member in the sorted set, with scores ordered from low to high.
+# The rank is 0-based.
+# ---
+# @param key: The key of the sorted set.
+# @param member: The member to get the rank of.
+# @return: The rank of the member, or null if the member does not exist.
 func zrank(key: String, member: String) -> Variant:
 	if _gedis._expiry._is_expired(key):
 		return null
@@ -234,6 +247,12 @@ func zrank(key: String, member: String) -> Variant:
 	return null
 
 
+# Returns the rank of a member in the sorted set, with scores ordered from high to low.
+# The rank is 0-based.
+# ---
+# @param key: The key of the sorted set.
+# @param member: The member to get the rank of.
+# @return: The rank of the member, or null if the member does not exist.
 func zrevrank(key: String, member: String) -> Variant:
 	if _gedis._expiry._is_expired(key):
 		return null
@@ -250,6 +269,12 @@ func zrevrank(key: String, member: String) -> Variant:
 	return null
 
 
+# Returns the number of members in a sorted set with scores within the given range.
+# ---
+# @param key: The key of the sorted set.
+# @param min_score: The minimum score of the range.
+# @param max_score: The maximum score of the range.
+# @return: The number of members in the specified score range.
 func zcount(key: String, min_score, max_score) -> int:
 	if _gedis._expiry._is_expired(key):
 		return 0
@@ -265,6 +290,13 @@ func zcount(key: String, min_score, max_score) -> int:
 	return count
 
 
+# Increments the score of a member in a sorted set.
+# If the member does not exist, it is added with the increment as its score.
+# ---
+# @param key: The key of the sorted set.
+# @param increment: The amount to increment the score by.
+# @param member: The member whose score to increment.
+# @return: The new score of the member.
 func zincrby(key: String, increment, member: String) -> Variant:
 	_gedis._core._touch_type(key, _gedis._core._sorted_sets)
 	var current_score = zscore(key, member)
@@ -274,6 +306,12 @@ func zincrby(key: String, increment, member: String) -> Variant:
 	add(key, member, new_score)
 	return new_score
 
+# Computes the union of multiple sorted sets and stores the result in a new sorted set.
+# ---
+# @param destination: The key to store the resulting sorted set in.
+# @param keys: An array of sorted set keys.
+# @param aggregate: The aggregation strategy for scores of the same member ("SUM", "MIN", "MAX").
+# @return: The number of members in the resulting sorted set.
 func zunionstore(destination: String, keys: Array, aggregate: String = "SUM") -> int:
 	var temp_scores: Dictionary = {}
 	for key in keys:
@@ -304,6 +342,12 @@ func zunionstore(destination: String, keys: Array, aggregate: String = "SUM") ->
 	return _gedis._core._sorted_sets[destination].sorted_set.size()
 
 
+# Computes the intersection of multiple sorted sets and stores the result in a new sorted set.
+# ---
+# @param destination: The key to store the resulting sorted set in.
+# @param keys: An array of sorted set keys.
+# @param aggregate: The aggregation strategy for scores of the same member ("SUM", "MIN", "MAX").
+# @return: The number of members in the resulting sorted set.
 func zinterstore(destination: String, keys: Array, aggregate: String = "SUM") -> int:
 	if keys.is_empty():
 		return 0

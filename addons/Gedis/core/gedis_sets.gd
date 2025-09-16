@@ -77,6 +77,10 @@ func smove(source: String, destination: String, member) -> bool:
 	sadd(destination, member)
 	return true
 
+# Computes the union of multiple sets.
+# ---
+# @param keys: An array of set keys.
+# @return: An array containing the members of the resulting union set.
 func sunion(keys: Array) -> Array:
 	var result_set := {}
 	for key in keys:
@@ -85,6 +89,10 @@ func sunion(keys: Array) -> Array:
 			result_set[member] = true
 	return result_set.keys()
 
+# Computes the intersection of multiple sets.
+# ---
+# @param keys: An array of set keys.
+# @return: An array containing the members of the resulting intersection set.
 func sinter(keys: Array) -> Array:
 	if keys.is_empty():
 		return []
@@ -103,6 +111,11 @@ func sinter(keys: Array) -> Array:
 	
 	return result_set.keys()
 
+# Computes the difference between multiple sets.
+# The difference is calculated as the members of the first set minus the members of all subsequent sets.
+# ---
+# @param keys: An array of set keys. The first key is the set to subtract from.
+# @return: An array containing the members of the resulting difference set.
 func sdiff(keys: Array) -> Array:
 	if keys.is_empty():
 		return []
@@ -120,6 +133,11 @@ func sdiff(keys: Array) -> Array:
 
 	return result_set.keys()
 
+# Computes the union of multiple sets and stores the result in a new set.
+# ---
+# @param destination: The key to store the resulting union set in.
+# @param keys: An array of set keys.
+# @return: The number of members in the resulting union set.
 func sunionstore(destination: String, keys: Array) -> int:
 	var result_members = sunion(keys)
 	_gedis._core._sets.erase(destination)
@@ -127,6 +145,11 @@ func sunionstore(destination: String, keys: Array) -> int:
 		sadd(destination, member)
 	return result_members.size()
 
+# Computes the intersection of multiple sets and stores the result in a new set.
+# ---
+# @param destination: The key to store the resulting intersection set in.
+# @param keys: An array of set keys.
+# @return: The number of members in the resulting intersection set.
 func sinterstore(destination: String, keys: Array) -> int:
 	var result_members = sinter(keys)
 	_gedis._core._sets.erase(destination)
@@ -134,6 +157,11 @@ func sinterstore(destination: String, keys: Array) -> int:
 		sadd(destination, member)
 	return result_members.size()
 
+# Computes the difference between multiple sets and stores the result in a new set.
+# ---
+# @param destination: The key to store the resulting difference set in.
+# @param keys: An array of set keys. The first key is the set to subtract from.
+# @return: The number of members in the resulting difference set.
 func sdiffstore(destination: String, keys: Array) -> int:
 	var result_members = sdiff(keys)
 	_gedis._core._sets.erase(destination)
@@ -141,6 +169,11 @@ func sdiffstore(destination: String, keys: Array) -> int:
 		sadd(destination, member)
 	return result_members.size()
 
+# Gets one or more random members from a set.
+# ---
+# @param key: The key of the set.
+# @param count: The number of random members to return. If positive, returns unique members. If negative, allows for repetitions.
+# @return: A single random member if count is 1, or an array of random members. Returns null or an empty array if the set is empty.
 func srandmember(key: String, count: int = 1):
 	if _gedis._expiry._is_expired(key):
 		return null if count == 1 else []

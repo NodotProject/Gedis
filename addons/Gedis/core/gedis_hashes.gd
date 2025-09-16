@@ -23,6 +23,11 @@ func hget(key: String, field: String, default_value: Variant = null):
 	var d: Dictionary = _gedis._core._hashes.get(key, {})
 	return d.get(field, default_value)
 
+# Gets the values of multiple fields in a hash.
+# ---
+# @param key: The key of the hash.
+# @param fields: An array of fields to get the values of.
+# @return: An array of values for the given fields. If a field does not exist, the corresponding value in the array will be null.
 func hmget(key: String, fields: Array) -> Array:
 	if _gedis._expiry._is_expired(key):
 		return fields.map(func(_field): return null)
@@ -32,6 +37,10 @@ func hmget(key: String, fields: Array) -> Array:
 		result.append(d.get(field, null))
 	return result
 
+# Sets multiple fields and their values in a hash.
+# ---
+# @param key: The key of the hash.
+# @param field_value_pairs: A dictionary of field-value pairs to set.
 func hmset(key: String, field_value_pairs: Dictionary) -> void:
 	_gedis._core._touch_type(key, _gedis._core._hashes)
 	var d: Dictionary = _gedis._core._hashes.get(key, {})

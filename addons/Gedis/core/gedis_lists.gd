@@ -195,6 +195,14 @@ func lmove(source: String, destination: String, from: String, to: String):
 	_gedis._core._lists[destination] = dest_list
 
 	return element
+# Trims a list to the specified range of indices.
+# Removes all elements from the list that are not in the range [start, stop].
+# If start is greater than stop, or start is out of bounds, the list will be emptied.
+# ---
+# @param key: The key of the list to trim.
+# @param start: The starting index of the range.
+# @param stop: The ending index of the range.
+# @return: Returns true if the list was trimmed, false otherwise.
 func ltrim(key: String, start: int, stop: int) -> bool:
 	if _gedis._expiry._is_expired(key):
 		return false
@@ -223,6 +231,13 @@ func ltrim(key: String, start: int, stop: int) -> bool:
 	_gedis._core._lists[key] = trimmed_list
 	return true
 
+# Inserts a value into a list before or after a pivot value.
+# ---
+# @param key: The key of the list.
+# @param position: "BEFORE" or "AFTER" the pivot.
+# @param pivot: The value to insert the new value next to.
+# @param value: The value to insert.
+# @return: The new size of the list, or -1 if the pivot was not found. Returns 0 if the key does not exist or the position is invalid.
 func linsert(key: String, position: String, pivot: Variant, value: Variant) -> int:
 	if _gedis._expiry._is_expired(key):
 		return 0
