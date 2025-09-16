@@ -32,7 +32,7 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 
 ## Features
 
-- **Strings**: Basic key-value storage (`set_value`, `get_value`, `incr`, `decr`).
+- **Variants**: Basic key-value storage (`set_value`, `get_value`, `incr`, `decr`).
 - **Hashes**: Store object-like structures with fields and values (`hset`, `hget`, `hgetall`).
 - **Lists**: Ordered collections of strings, useful for queues and stacks (`lpush`, `rpush`, `lpop`).
 - **Sets**: Unordered collections of unique strings (`sadd`, `srem`, `smembers`).
