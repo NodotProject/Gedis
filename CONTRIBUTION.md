@@ -8,6 +8,7 @@ This addon is implemented in GDScript and does not require native compilation. T
 - Documentation is in the `docs` folder.
 - Tests live in the `tests` directory.
 - Run the project's test suite with `./run_tests.sh`.
+- Run specific tests with `./run_tests.sh sets`
 
 3.  **Contribute**:
 

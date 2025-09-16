@@ -38,8 +38,8 @@ var name = gedis.get_value("player_name") # "Alice"
 
 # Increment/decrement a numeric value
 gedis.set_value("score", 100)
-gedis.incr("score") # 101
-gedis.decr("score") # 99
+gedis.incrby("score") # 101
+gedis.decrby("score") # 99
 ```
 
 ### Hashes

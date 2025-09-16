@@ -17,10 +17,10 @@ func test_set_get():
 	assert_eq(gedis.get_value("a"), "1", "get_value should return what was set")
 	assert_eq(gedis.get_value("missing"), null, "get_value should return null when missing")
 
-func test_incr_decr():
-	assert_eq(gedis.incr("n"), 1, "incr on non-existent key should return 1")
-	assert_eq(gedis.incr("n"), 2, "incr should increment existing value")
-	assert_eq(gedis.decr("n"), 1, "decr should decrement existing value")
+func test_incr_decrby():
+	assert_eq(gedis.incrby("n"), 1, "incr on non-existent key should return 1")
+	assert_eq(gedis.incrby("n"), 2, "incr should increment existing value")
+	assert_eq(gedis.decrby("n"), 1, "decr should decrement existing value")
 
 func test_del_exists_and_keys():
 	gedis.set_value("user:1", "ok")
@@ -93,3 +93,39 @@ func test_move_success():
 	assert_eq(gedis.get_value("key1"), null)
 	assert_eq(gedis.get_value("key2"), "value1")
 	assert_eq(gedis.get_value("key2"), "value1")
+
+
+func test_mset_mget():
+	gedis.mset({"a": "1", "b": "2", "c": "3"})
+	var values = gedis.mget(["a", "b", "c", "missing"])
+	assert_eq(values, ["1", "2", "3", null], "mget should return set values and null for missing")
+
+func test_append():
+	gedis.set_value("a", "Hello")
+	var new_len = gedis.append("a", " World")
+	assert_eq(new_len, 11, "append should return the new length of the string")
+	assert_eq(gedis.get_value("a"), "Hello World", "append should concatenate the strings")
+	assert_eq(gedis.append("missing", "value"), 5, "append on a missing key should create it")
+
+func test_strlen():
+	gedis.set_value("a", "Hello")
+	assert_eq(gedis.strlen("a"), 5, "strlen should return the length of the string")
+	assert_eq(gedis.strlen("missing"), 0, "strlen on a missing key should return 0")
+	gedis.set_value("b", 123)
+	assert_eq(gedis.strlen("b"), 0, "strlen on a non-string value should return 0")
+
+func test_incrby_decrby():
+	gedis.set_value("n", "10")
+	assert_eq(gedis.incrby("n", 5), 15, "incrby should increment by the given amount")
+	assert_eq(gedis.decrby("n", 5), 10, "decrby should decrement by the given amount")
+	assert_eq(gedis.incrby("missing", 5), 5, "incrby on a missing key should start from 0")
+
+func test_randomkey_dbsize():
+	assert_eq(gedis.dbsize(), 0, "dbsize should be 0 for an empty database")
+	assert_eq(gedis.randomkey(), "", "randomkey should return an empty string for an empty database")
+	gedis.set_value("a", "1")
+	gedis.set_value("b", "2")
+	gedis.set_value("c", "3")
+	assert_eq(gedis.dbsize(), 3, "dbsize should return the number of keys")
+	var key = gedis.randomkey()
+	assert_true(key in ["a", "b", "c"], "randomkey should return a key from the database")

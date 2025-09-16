@@ -58,7 +58,7 @@ func exists(keys) -> Variant:
 func key_exists(key: String) -> bool:
 	return bool(exists(key))
 
-func incr(key: String, amount: int = 1) -> int:
+func incrby(key: String, amount: int = 1) -> int:
 	var k := str(key)
 	var current: int = 0
 	if _gedis._expiry._is_expired(k):
@@ -87,8 +87,8 @@ func incr(key: String, amount: int = 1) -> int:
 	_gedis._core._store[k] = v
 	return v
 
-func decr(key: String, amount: int = 1) -> int:
-	return incr(key, -int(amount))
+func decrby(key: String, amount: int = 1) -> int:
+	return incrby(key, -int(amount))
 
 func keys(pattern: String = "*") -> Array:
 	var all: Dictionary = _gedis._core._get_all_keys()

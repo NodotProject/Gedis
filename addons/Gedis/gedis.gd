@@ -104,12 +104,12 @@ func key_exists(key: String) -> bool:
 	return _strings.key_exists(key)
 
 ## Increments the integer value of a key by a given amount.
-func incr(key: String, amount: int = 1) -> int:
-	return _strings.incr(key, amount)
+func incrby(key: String, amount: int = 1) -> int:
+	return _strings.incrby(key, amount)
 
 ## Decrements the integer value of a key by a given amount.
-func decr(key: String, amount: int = 1) -> int:
-	return _strings.decr(key, amount)
+func decrby(key: String, amount: int = 1) -> int:
+	return _strings.decrby(key, amount)
 
 ## Gets all keys matching a pattern.
 func keys(pattern: String = "*") -> Array:
@@ -135,14 +135,6 @@ func getset(key: String, value: Variant) -> Variant:
 func strlen(key: String) -> int:
 	return _strings.strlen(key)
 
-## Increments the integer value of a key by a given amount.
-func incrby(key: String, amount: int) -> int:
-	return _strings.incrby(key, amount)
-
-## Decrements the integer value of a key by a given amount.
-func decrby(key: String, amount: int) -> int:
-	return _strings.decrby(key, amount)
-
 ## Sets a key to a value, only if the key does not exist.
 func setnx(key: String, value: Variant) -> int:
 	return _strings.setnx(key, value)
@@ -157,14 +149,14 @@ func move(key: String, newkey: String) -> int:
 
 ## Returns a random key from the database.
 func randomkey() -> String:
-	var all_keys = _core.keys()
+	var all_keys = _core._get_all_keys().keys()
 	if all_keys.is_empty():
 		return ""
 	return all_keys.pick_random()
 
 ## Returns the number of keys in the database.
 func dbsize() -> int:
-	return _core.dbsize()
+	return _core._get_all_keys().size()
 
 # Hashes
 ## Sets the string value of a hash field.

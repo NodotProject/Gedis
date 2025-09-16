@@ -19,8 +19,8 @@ permalink: api-reference
 | `del(keys)`                      | Deletes one or more keys (accepts Array).                  |
 | `exists(keys)`                   | Checks if keys exist (accepts Array).                      |
 | `key_exists(key)`                | Checks if a single key exists.                             |
-| `incr(key)`                      | Increments the integer value of a key by one.              |
-| `decr(key)`                      | Decrements the integer value of a key by one.              |
+| `incrby(key)`                      | Increments the integer value of a key by one.              |
+| `decrby(key)`                      | Decrements the integer value of a key by one.              |
 | `mget(keys)`                     | Returns the values of all specified keys. For every key that does not hold a string value or does not exist, a `null` value is returned. |
 | `mset(values)`                   | Sets the given keys to their respective values. `MSET` replaces existing values with new values, just as regular `SET`. |
 | `append(key, value)`             | If `key` already exists and is a string, this command appends the `value` at the end of the string. If `key` does not exist it is created and set as an empty string, so `APPEND` will be similar to `SET` in this special case. |
