@@ -49,8 +49,8 @@ func test_zrange():
 	gedis.zadd("myzset", "member3", 30)
 	gedis.zadd("myzset", "member4", 40)
 	
-	var result = gedis.zrange("myzset", 15, 35)
-	assert_eq(result, ["member2", "member3"], "Should return members within the score range")
+	var result = gedis.zrange("myzset", 1, 2)
+	assert_eq(result, ["member2", "member3"], "Should return members within the index range")
 
 func test_zrange_empty_result():
 	gedis.zadd("myzset", "member1", 10)
@@ -124,8 +124,8 @@ func test_zrevrange_subset():
 	gedis.zadd("myzset", "member3", 30)
 	gedis.zadd("myzset", "member4", 40)
 	
-	var result = gedis.zrevrange("myzset", 15, 35)
-	assert_eq(result, ["member3", "member2"], "Should return a subset of members in reverse sorted order")
+	var result = gedis.zrevrange("myzset", 1, 2)
+	assert_eq(result, ["member3", "member2"], "Should return a subset of members in reverse sorted order by index")
 
 func test_zrevrange_empty_set():
 	var result = gedis.zrevrange("myzset", 0, 100)
@@ -144,13 +144,47 @@ func test_zrevrange_with_inf():
 	gedis.zadd("myzset", "member3", 30)
 	gedis.zadd("myzset", "member4", 40)
 	
-	var result = gedis.zrevrange("myzset", 0, INF)
-	assert_eq(result, ["member4", "member3", "member2", "member1"], "Should return all members in reverse sorted order when using INF")
+	var result = gedis.zrevrange("myzset", 0, -1)
+	assert_eq(result, ["member4", "member3", "member2", "member1"], "Should return all members in reverse sorted order")
 
 func test_zrevrange_with_inf_and_scores():
 	gedis.zadd("myzset", "member1", 10)
 	gedis.zadd("myzset", "member2", 20)
 	gedis.zadd("myzset", "member3", 30)
 	
-	var result = gedis.zrevrange("myzset", 0, INF, true)
-	assert_eq(result, [["member3", 30], ["member2", 20], ["member1", 10]], "Should return all members and scores in reverse sorted order when using INF")
+	var result = gedis.zrevrange("myzset", 0, -1, true)
+	assert_eq(result, [["member3", 30], ["member2", 20], ["member1", 10]], "Should return all members and scores in reverse sorted order")
+
+
+func test_zrange_by_index():
+	gedis.zadd("myzset", "one", 1)
+	gedis.zadd("myzset", "two", 2)
+	gedis.zadd("myzset", "three", 3)
+	
+	assert_eq(gedis.zrange("myzset", 0, -1), ["one", "two", "three"])
+	assert_eq(gedis.zrange("myzset", 2, 3), ["three"])
+	assert_eq(gedis.zrange("myzset", -2, -1), ["two", "three"])
+
+func test_zrange_by_index_with_scores():
+	gedis.zadd("myzset", "one", 1)
+	gedis.zadd("myzset", "two", 2)
+	gedis.zadd("myzset", "three", 3)
+
+	assert_eq(gedis.zrange("myzset", 0, -1, true), [["one", 1], ["two", 2], ["three", 3]])
+
+
+func test_zrevrange_by_index():
+	gedis.zadd("myzset", "one", 1)
+	gedis.zadd("myzset", "two", 2)
+	gedis.zadd("myzset", "three", 3)
+	
+	assert_eq(gedis.zrevrange("myzset", 0, -1), ["three", "two", "one"])
+	assert_eq(gedis.zrevrange("myzset", 0, 0), ["three"])
+	assert_eq(gedis.zrevrange("myzset", -2, -1), ["two", "one"])
+
+func test_zrevrange_by_index_with_scores():
+	gedis.zadd("myzset", "one", 1)
+	gedis.zadd("myzset", "two", 2)
+	gedis.zadd("myzset", "three", 3)
+	
+	assert_eq(gedis.zrevrange("myzset", 0, -1, true), [["three", 3], ["two", 2], ["one", 1]])

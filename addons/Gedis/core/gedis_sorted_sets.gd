@@ -87,34 +87,89 @@ func remove(key: String, member: String) -> int:
 # @param max_score: The maximum score of the range.
 # @param withscores: Whether to return scores along with members.
 # @return: An array of members, or an array of [member, score] pairs if withscores is true.
-func zrange(key: String, min_score, max_score, withscores: bool = false) -> Array:
+func zrange(key: String, start: int, stop: int, withscores: bool = false) -> Array:
 	if _gedis._expiry._is_expired(key):
 		return []
 	if not _gedis._core._sorted_sets.has(key):
 		return []
-		
-	var data: Dictionary = _gedis._core._sorted_sets[key]
-	var result: Array = []
-	for entry in data.sorted_set:
-		var score = entry[0]
-		var is_in_range = (min_score == INF or score >= min_score) and (max_score == INF or score <= max_score)
 
-		if is_in_range:
-			if withscores:
-				result.append([entry[1], score])
-			else:
-				result.append(entry[1])
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	var sorted_set: Array = data.sorted_set
+	var set_len: int = sorted_set.size()
+
+	var start_index: int = start
+	if start_index < 0:
+		start_index = set_len + start_index
+
+	var stop_index: int = stop
+	if stop_index < 0:
+		stop_index = set_len + stop_index
+
+	if start_index < 0:
+		start_index = 0
+
+	if stop_index >= set_len:
+		stop_index = set_len - 1
+
+	if start_index > stop_index or start_index >= set_len:
+		return []
+
+	var result: Array = []
+	for i in range(start_index, stop_index + 1):
+		var entry = sorted_set[i]
+		var score = entry[0]
+		var member = entry[1]
+		if withscores:
+			result.append([member, score])
+		else:
+			result.append(member)
 	return result
+
 
 # Returns a range of members from the sorted set, ordered by score in reverse.
 #
-# @param min_score: The minimum score of the range.
-# @param max_score: The maximum score of the range.
+# @param start: The starting index of the range.
+# @param stop: The ending index of the range.
 # @param withscores: Whether to return scores along with members.
 # @return: An array of members, or an array of [member, score] pairs if withscores is true.
-func zrevrange(key: String, min_score, max_score, withscores: bool = false) -> Array:
-	var result = zrange(key, min_score, max_score, withscores)
-	result.reverse()
+func zrevrange(key: String, start: int, stop: int, withscores: bool = false) -> Array:
+	if _gedis._expiry._is_expired(key):
+		return []
+	if not _gedis._core._sorted_sets.has(key):
+		return []
+
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	var sorted_set: Array = data.sorted_set.duplicate()
+	sorted_set.reverse() # Order from high to low score
+
+	var set_len: int = sorted_set.size()
+
+	var start_index: int = start
+	if start_index < 0:
+		start_index = set_len + start_index
+
+	var stop_index: int = stop
+	if stop_index < 0:
+		stop_index = set_len + stop_index
+
+	if start_index < 0:
+		start_index = 0
+
+	if stop_index >= set_len:
+		stop_index = set_len - 1
+
+	if start_index > stop_index or start_index >= set_len:
+		return []
+
+	var result: Array = []
+	for i in range(start_index, stop_index + 1):
+		var entry = sorted_set[i]
+		var score = entry[0]
+		var member = entry[1]
+		if withscores:
+			result.append([member, score])
+		else:
+			result.append(member)
 	return result
 
 
