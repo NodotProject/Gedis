@@ -53,9 +53,6 @@ func _on_pubsub_message(channel: String, message: Variant) -> void:
 func _on_psub_message(pattern: String, channel: String, message: Variant) -> void:
 	psub_message.emit(pattern, channel, message)
 
-func _ready() -> void:
-	set_process(true)
-
 func _exit_tree() -> void:
 	# unregister instance
 	for i in range(_instances.size()):

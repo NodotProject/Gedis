@@ -164,16 +164,27 @@ func _on_some_event():
 
 ### Pub/Sub System
 
-The Pub/Sub system allows for decoupled communication using signals.
+The Pub/Sub system allows for decoupled communication. There are two ways to receive messages:
+
+1.  **Subscriber-based Signals (Recommended):** The subscriber object defines its own `pubsub_message` signal. This is the most robust method as it encapsulates the handling logic within the subscriber.
+2.  **Gedis-level Signal:** You can connect to the `pubsub_message` signal on the main Gedis instance. This is useful for global handlers that need to listen to all messages.
+
+**Example with Subscriber-based Signal:**
 
 ```gdscript
 # Subscriber script
+class_name MySubscriber extends Node
+
+# Define the signal that Gedis will emit on this object
+signal pubsub_message(channel, message)
+
 var gedis = Gedis.new()
 
 func _ready():
-    # Subscribe to the 'game_events' channel and connect to a local method
+    # Connect to our own signal
+    self.pubsub_message.connect(_on_game_event)
+    # Subscribe to the 'game_events' channel
     gedis.subscribe("game_events", self)
-    gedis.connect("pubsub_message", _on_game_event)
 
 func _on_game_event(channel, message):
     print("Received message on channel '%s': %s" % [channel, message])
@@ -185,19 +196,25 @@ func _on_button_pressed():
     # Publish a message to the 'game_events' channel
     gedis.publish("game_events", "Player pressed the button!")
 ```
-   
+
 ### Pattern-Based Subscriptions
 
-You can also subscribe to channels that match a specific pattern.
-   
+Pattern-based subscriptions work similarly. The subscriber object should define a `psub_message` signal.
+
 ```gdscript
 # PSubscriber script
+class_name MyPatternSubscriber extends Node
+
+# Define the signal for pattern-based messages
+signal psub_message(pattern, channel, message)
+
 var gedis = Gedis.new()
 
 func _ready():
+    # Connect to our own signal
+    self.psub_message.connect(_on_player_event)
     # Subscribe to all channels starting with 'player:'
     gedis.psubscribe("player:*", self)
-    gedis.connect("psub_message", _on_player_event)
 
 func _on_player_event(pattern, channel, message):
     print("Received message on channel '%s' (matched pattern '%s'): %s" % [channel, pattern, message])
