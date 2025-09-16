@@ -6,9 +6,11 @@ permalink: api-reference
 
 | Method                           | Description                                                |
 | -------------------------------- | ---------------------------------------------------------- |
-| **Strings**                      |                                                            |
-| `set_value(key, value)`          | Sets the value of a key.                            |
-| `get_value(key)`                 | Gets the value of a key.                            |
+| **Keys**                         |                                                            |
+| `move(key, db_index)`            | Moves a key from the current database to a specified target database. Returns `1` if the key was successfully moved, `0` if the key doesn’t exist or already exists in the destination.          |
+| **Variants**                     |                                                            |
+| `set_value(key, value)`          | Sets the value of a key.                                   |
+| `get_value(key)`                 | Gets the value of a key.                                   |
 | `del(keys)`                      | Deletes one or more keys (accepts Array).                  |
 | `exists(keys)`                   | Checks if keys exist (accepts Array).                      |
 | `key_exists(key)`                | Checks if a single key exists.                             |
@@ -29,6 +31,7 @@ permalink: api-reference
 | `rpush(key, values)`             | Appends values to a list. If `values` is an Array, it's concatenated. |
 | `lpop(key)`                      | Removes and gets the first element in a list.              |
 | `rpop(key)`                      | Removes and gets the last element in a list.               |
+| `lmove(source, destination, from, to)` | Atomically pops an element from one end of a source list and pushes it to one end of a destination list. Directions (`from` and `to`, which can be `LEFT` or `RIGHT`) specify which side to pop from and which side to push to. Returns the moved element or `null` if the source is empty. Creates the destination list if it doesn’t exist. This command replaces the deprecated `RPOPLPUSH` command. |
 | `llen(key)`                      | Gets the length of a list.                                 |
 | `lget(key)`                      | Gets all elements from a list.                             |
 | `lrange(key, start, stop)`       | Gets a range of elements from a list.                      |

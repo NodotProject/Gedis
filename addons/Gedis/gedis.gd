@@ -302,6 +302,42 @@ func persist(key: String) -> bool:
 func flushall() -> void:
 	_core.flushall()
 
+func move(key: String, db_index: int) -> int:
+	var destination_db: Gedis = null
+	for inst_info in get_all_instances():
+		if inst_info["id"] == db_index:
+			destination_db = inst_info["object"]
+			break
+
+	if destination_db == null or destination_db == self:
+		return 0
+
+	if not _core.key_exists(key) or destination_db._core.key_exists(key):
+		return 0
+
+	var value
+	if _core._store.has(key):
+		value = _core._store[key]
+		destination_db._core._store[key] = value
+	elif _core._hashes.has(key):
+		value = _core._hashes[key]
+		destination_db._core._hashes[key] = value
+	elif _core._lists.has(key):
+		value = _core._lists[key]
+		destination_db._core._lists[key] = value
+	elif _core._sets.has(key):
+		value = _core._sets[key]
+		destination_db._core._sets[key] = value
+	elif _core._sorted_sets.has(key):
+		value = _core._sorted_sets[key]
+		destination_db._core._sorted_sets[key] = value
+
+	if _core._expiry.has(key):
+		var expiry_time = _core._expiry[key]
+		destination_db._core._expiry[key] = expiry_time
+
+	_core._delete_all_types_for_key(key)
+	return 1
 
 # Persistence
 ## Registers a new persistence backend.

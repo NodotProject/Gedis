@@ -154,3 +154,44 @@ func lrem(key: String, count: int, value) -> int:
 	else:
 		_gedis._core._lists[key] = a
 	return removed
+
+func lmove(source: String, destination: String, from: String, to: String):
+	if _gedis._expiry._is_expired(source):
+		return null
+	if not _gedis._core._lists.has(source):
+		return null
+
+	var source_list: Array = _gedis._core._lists[source]
+	if source_list.is_empty():
+		return null
+
+	var element
+	if from == "LEFT":
+		element = source_list.pop_front()
+	elif from == "RIGHT":
+		element = source_list.pop_back()
+	else:
+		return null
+
+	_gedis._core._touch_type(destination, _gedis._core._lists)
+	var dest_list: Array = _gedis._core._lists.get(destination, [])
+
+	if to == "LEFT":
+		dest_list.insert(0, element)
+	elif to == "RIGHT":
+		dest_list.append(element)
+	else:
+		# Invalid 'to', restore source list and return error
+		if from == "LEFT":
+			source_list.insert(0, element)
+		else:
+			source_list.append(element)
+		return null
+
+	if source_list.is_empty():
+		_gedis._core._lists.erase(source)
+	else:
+		_gedis._core._lists[source] = source_list
+	_gedis._core._lists[destination] = dest_list
+
+	return element
