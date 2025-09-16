@@ -8,6 +8,8 @@ permalink: api-reference
 | -------------------------------- | ---------------------------------------------------------- |
 | **Keys**                         |                                                            |
 | `move(key, db_index)`            | Moves a key from the current database to a specified target database. Returns `1` if the key was successfully moved, `0` if the key doesn’t exist or already exists in the destination.          |
+| `flushall()`                     | Deletes all keys from the database.                        |
+| `flushdb()`                      | Deletes all keys from the database. Alias for `flushall`.  |
 | **Variants**                     |                                                            |
 | `set_value(key, value)`          | Sets the value of a key.                                   |
 | `get_value(key)`                 | Gets the value of a key.                                   |

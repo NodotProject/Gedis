@@ -302,6 +302,10 @@ func persist(key: String) -> bool:
 func flushall() -> void:
 	_core.flushall()
 
+## Deletes all keys from the database. Alias for flushall.
+func flushdb() -> void:
+	_core.flushall()
+
 func move(key: String, db_index: int) -> int:
 	var destination_db: Gedis = null
 	for inst_info in get_all_instances():
