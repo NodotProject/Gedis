@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sync Docs to gh-pages
+      - name: Sync docs to gh-pages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -26,15 +26,15 @@ jobs:
           git fetch origin gh-pages
           git checkout gh-pages
 
-          # Grab Docs/ folder from main
-          git checkout origin/main -- Docs/
+          # Grab docs/ folder from main
+          git checkout origin/main -- docs/
 
           # Copy contents to root and clean up
-          if [ -d "Docs" ]; then
-            cp -a Docs/. .
-            rm -rf Docs/
+          if [ -d "docs" ]; then
+            cp -a docs/. .
+            rm -rf docs/
           else
-            echo "Docs/ directory not found."
+            echo "docs/ directory not found."
             exit 0
           fi
 
@@ -43,7 +43,7 @@ jobs:
 
           # Commit & push if there are changes
           if ! git diff --staged --quiet; then
-            git commit -m "Deploy Docs: Sync documentation from main branch"
+            git commit -m "Deploy docs: Sync documentation from main branch"
             git push --force-with-lease origin gh-pages
           else
             echo "No changes to commit."
