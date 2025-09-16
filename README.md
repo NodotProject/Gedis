@@ -34,13 +34,13 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 
 ## Features
 
-- **Variants**: Basic key-value storage (`set_value`, `get_value`, `incr`, `decr`).
-- **Hashes**: Store object-like structures with fields and values (`hset`, `hget`, `hgetall`).
-- **Lists**: Ordered collections of strings, useful for queues and stacks (`lpush`, `rpush`, `lpop`).
-- **Sets**: Unordered collections of unique strings (`sadd`, `srem`, `smembers`).
+- **Variants**: Basic key-value storage (`set_value`, `get_value`, `incr`, `decr`, `mget`, `mset`).
+- **Hashes**: Store object-like structures with fields and values (`hset`, `hget`, `hgetall`, `hmget`, `hmset`).
+- **Lists**: Ordered collections of strings, useful for queues and stacks (`lpush`, `rpush`, `lpop`, `blpop`, `ltrim`).
+- **Sets**: Unordered collections of unique strings (`sadd`, `srem`, `smembers`, `sunion`, `sinter`).
 - **Key Expiry**: Set a time-to-live (TTL) on keys for automatic deletion (`expire`, `ttl`).
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
-- **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`).
+- **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`, `zscore`, `zrank`).
 
 <p align="center">
     <a href="https://nodotproject.github.io/Gedis/"><img src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>

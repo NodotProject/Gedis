@@ -123,6 +123,49 @@ func mset(dict: Dictionary) -> void:
 func mget(keys: Array) -> Array:
 	return _strings.mget(keys)
 
+## Appends a value to a key.
+func append(key: String, value: String) -> int:
+	return _strings.append(key, value)
+
+## Atomically sets a key to a value and returns the old value.
+func getset(key: String, value: Variant) -> Variant:
+	return _strings.getset(key, value)
+
+## Gets the length of the string value of a key.
+func strlen(key: String) -> int:
+	return _strings.strlen(key)
+
+## Increments the integer value of a key by a given amount.
+func incrby(key: String, amount: int) -> int:
+	return _strings.incrby(key, amount)
+
+## Decrements the integer value of a key by a given amount.
+func decrby(key: String, amount: int) -> int:
+	return _strings.decrby(key, amount)
+
+## Sets a key to a value, only if the key does not exist.
+func setnx(key: String, value: Variant) -> int:
+	return _strings.setnx(key, value)
+
+## Renames a key to newkey, only if newkey does not exist.
+func rename(key: String, newkey: String) -> int:
+	return _core.rename(key, newkey)
+
+## Moves a key to another key.
+func move(key: String, newkey: String) -> int:
+	return _core.move(key, newkey)
+
+## Returns a random key from the database.
+func randomkey() -> String:
+	var all_keys = _core.keys()
+	if all_keys.is_empty():
+		return ""
+	return all_keys.pick_random()
+
+## Returns the number of keys in the database.
+func dbsize() -> int:
+	return _core.dbsize()
+
 # Hashes
 ## Sets the string value of a hash field.
 func hset(key: String, field: String, value) -> int:
@@ -131,6 +174,22 @@ func hset(key: String, field: String, value) -> int:
 ## Gets the value of a hash field.
 func hget(key: String, field: String, default_value: Variant = null):
 	return _hashes.hget(key, field, default_value)
+
+## Gets the values of all the given hash fields.
+func hmget(key: String, fields: Array) -> Array:
+	return _hashes.hmget(key, fields)
+
+## Sets multiple hash fields to multiple values.
+func hmset(key: String, field_value_pairs: Dictionary) -> void:
+	_hashes.hmset(key, field_value_pairs)
+
+## Increments the integer value of a hash field by the given amount.
+func hincrby(key: String, field: String, amount: int) -> Variant:
+	return _hashes.hincrby(key, field, amount)
+
+## Increments the float value of a hash field by the given amount.
+func hincrbyfloat(key: String, field: String, amount: float) -> Variant:
+	return _hashes.hincrbyfloat(key, field, amount)
 
 ## Deletes one or more hash fields.
 func hdel(key: String, fields) -> int:
@@ -197,6 +256,13 @@ func lset(key: String, index: int, value) -> bool:
 func lrem(key: String, count: int, value) -> int:
 	return _lists.lrem(key, count, value)
 
+## Trims a list to the specified range of indices.
+func ltrim(key: String, start: int, stop: int) -> bool:
+	return _lists.ltrim(key, start, stop)
+
+## Inserts a value into a list before or after a pivot value.
+func linsert(key: String, position: String, pivot, value) -> int:
+	return _lists.linsert(key, position, pivot, value)
 # Sets
 ## Adds one or more members to a set.
 func sadd(key: String, member) -> int:
@@ -226,6 +292,34 @@ func spop(key: String):
 func smove(source: String, destination: String, member) -> bool:
 	return _sets.smove(source, destination, member)
 
+## Returns the union of the sets stored at the given keys.
+func sunion(keys: Array) -> Array:
+	return _sets.sunion(keys)
+
+## Returns the intersection of the sets stored at the given keys.
+func sinter(keys: Array) -> Array:
+	return _sets.sinter(keys)
+
+## Returns the difference of the sets stored at the given keys.
+func sdiff(keys: Array) -> Array:
+	return _sets.sdiff(keys)
+
+## Stores the union of the sets at keys in the destination key.
+func sunionstore(destination: String, keys: Array) -> int:
+	return _sets.sunionstore(destination, keys)
+
+## Stores the intersection of the sets at keys in the destination key.
+func sinterstore(destination: String, keys: Array) -> int:
+	return _sets.sinterstore(destination, keys)
+
+## Stores the difference of the sets at keys in the destination key.
+func sdiffstore(destination: String, keys: Array) -> int:
+	return _sets.sdiffstore(destination, keys)
+
+## Returns one or more random members from the set at key.
+func srandmember(key: String, count: int = 1) -> Variant:
+	return _sets.srandmember(key, count)
+
 # Sorted Sets
 ## Adds a member with a score to a sorted set.
 func zadd(key: String, member: String, score: int):
@@ -246,6 +340,42 @@ func zrevrange(key: String, start, stop, withscores: bool = false):
 ## Removes and returns members with scores up to a certain value.
 func zpopready(key: String, now: int):
 	return _sorted_sets.pop_ready(key, now)
+
+## Returns the score of member in the sorted set at key.
+func zscore(key: String, member: String) -> Variant:
+	return _sorted_sets.zscore(key, member)
+
+## Returns the rank of member in the sorted set at key.
+func zrank(key: String, member: String) -> Variant:
+	return _sorted_sets.zrank(key, member)
+
+## Returns the rank of member in the sorted set at key, with scores ordered from high to low.
+func zrevrank(key: String, member: String) -> Variant:
+	return _sorted_sets.zrevrank(key, member)
+
+## Returns the number of elements in the sorted set at key with a score between min and max.
+func zcount(key: String, min_score, max_score) -> int:
+	return _sorted_sets.zcount(key, min_score, max_score)
+
+## Increments the score of member in the sorted set at key by increment.
+func zincrby(key: String, increment, member: String) -> Variant:
+	return _sorted_sets.zincrby(key, increment, member)
+
+## Returns a range of members in a sorted set, by score.
+func zrangebyscore(key: String, min_score, max_score, withscores: bool = false) -> Array:
+	return _sorted_sets.zrangebyscore(key, min_score, max_score, withscores)
+
+## Returns a range of members in a sorted set, by score, in reverse order.
+func zrevrangebyscore(key: String, min_score, max_score, withscores: bool = false) -> Array:
+	return _sorted_sets.zrevrangebyscore(key, min_score, max_score, withscores)
+
+## Computes the union of sorted sets and stores the result in a new key.
+func zunionstore(destination: String, keys: Array, aggregate: String = "SUM") -> int:
+	return _sorted_sets.zunionstore(destination, keys, aggregate)
+
+## Computes the intersection of sorted sets and stores the result in a new key.
+func zinterstore(destination: String, keys: Array, aggregate: String = "SUM") -> int:
+	return _sorted_sets.zinterstore(destination, keys, aggregate)
 
 # Pub/Sub
 ## Posts a message to a channel.
@@ -306,48 +436,10 @@ func flushall() -> void:
 func flushdb() -> void:
 	_core.flushall()
 
-func move(key: String, db_index: int) -> int:
-	var destination_db: Gedis = null
-	for inst_info in get_all_instances():
-		if inst_info["id"] == db_index:
-			destination_db = inst_info["object"]
-			break
-
-	if destination_db == null or destination_db == self:
-		return 0
-
-	if not _core.key_exists(key) or destination_db._core.key_exists(key):
-		return 0
-
-	var value
-	if _core._store.has(key):
-		value = _core._store[key]
-		destination_db._core._store[key] = value
-	elif _core._hashes.has(key):
-		value = _core._hashes[key]
-		destination_db._core._hashes[key] = value
-	elif _core._lists.has(key):
-		value = _core._lists[key]
-		destination_db._core._lists[key] = value
-	elif _core._sets.has(key):
-		value = _core._sets[key]
-		destination_db._core._sets[key] = value
-	elif _core._sorted_sets.has(key):
-		value = _core._sorted_sets[key]
-		destination_db._core._sorted_sets[key] = value
-
-	if _core._expiry.has(key):
-		var expiry_time = _core._expiry[key]
-		destination_db._core._expiry[key] = expiry_time
-
-	_core._delete_all_types_for_key(key)
-	return 1
-
 # Persistence
 ## Registers a new persistence backend.
 func register_persistence_backend(name: String, backend: GedisPersistenceBackend) -> void:
 	_persistence_backends[name] = backend
-
 
 ## Sets the default persistence backend.
 func set_default_persistence_backend(name: String) -> bool:
@@ -355,7 +447,6 @@ func set_default_persistence_backend(name: String) -> bool:
 		_default_persistence_backend = name
 		return true
 	return false
-
 
 ## Saves the current state to a file using the default persistence backend.
 func save(path: String, options: Dictionary = {}) -> int:
@@ -372,7 +463,6 @@ func save(path: String, options: Dictionary = {}) -> int:
 	
 	var save_options = {"path": path}
 	return backend.save(data, save_options)
-
 
 ## Loads the state from a file using the default persistence backend.
 func load(path: String, options: Dictionary = {}) -> int:

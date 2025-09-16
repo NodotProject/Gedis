@@ -120,7 +120,8 @@ func zrange(key: String, start: int, stop: int, withscores: bool = false) -> Arr
 		var score = entry[0]
 		var member = entry[1]
 		if withscores:
-			result.append([member, score])
+			result.append(member)
+			result.append(score)
 		else:
 			result.append(member)
 	return result
@@ -201,3 +202,179 @@ func pop_ready(key: String, now: int) -> Array:
 	else:
 		_gedis._core._sorted_sets[key] = data
 	return ready_members
+
+
+func zscore(key: String, member: String) -> Variant:
+	if _gedis._expiry._is_expired(key):
+		return null
+	if not _gedis._core._sorted_sets.has(key):
+		return null
+
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	if not data.member_scores.has(member):
+		return null
+
+	return data.member_scores[member]
+
+
+func zrank(key: String, member: String) -> Variant:
+	if _gedis._expiry._is_expired(key):
+		return null
+	if not _gedis._core._sorted_sets.has(key):
+		return null
+
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	if not data.member_scores.has(member):
+		return null
+
+	for i in range(data.sorted_set.size()):
+		if data.sorted_set[i][1] == member:
+			return i
+	return null
+
+
+func zrevrank(key: String, member: String) -> Variant:
+	if _gedis._expiry._is_expired(key):
+		return null
+	if not _gedis._core._sorted_sets.has(key):
+		return null
+
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	if not data.member_scores.has(member):
+		return null
+
+	for i in range(data.sorted_set.size() - 1, -1, -1):
+		if data.sorted_set[i][1] == member:
+			return data.sorted_set.size() - 1 - i
+	return null
+
+
+func zcount(key: String, min_score, max_score) -> int:
+	if _gedis._expiry._is_expired(key):
+		return 0
+	if not _gedis._core._sorted_sets.has(key):
+		return 0
+
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	var count: int = 0
+	for entry in data.sorted_set:
+		var score = entry[0]
+		if score >= min_score and score <= max_score:
+			count += 1
+	return count
+
+
+func zincrby(key: String, increment, member: String) -> Variant:
+	_gedis._core._touch_type(key, _gedis._core._sorted_sets)
+	var current_score = zscore(key, member)
+	if current_score == null:
+		current_score = 0
+	var new_score = current_score + increment
+	add(key, member, new_score)
+	return new_score
+
+
+func zrangebyscore(key: String, min_score, max_score, withscores: bool = false) -> Array:
+	if _gedis._expiry._is_expired(key):
+		return []
+	if not _gedis._core._sorted_sets.has(key):
+		return []
+
+	var data: Dictionary = _gedis._core._sorted_sets[key]
+	var result: Array = []
+	for entry in data.sorted_set:
+		var score = entry[0]
+		var member = entry[1]
+		if score >= min_score and score <= max_score:
+			if withscores:
+				result.append([member, score])
+			else:
+				result.append(member)
+	return result
+
+
+func zrevrangebyscore(key: String, min_score, max_score, withscores: bool = false) -> Array:
+	var result = zrangebyscore(key, min_score, max_score, withscores)
+	result.reverse()
+	return result
+
+
+func zunionstore(destination: String, keys: Array, aggregate: String = "SUM") -> int:
+	var temp_scores: Dictionary = {}
+	for key in keys:
+		if not _gedis._core._sorted_sets.has(key):
+			continue
+		var data: Dictionary = _gedis._core._sorted_sets[key]
+		for member in data.member_scores:
+			var score = data.member_scores[member]
+			if not temp_scores.has(member):
+				temp_scores[member] = score
+			else:
+				match aggregate.to_upper():
+					"SUM":
+						temp_scores[member] += score
+					"MIN":
+						temp_scores[member] = min(temp_scores[member], score)
+					"MAX":
+						temp_scores[member] = max(temp_scores[member], score)
+
+	if _gedis._core._sorted_sets.has(destination):
+		_gedis.del([destination])
+
+	for member in temp_scores:
+		add(destination, member, temp_scores[member])
+
+	if not _gedis._core._sorted_sets.has(destination):
+		return 0
+	return _gedis._core._sorted_sets[destination].sorted_set.size()
+
+
+func zinterstore(destination: String, keys: Array, aggregate: String = "SUM") -> int:
+	if keys.is_empty():
+		return 0
+
+	var member_sets: Array = []
+	for key in keys:
+		if not _gedis._core._sorted_sets.has(key):
+			return 0
+		var data: Dictionary = _gedis._core._sorted_sets[key]
+		member_sets.append(data.member_scores.keys())
+
+	var intersection = member_sets[0]
+	for i in range(1, member_sets.size()):
+		var next_set = member_sets[i]
+		var current_intersection: Array = []
+		for member in intersection:
+			if member in next_set:
+				current_intersection.append(member)
+		intersection = current_intersection
+
+	var temp_scores: Dictionary = {}
+	for member in intersection:
+		var score_sum = 0
+		var score_min = INF
+		var score_max = - INF
+		for key in keys:
+			var data: Dictionary = _gedis._core._sorted_sets[key]
+			var score = data.member_scores[member]
+			score_sum += score
+			score_min = min(score_min, score)
+			score_max = max(score_max, score)
+
+		match aggregate.to_upper():
+			"SUM":
+				temp_scores[member] = score_sum
+			"MIN":
+				temp_scores[member] = score_min
+			"MAX":
+				temp_scores[member] = score_max
+
+	if _gedis._core._sorted_sets.has(destination):
+		_gedis.del([destination])
+
+	for member in temp_scores:
+		add(destination, member, temp_scores[member])
+
+	if not _gedis._core._sorted_sets.has(destination):
+		return 0
+	return _gedis._core._sorted_sets[destination].sorted_set.size()

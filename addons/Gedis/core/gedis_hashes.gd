@@ -1,9 +1,9 @@
 extends RefCounted
 class_name GedisHashes
 
-var _gedis: Gedis
+var _gedis
 
-func _init(gedis: Gedis):
+func _init(gedis):
 	_gedis = gedis
 
 # ------
@@ -22,6 +22,46 @@ func hget(key: String, field: String, default_value: Variant = null):
 		return default_value
 	var d: Dictionary = _gedis._core._hashes.get(key, {})
 	return d.get(field, default_value)
+
+func hmget(key: String, fields: Array) -> Array:
+	if _gedis._expiry._is_expired(key):
+		return fields.map(func(_field): return null)
+	var d: Dictionary = _gedis._core._hashes.get(key, {})
+	var result: Array = []
+	for field in fields:
+		result.append(d.get(field, null))
+	return result
+
+func hmset(key: String, field_value_pairs: Dictionary) -> void:
+	_gedis._core._touch_type(key, _gedis._core._hashes)
+	var d: Dictionary = _gedis._core._hashes.get(key, {})
+	for field in field_value_pairs:
+		d[field] = field_value_pairs[field]
+	_gedis._core._hashes[key] = d
+
+func hincrby(key: String, field: String, amount: int) -> Variant:
+	_gedis._core._touch_type(key, _gedis._core._hashes)
+	var d: Dictionary = _gedis._core._hashes.get(key, {})
+	var value = d.get(field, 0)
+	if not typeof(value) in [TYPE_INT, TYPE_FLOAT]:
+		push_error("WRONGTYPE Operation against a key holding the wrong kind of value")
+		return null
+	value += amount
+	d[field] = value
+	_gedis._core._hashes[key] = d
+	return value
+
+func hincrbyfloat(key: String, field: String, amount: float) -> Variant:
+	_gedis._core._touch_type(key, _gedis._core._hashes)
+	var d: Dictionary = _gedis._core._hashes.get(key, {})
+	var value = d.get(field, 0.0)
+	if not typeof(value) in [TYPE_INT, TYPE_FLOAT]:
+		push_error("WRONGTYPE Operation against a key holding the wrong kind of value")
+		return null
+	value += amount
+	d[field] = value
+	_gedis._core._hashes[key] = d
+	return value
 
 func hdel(key: String, fields) -> int:
 	# Accept single field (String) or Array of fields

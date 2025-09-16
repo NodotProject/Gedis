@@ -108,3 +108,32 @@ func mget(keys: Array) -> Array:
 	for k in keys:
 		out.append(get_value(str(k), null))
 	return out
+
+func append(key: String, value: String) -> int:
+	var k := str(key)
+	var current_value := get_value(k, "")
+	if typeof(current_value) != TYPE_STRING:
+		current_value = str(current_value)
+	var new_value: String = current_value + value
+	set_value(k, new_value)
+	return new_value.length()
+
+func getset(key: String, value: Variant) -> Variant:
+	var k := str(key)
+	var old_value = get_value(k)
+	set_value(k, value)
+	return old_value
+
+func strlen(key: String) -> int:
+	var k := str(key)
+	var value = get_value(k)
+	if typeof(value) == TYPE_STRING:
+		return value.length()
+	return 0
+
+func setnx(key: String, value: Variant) -> int:
+	var k := str(key)
+	if not _gedis._expiry._is_expired(k) and key_exists(k):
+		return 0
+	set_value(k, value)
+	return 1

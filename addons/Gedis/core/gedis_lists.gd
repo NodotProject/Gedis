@@ -1,9 +1,9 @@
 extends RefCounted
 class_name GedisLists
 
-var _gedis: Gedis
+var _gedis
 
-func _init(gedis: Gedis):
+func _init(gedis):
 	_gedis = gedis
 
 # -----
@@ -195,3 +195,58 @@ func lmove(source: String, destination: String, from: String, to: String):
 	_gedis._core._lists[destination] = dest_list
 
 	return element
+func ltrim(key: String, start: int, stop: int) -> bool:
+	if _gedis._expiry._is_expired(key):
+		return false
+	if not _gedis._core._lists.has(key):
+		return false
+
+	var a: Array = _gedis._core._lists[key]
+	var n = a.size()
+
+	if start < 0:
+		start = n + start
+	if stop < 0:
+		stop = n + stop
+
+	start = max(0, start)
+	stop = min(n - 1, stop)
+
+	if start > stop:
+		_gedis._core._lists.erase(key)
+		return true
+
+	var trimmed_list: Array = []
+	for i in range(start, stop + 1):
+		trimmed_list.append(a[i])
+	
+	_gedis._core._lists[key] = trimmed_list
+	return true
+
+func linsert(key: String, position: String, pivot: Variant, value: Variant) -> int:
+	if _gedis._expiry._is_expired(key):
+		return 0
+	if not _gedis._core._lists.has(key):
+		return 0
+
+	var a: Array = _gedis._core._lists[key]
+	var n = a.size()
+	var index = -1
+
+	for i in range(n):
+		if a[i] == pivot:
+			index = i
+			break
+	
+	if index == -1:
+		return -1
+
+	if position.to_upper() == "BEFORE":
+		a.insert(index, value)
+	elif position.to_upper() == "AFTER":
+		a.insert(index + 1, value)
+	else:
+		return 0
+	
+	_gedis._core._lists[key] = a
+	return a.size()

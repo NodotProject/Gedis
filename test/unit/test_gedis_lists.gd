@@ -1,61 +1,35 @@
 extends GutTest
 
-var g
+var gedis = null
+
+func before_all():
+	gedis = Gedis.new()
+	gedis.flushdb()
+
+func after_all():
+	gedis.free()
 
 func before_each():
-	self.g = Gedis.new()
+	gedis.flushdb()
 
-func after_each():
-	g.free()
+func test_linsert_before_pivot():
+	gedis.rpush("key1", ["a", "b", "c"])
+	var result = gedis.linsert("key1", "BEFORE", "b", "x")
+	assert_eq(result, 4)
+	assert_eq(gedis.lrange("key1", 0, -1), ["a", "x", "b", "c"])
 
-func test_lpush_rpush_and_len():
-	assert_eq(g.rpush("l", "x"), 1)
-	assert_eq(g.lpush("l", "y"), 2)
-	assert_eq(g.llen("l"), 2)
-	g.rpush("l", ["a", "b"])
-	assert_eq(g.lget("l"), ["y", "x", "a", "b"])
-	g.lpush("l", ["1", "2"])
-	assert_eq(g.lget("l"), ["1", "2", "y", "x", "a", "b"])
+func test_linsert_after_pivot():
+	gedis.rpush("key1", ["a", "b", "c"])
+	var result = gedis.linsert("key1", "AFTER", "b", "x")
+	assert_eq(result, 4)
+	assert_eq(gedis.lrange("key1", 0, -1), ["a", "b", "x", "c"])
 
-func test_lpop_rpop_and_empty():
-	g.rpush("l", 1)
-	g.rpush("l", 2)
-	assert_eq(g.lpop("l"), 1)
-	assert_eq(g.rpop("l"), 2)
-	assert_eq(g.lpop("l"), null)
-	assert_eq(g.rpop("l"), null)
+func test_linsert_pivot_not_found():
+	gedis.rpush("key1", ["a", "b", "c"])
+	var result = gedis.linsert("key1", "BEFORE", "y", "x")
+	assert_eq(result, -1)
+	assert_eq(gedis.lrange("key1", 0, -1), ["a", "b", "c"])
 
-
-func test_lrange():
-	g.rpush("l", 1)
-	g.rpush("l", 2)
-	g.rpush("l", 3)
-	assert_eq(g.lrange("l", 0, 1), [1, 2])
-	assert_eq(g.lrange("l", 0, -1), [1, 2, 3])
-
-func test_lget():
-	g.rpush("l", 1)
-	g.rpush("l", 2)
-	g.rpush("l", 3)
-	assert_eq(g.lget("l"), [1, 2, 3])
-
-func test_lindex():
-	g.rpush("l", 1)
-	g.rpush("l", 2)
-	assert_eq(g.lindex("l", 0), 1)
-	assert_eq(g.lindex("l", 1), 2)
-	assert_eq(g.lindex("l", 2), null)
-
-func test_lset():
-	g.rpush("l", 1)
-	g.rpush("l", 2)
-	g.lset("l", 0, 10)
-	assert_eq(g.lindex("l", 0), 10)
-
-func test_lrem():
-	g.rpush("l", 1)
-	g.rpush("l", 2)
-	g.rpush("l", 1)
-	g.rpush("l", 1)
-	assert_eq(g.lrem("l", 2, 1), 2)
-	assert_eq(g.lrange("l", 0, -1), [2, 1])
+func test_linsert_key_not_found():
+	var result = gedis.linsert("key1", "BEFORE", "y", "x")
+	assert_eq(result, 0)
