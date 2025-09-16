@@ -75,9 +75,10 @@ func test_an_event_is_published_when_a_key_expires():
 	g.subscribe("gedis:keyspace:mykey", self)
 	g.setex("mykey", 1, "value")
 	await get_tree().create_timer(1.1).timeout
+	g._expiry._purge_expired()
 	assert_eq(_received_messages.size(), 2)
 	assert_eq(_received_messages[0].message, "set")
-	assert_eq(_received_messages[1].message, "expired")
+	assert_eq(_received_messages[1].message, "expire")
 
 
 func test_no_event_is_published_when_a_key_is_persisted():
@@ -85,6 +86,7 @@ func test_no_event_is_published_when_a_key_is_persisted():
 	g.setex("mykey", 1, "value")
 	g.persist("mykey")
 	await get_tree().create_timer(1.1).timeout
+	g._expiry._purge_expired()
 	assert_eq(_received_messages.size(), 1, "Should only receive the set message")
 	assert_eq(_received_messages[0].message, "set")
 	assert_true(g.key_exists("mykey"), "Key should still exist after being persisted")

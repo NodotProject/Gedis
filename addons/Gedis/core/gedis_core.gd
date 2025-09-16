@@ -11,6 +11,10 @@ var _expiry: Dictionary = {} # key -> float (unix seconds)
 # Pub/Sub registries
 var _subscribers: Dictionary = {} # channel -> Array of Objects
 var _psubscribers: Dictionary = {} # pattern -> Array of Objects
+var _gedis: Gedis
+
+func _init(gedis_instance: Gedis) -> void:
+	_gedis = gedis_instance
 
 func _delete_all_types_for_key(key: String) -> void:
 	_store.erase(key)

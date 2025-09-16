@@ -30,7 +30,7 @@ func _init() -> void:
 	_instances.append(self)
 
 	# Instantiate components
-	_core = GedisCore.new()
+	_core = GedisCore.new(self)
 	_utils = GedisUtils.new()
 	_time_source = GedisUnixTimeSource.new()
 	_expiry = GedisExpiry.new(self)

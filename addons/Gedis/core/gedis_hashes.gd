@@ -15,6 +15,7 @@ func hset(key: String, field: String, value) -> int:
 	var existed := int(d.has(field))
 	d[field] = value
 	_gedis._core._hashes[key] = d
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return 1 - existed
 
 func hget(key: String, field: String, default_value: Variant = null):
@@ -47,6 +48,7 @@ func hmset(key: String, field_value_pairs: Dictionary) -> void:
 	for field in field_value_pairs:
 		d[field] = field_value_pairs[field]
 	_gedis._core._hashes[key] = d
+	_gedis.publish("gedis:keyspace:" + key, "set")
 
 func hincrby(key: String, field: String, amount: int) -> Variant:
 	_gedis._core._touch_type(key, _gedis._core._hashes)
@@ -58,6 +60,7 @@ func hincrby(key: String, field: String, amount: int) -> Variant:
 	value += amount
 	d[field] = value
 	_gedis._core._hashes[key] = d
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return value
 
 func hincrbyfloat(key: String, field: String, amount: float) -> Variant:
@@ -70,6 +73,7 @@ func hincrbyfloat(key: String, field: String, amount: float) -> Variant:
 	value += amount
 	d[field] = value
 	_gedis._core._hashes[key] = d
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return value
 
 func hdel(key: String, fields) -> int:
@@ -92,6 +96,7 @@ func hdel(key: String, fields) -> int:
 			removed = 1
 	if d.is_empty():
 		_gedis._core._hashes.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._hashes[key] = d
 	return removed
