@@ -108,3 +108,88 @@ func restore(state: Dictionary) -> void:
 	for key in _expiry.keys():
 		if _expiry[key] < now:
 			_delete_all_types_for_key(key)
+
+func restore_key(key: String, data: Dictionary) -> void:
+	_delete_all_types_for_key(key)
+	var value = data["value"]
+	var type = data["type"]
+
+	if type == "string":
+		_store[key] = value
+	elif type == "hash":
+		_hashes[key] = value
+	elif type == "list":
+		_lists[key] = value
+	elif type == "set":
+		_sets[key] = value
+	elif type == "sorted_set":
+		_sorted_sets[key] = value
+	
+	if data.has("expiry"):
+		_expiry[key] = data["expiry"]
+		
+func rename(key: String, newkey: String) -> int:
+	if not key_exists(key):
+		return ERR_DOES_NOT_EXIST
+
+	if key_exists(newkey):
+		return 0
+
+	var value
+	if _store.has(key):
+		value = _store[key]
+		_store[newkey] = value
+	elif _hashes.has(key):
+		value = _hashes[key]
+		_hashes[newkey] = value
+	elif _lists.has(key):
+		value = _lists[key]
+		_lists[newkey] = value
+	elif _sets.has(key):
+		value = _sets[key]
+		_sets[newkey] = value
+	elif _sorted_sets.has(key):
+		value = _sorted_sets[key]
+		_sorted_sets[newkey] = value
+	else:
+		return ERR_DOES_NOT_EXIST
+
+	if _expiry.has(key):
+		var expiry_time = _expiry[key]
+		_expiry[newkey] = expiry_time
+
+	_delete_all_types_for_key(key)
+	return 1
+
+func move(key: String, newkey: String) -> int:
+	if not key_exists(key):
+		return ERR_DOES_NOT_EXIST
+
+	if key_exists(newkey):
+		_delete_all_types_for_key(newkey)
+
+	var value
+	if _store.has(key):
+		value = _store[key]
+		_store[newkey] = value
+	elif _hashes.has(key):
+		value = _hashes[key]
+		_hashes[newkey] = value
+	elif _lists.has(key):
+		value = _lists[key]
+		_lists[newkey] = value
+	elif _sets.has(key):
+		value = _sets[key]
+		_sets[newkey] = value
+	elif _sorted_sets.has(key):
+		value = _sorted_sets[key]
+		_sorted_sets[newkey] = value
+	else:
+		return ERR_DOES_NOT_EXIST
+
+	if _expiry.has(key):
+		var expiry_time = _expiry[key]
+		_expiry[newkey] = expiry_time
+
+	_delete_all_types_for_key(key)
+	return 1

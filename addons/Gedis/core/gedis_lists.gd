@@ -1,9 +1,9 @@
 extends RefCounted
 class_name GedisLists
 
-var _gedis: Gedis
+var _gedis
 
-func _init(gedis: Gedis):
+func _init(gedis):
 	_gedis = gedis
 
 # -----
@@ -154,3 +154,114 @@ func lrem(key: String, count: int, value) -> int:
 	else:
 		_gedis._core._lists[key] = a
 	return removed
+
+func lmove(source: String, destination: String, from: String, to: String):
+	if _gedis._expiry._is_expired(source):
+		return null
+	if not _gedis._core._lists.has(source):
+		return null
+
+	var source_list: Array = _gedis._core._lists[source]
+	if source_list.is_empty():
+		return null
+
+	var element
+	if from.to_upper() == "LEFT":
+		element = source_list.pop_front()
+	elif from.to_upper() == "RIGHT":
+		element = source_list.pop_back()
+	else:
+		return null
+
+	_gedis._core._touch_type(destination, _gedis._core._lists)
+	var dest_list: Array = _gedis._core._lists.get(destination, [])
+
+	if to.to_upper() == "LEFT":
+		dest_list.insert(0, element)
+	elif to.to_upper() == "RIGHT":
+		dest_list.append(element)
+	else:
+		# Invalid 'to', restore source list and return error
+		if from.to_upper() == "LEFT":
+			source_list.insert(0, element)
+		else:
+			source_list.append(element)
+		return null
+
+	if source_list.is_empty():
+		_gedis._core._lists.erase(source)
+	else:
+		_gedis._core._lists[source] = source_list
+	_gedis._core._lists[destination] = dest_list
+
+	return element
+# Trims a list to the specified range of indices.
+# Removes all elements from the list that are not in the range [start, stop].
+# If start is greater than stop, or start is out of bounds, the list will be emptied.
+# ---
+# @param key: The key of the list to trim.
+# @param start: The starting index of the range.
+# @param stop: The ending index of the range.
+# @return: Returns true if the list was trimmed, false otherwise.
+func ltrim(key: String, start: int, stop: int) -> bool:
+	if _gedis._expiry._is_expired(key):
+		return false
+	if not _gedis._core._lists.has(key):
+		return false
+
+	var a: Array = _gedis._core._lists[key]
+	var n = a.size()
+
+	if start < 0:
+		start = n + start
+	if stop < 0:
+		stop = n + stop
+
+	start = max(0, start)
+	stop = min(n - 1, stop)
+
+	if start > stop:
+		_gedis._core._lists.erase(key)
+		return true
+
+	var trimmed_list: Array = []
+	for i in range(start, stop + 1):
+		trimmed_list.append(a[i])
+	
+	_gedis._core._lists[key] = trimmed_list
+	return true
+
+# Inserts a value into a list before or after a pivot value.
+# ---
+# @param key: The key of the list.
+# @param position: "BEFORE" or "AFTER" the pivot.
+# @param pivot: The value to insert the new value next to.
+# @param value: The value to insert.
+# @return: The new size of the list, or -1 if the pivot was not found. Returns 0 if the key does not exist or the position is invalid.
+func linsert(key: String, position: String, pivot: Variant, value: Variant) -> int:
+	if _gedis._expiry._is_expired(key):
+		return 0
+	if not _gedis._core._lists.has(key):
+		return 0
+
+	var a: Array = _gedis._core._lists[key]
+	var n = a.size()
+	var index = -1
+
+	for i in range(n):
+		if a[i] == pivot:
+			index = i
+			break
+	
+	if index == -1:
+		return -1
+
+	if position.to_upper() == "BEFORE":
+		a.insert(index, value)
+	elif position.to_upper() == "AFTER":
+		a.insert(index + 1, value)
+	else:
+		return 0
+	
+	_gedis._core._lists[key] = a
+	return a.size()

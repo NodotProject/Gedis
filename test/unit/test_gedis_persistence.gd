@@ -238,3 +238,36 @@ func test_performance_with_large_dataset():
 	var dir_access = DirAccess.open("user://")
 	dir_access.remove(save_path)
 	new_gedis.queue_free()
+	
+func test_restore_top_level():
+	gedis.set_value("key1", "value1")
+	var dump_data = gedis.dump("key1")
+	gedis.del("key1")
+	assert_false(gedis.key_exists("key1"))
+	assert_eq(gedis.restore("key1", JSON.stringify(dump_data)), OK)
+	assert_eq(gedis.get_value("key1"), "value1")
+
+func test_restore_key():
+	gedis.set_value("key1", "value1")
+	var dump_data = gedis.dump("key1")
+	gedis.del("key1")
+	assert_false(gedis.key_exists("key1"))
+	gedis._core.restore_key("key1", dump_data)
+	assert_eq(gedis.get_value("key1"), "value1")
+
+func test_json_backend_serialize_deserialize():
+	var backend = GedisJSONSnapshotBackend.new()
+	var data = {
+		"store": {
+			"key1": {"type": "string", "value": "hello"},
+			"key2": {"type": "list", "value": ["a", "b"]},
+		},
+		"expiry": {
+			"key1": 12345
+		}
+	}
+	var serialized_data = backend.serialize(data)
+	var deserialized_data = backend.deserialize(serialized_data)
+	assert_eq(deserialized_data.store.key1.value, "hello")
+	assert_eq(deserialized_data.store.key2.value, ["a", "b"])
+	assert_eq(deserialized_data.expiry.key1, 12345)

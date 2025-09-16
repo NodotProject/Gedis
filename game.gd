@@ -42,7 +42,7 @@ func _on_ClickButton_pressed():
 	if gedis.exists("powerup:double_points"):
 		points = 2
 	
-	gedis.incr("score", points)
+	gedis.incrby("score", points)
 	
 	# 10% chance to find an item
 	if randf() < 0.1:
