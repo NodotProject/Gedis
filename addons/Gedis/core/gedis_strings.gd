@@ -41,7 +41,6 @@ func del(keys) -> int:
 
 # exists: if Array -> return number of existing keys, else boolean for single key
 func exists(keys) -> Variant:
-	_gedis._expiry._purge_expired()
 	if typeof(keys) == TYPE_ARRAY:
 		var cnt = 0
 		for k in keys:
