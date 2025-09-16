@@ -19,7 +19,7 @@ func test_zunionstore():
 	gedis.zadd("key2", "c", 4)
 	var result = gedis.zunionstore("key3", ["key1", "key2"])
 	assert_eq(result, 3)
-	assert_eq(gedis.zrange("key3", 0, -1, true), ["a", 1, "c", 4, "b", 5])
+	assert_eq(gedis.zrange("key3", 0, -1, true), [["a", 1], ["c", 4], ["b", 5]])
 
 func test_zinterstore():
 	gedis.zadd("key1", "a", 1)
@@ -28,7 +28,7 @@ func test_zinterstore():
 	gedis.zadd("key2", "c", 4)
 	var result = gedis.zinterstore("key3", ["key1", "key2"])
 	assert_eq(result, 1)
-	assert_eq(gedis.zrange("key3", 0, -1, true), ["b", 5])
+	assert_eq(gedis.zrange("key3", 0, -1, true), [["b", 5]])
 
 func test_zrem():
 	gedis.zadd("key", "a", 1)
