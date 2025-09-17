@@ -197,3 +197,9 @@ func move(key: String, newkey: String) -> int:
 
 	_delete_all_types_for_key(key)
 	return 1
+
+func ks(key: String) -> String:
+	return "gedis:keyspace:" + key
+	
+func rks(key: String) -> String:
+	return key.substr("gedis:keyspace:".length())

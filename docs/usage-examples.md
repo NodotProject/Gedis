@@ -145,7 +145,8 @@ var gedis = Gedis.new()
 
 func _ready():
     # Subscribe to events for the key "player_health"
-    gedis.subscribe("gedis:keyspace:player_health", self)
+    var keyspaced_key := gedis.ks("player_health") # Automatically add the keyspace prefix
+    gedis.subscribe(keyspaced_key, self)
     gedis.connect("pubsub_message", _on_keyspace_event)
 
 func _on_keyspace_event(channel, message):

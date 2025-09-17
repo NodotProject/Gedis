@@ -14,6 +14,8 @@ permalink: api-reference
 | `move(key, db)` | Moves `key` from the current database to the specified `db` index. |
 | `randomkey()` | Returns a random key from the currently selected database. |
 | `dbsize()` | Returns the number of keys in the currently selected database. |
+| `ks()` | Adds the keyspace prefix to a key. |
+| `rks()` | Removes the keyspace prefix of a key. |
 | **Strings** | |
 | `set_value(key, value)` | Sets the value of a key. |
 | `get_value(key)` | Gets the value of a key. |

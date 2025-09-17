@@ -15,6 +15,12 @@ func before_each():
 func after_each():
 	remove_child(g)
 	g.free()
+	
+func test_adding_keyspace_prefix_to_key():
+	assert_eq(g.ks("test"), "gedis:keyspace:test")
+	
+func test_remove_keyspace_prefix_from_key():
+	assert_eq(g.rks("gedis:keyspace:test"), "test")
 
 func test_set_event_is_published():
 	g.subscribe("gedis:keyspace:mykey", self)
@@ -257,4 +263,3 @@ func test_zpop_ready_publishes_del_event_when_sorted_set_becomes_empty():
 	await get_tree().create_timer(0.1).timeout
 	assert_eq(_received_messages.size(), 2)
 	assert_eq(_received_messages[1].message, "del")
-

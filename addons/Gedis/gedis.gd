@@ -155,6 +155,14 @@ func randomkey() -> String:
 func dbsize() -> int:
 	return _core._get_all_keys().size()
 
+## Adds the keyspace prefix to a key
+func ks(key: String) -> String:
+	return _core.ks(key)
+	
+## Removes the keyspace prefix of a key
+func rks(key: String) -> String:
+	return _core.rks(key)
+
 # Hashes
 ## Sets the string value of a hash field.
 func hset(key: String, field: String, value) -> int:
