@@ -51,6 +51,8 @@ func add(key: String, member: String, score: int) -> int:
 		data.sorted_set.append(entry)
 	
 	_gedis._core._sorted_sets[key] = data
+	if new_member:
+		_gedis.publish("gedis:keyspace:" + key, "set")
 	return 1 if new_member else 0
 
 
@@ -75,6 +77,7 @@ func remove(key: String, member: String) -> int:
 			data.sorted_set.remove_at(i)
 			if data.sorted_set.is_empty():
 				_gedis._core._sorted_sets.erase(key)
+				_gedis.publish("gedis:keyspace:" + key, "del")
 			else:
 				_gedis._core._sorted_sets[key] = data
 			return 1
@@ -202,6 +205,7 @@ func pop_ready(key: String, now: int) -> Array:
 	
 	if data.sorted_set.is_empty():
 		_gedis._core._sorted_sets.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._sorted_sets[key] = data
 	return ready_members

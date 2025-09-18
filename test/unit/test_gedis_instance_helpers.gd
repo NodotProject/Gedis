@@ -4,13 +4,13 @@ var gedis = null
 
 func before_all():
 	gedis = Gedis.new()
-	gedis.flushdb()
+	gedis.flushall()
 
 func after_all():
 	gedis.free()
 
 func before_each():
-	gedis.flushdb()
+	gedis.flushall()
 
 func test_set_and_get_instance_name():
 	gedis.set_instance_name("my_test_instance")

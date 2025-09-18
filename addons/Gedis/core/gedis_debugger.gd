@@ -80,7 +80,7 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 					if data.size() < 3:
 						return false
 					var key = data[2]
-					var key_value_data = target_instance.dump(key)
+					var key_value_data = target_instance.dump_key(key)
 					debugger.send_message("gedis:key_value_data", [key_value_data])
 					return true
 				"set":
@@ -89,7 +89,7 @@ static func _on_debugger_message(message: String, data: Array) -> bool:
 					var key = data[2]
 					var value = data[3]
 					target_instance.set_value(key, value)
-					var key_value_data = target_instance.dump(key)
+					var key_value_data = target_instance.dump_key(key)
 					debugger.send_message("gedis:key_value_data", [key_value_data])
 					return true
 				"pubsub":

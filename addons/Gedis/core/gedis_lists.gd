@@ -17,6 +17,7 @@ func lpush(key: String, value) -> int:
 	else:
 		a.insert(0, value)
 	_gedis._core._lists[key] = a
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return a.size()
 
 func rpush(key: String, value) -> int:
@@ -27,6 +28,7 @@ func rpush(key: String, value) -> int:
 	else:
 		a.append(value)
 	_gedis._core._lists[key] = a
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return a.size()
 
 func lpop(key: String):
@@ -38,7 +40,12 @@ func lpop(key: String):
 	if a.is_empty():
 		return null
 	var v = a.pop_front()
-	_gedis._core._lists[key] = a
+	if a.is_empty():
+		_gedis._core._lists.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
+	else:
+		_gedis._core._lists[key] = a
+		_gedis.publish("gedis:keyspace:" + key, "set")
 	return v
 
 func rpop(key: String):
@@ -50,7 +57,12 @@ func rpop(key: String):
 	if a.is_empty():
 		return null
 	var v = a.pop_back()
-	_gedis._core._lists[key] = a
+	if a.is_empty():
+		_gedis._core._lists.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
+	else:
+		_gedis._core._lists[key] = a
+		_gedis.publish("gedis:keyspace:" + key, "set")
 	return v
 
 func llen(key: String) -> int:
@@ -110,6 +122,7 @@ func lset(key: String, index: int, value) -> bool:
 		return false
 	a[index] = value
 	_gedis._core._lists[key] = a
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return true
 
 func lrem(key: String, count: int, value) -> int:
@@ -151,8 +164,10 @@ func lrem(key: String, count: int, value) -> int:
 		a = out2
 	if a.is_empty():
 		_gedis._core._lists.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._lists[key] = a
+		_gedis.publish("gedis:keyspace:" + key, "set")
 	return removed
 
 func lmove(source: String, destination: String, from: String, to: String):
@@ -190,9 +205,12 @@ func lmove(source: String, destination: String, from: String, to: String):
 
 	if source_list.is_empty():
 		_gedis._core._lists.erase(source)
+		_gedis.publish("gedis:keyspace:" + source, "del")
 	else:
 		_gedis._core._lists[source] = source_list
+		_gedis.publish("gedis:keyspace:" + source, "set")
 	_gedis._core._lists[destination] = dest_list
+	_gedis.publish("gedis:keyspace:" + destination, "set")
 
 	return element
 # Trims a list to the specified range of indices.
@@ -222,6 +240,7 @@ func ltrim(key: String, start: int, stop: int) -> bool:
 
 	if start > stop:
 		_gedis._core._lists.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
 		return true
 
 	var trimmed_list: Array = []
@@ -229,6 +248,7 @@ func ltrim(key: String, start: int, stop: int) -> bool:
 		trimmed_list.append(a[i])
 	
 	_gedis._core._lists[key] = trimmed_list
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return true
 
 # Inserts a value into a list before or after a pivot value.
@@ -264,4 +284,5 @@ func linsert(key: String, position: String, pivot: Variant, value: Variant) -> i
 		return 0
 	
 	_gedis._core._lists[key] = a
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return a.size()

@@ -84,6 +84,7 @@ func incrby(key: String, amount: int = 1) -> int:
 	# Store as an integer to keep types consistent
 	_gedis._core._touch_type(k, _gedis._core._store)
 	_gedis._core._store[k] = v
+	_gedis.publish("gedis:keyspace:" + k, "set")
 	return v
 
 func decrby(key: String, amount: int = 1) -> int:

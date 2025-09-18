@@ -4,13 +4,13 @@ var gedis = null
 
 func before_all():
 	gedis = Gedis.new()
-	gedis.flushdb()
+	gedis.flushall()
 
 func after_all():
 	gedis.free()
 
 func before_each():
-	gedis.flushdb()
+	gedis.flushall()
 
 func test_hincrby_field_does_not_exist():
 	gedis.hset("key1", "field1", 10)

@@ -20,11 +20,11 @@ func test_dump_and_restore():
 	gedis.lpush("list_key", "item1")
 	gedis.sadd("set_key", "member1")
 	
-	var dump = gedis._core.dump()
+	var dump = gedis._core.dump_all()
 	
 	var new_gedis = Gedis.new()
 	add_child(new_gedis)
-	new_gedis._core.restore(dump)
+	new_gedis._core.restore_all(dump)
 	
 	assert_eq(new_gedis.get_value("string_key"), "hello", "String should be restored")
 	assert_eq(new_gedis.hget("hash_key", "field1"), "value1", "Hash should be restored")
@@ -37,12 +37,12 @@ func test_dump_namespace_filtering():
 	gedis.set_value("user:2", "Bob")
 	gedis.set_value("session:1", "active")
 	
-	var user_dump = gedis._core.dump({"include": ["user:"]})
+	var user_dump = gedis._core.dump_all({"include": ["user:"]})
 	assert_true(user_dump.store.has("user:1"), "Include should keep user:1")
 	assert_true(user_dump.store.has("user:2"), "Include should keep user:2")
 	assert_false(user_dump.store.has("session:1"), "Include should remove session:1")
 	
-	var no_session_dump = gedis._core.dump({"exclude": ["session:"]})
+	var no_session_dump = gedis._core.dump_all({"exclude": ["session:"]})
 	assert_true(no_session_dump.store.has("user:1"), "Exclude should keep user:1")
 	assert_true(no_session_dump.store.has("user:2"), "Exclude should keep user:2")
 	assert_false(no_session_dump.store.has("session:1"), "Exclude should remove session:1")
@@ -51,12 +51,12 @@ func test_ttl_preservation():
 	gedis.set_value("mykey", "some_value")
 	gedis.expire("mykey", 10) # Expires in 10 seconds
 	
-	var dump = gedis._core.dump()
+	var dump = gedis._core.dump_all()
 	var expiry_time = dump.expiry.mykey
 	
 	var new_gedis = Gedis.new()
 	add_child(new_gedis)
-	new_gedis._core.restore(dump)
+	new_gedis._core.restore_all(dump)
 	
 	assert_true(new_gedis._core._expiry.has("mykey"), "Expiry key should be restored")
 	assert_eq(new_gedis._core._expiry.mykey, expiry_time, "Expiry time should be identical")
@@ -66,11 +66,11 @@ func test_expired_key_on_restore():
 	gedis.set_value("mykey", "some_value")
 	gedis.expire("mykey", -10) # Expired 10 seconds ago
 	
-	var dump = gedis._core.dump()
+	var dump = gedis._core.dump_all()
 	
 	var new_gedis = Gedis.new()
 	add_child(new_gedis)
-	new_gedis._core.restore(dump)
+	new_gedis._core.restore_all(dump)
 	
 	assert_false(new_gedis.key_exists("mykey"), "Expired key should not be restored")
 	new_gedis.queue_free()
@@ -241,7 +241,7 @@ func test_performance_with_large_dataset():
 	
 func test_restore_top_level():
 	gedis.set_value("key1", "value1")
-	var dump_data = gedis.dump("key1")
+	var dump_data = gedis.dump_key("key1")
 	gedis.del("key1")
 	assert_false(gedis.key_exists("key1"))
 	assert_eq(gedis.restore("key1", JSON.stringify(dump_data)), OK)
@@ -249,7 +249,7 @@ func test_restore_top_level():
 
 func test_restore_key():
 	gedis.set_value("key1", "value1")
-	var dump_data = gedis.dump("key1")
+	var dump_data = gedis.dump_key("key1")
 	gedis.del("key1")
 	assert_false(gedis.key_exists("key1"))
 	gedis._core.restore_key("key1", dump_data)

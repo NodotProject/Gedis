@@ -15,6 +15,7 @@ func sadd(key: String, member) -> int:
 	var existed := int(s.has(member))
 	s[member] = true
 	_gedis._core._sets[key] = s
+	_gedis.publish("gedis:keyspace:" + key, "set")
 	return 1 - existed
 
 func srem(key: String, member) -> int:
@@ -27,6 +28,7 @@ func srem(key: String, member) -> int:
 	s.erase(member)
 	if s.is_empty():
 		_gedis._core._sets.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._sets[key] = s
 	return existed
@@ -62,6 +64,7 @@ func spop(key: String):
 	s.erase(member)
 	if s.is_empty():
 		_gedis._core._sets.erase(key)
+		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._sets[key] = s
 	return member

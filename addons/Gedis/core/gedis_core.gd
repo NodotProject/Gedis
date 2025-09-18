@@ -11,6 +11,13 @@ var _expiry: Dictionary = {} # key -> float (unix seconds)
 # Pub/Sub registries
 var _subscribers: Dictionary = {} # channel -> Array of Objects
 var _psubscribers: Dictionary = {} # pattern -> Array of Objects
+var _gedis: Gedis
+
+func _init(gedis_instance: Gedis) -> void:
+	_gedis = gedis_instance
+
+func _now() -> int:
+	return _gedis.get_time_source().get_time()
 
 func _delete_all_types_for_key(key: String) -> void:
 	_store.erase(key)
@@ -57,7 +64,7 @@ func flushall() -> void:
 	_psubscribers.clear()
 
 
-func dump(options: Dictionary = {}) -> Dictionary:
+func dump_all(options: Dictionary = {}) -> Dictionary:
 	var state := {
 		"store": _store.duplicate(true),
 		"hashes": _hashes.duplicate(true),
@@ -93,7 +100,7 @@ func dump(options: Dictionary = {}) -> Dictionary:
 	return state
 
 
-func restore(state: Dictionary) -> void:
+func restore_all(state: Dictionary) -> void:
 	flushall()
 
 	_store = state.get("store", {})
@@ -104,7 +111,7 @@ func restore(state: Dictionary) -> void:
 	_expiry = state.get("expiry", {})
 
 	# Discard expired keys
-	var now: float = Time.get_unix_time_from_system()
+	var now: float = _now()
 	for key in _expiry.keys():
 		if _expiry[key] < now:
 			_delete_all_types_for_key(key)
@@ -193,3 +200,9 @@ func move(key: String, newkey: String) -> int:
 
 	_delete_all_types_for_key(key)
 	return 1
+
+func ks(key: String) -> String:
+	return "gedis:keyspace:" + key
+	
+func rks(key: String) -> String:
+	return key.substr("gedis:keyspace:".length())

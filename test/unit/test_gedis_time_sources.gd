@@ -16,7 +16,7 @@ func after_all():
 	gedis.free()
 
 func before_each():
-	gedis.flushdb()
+	gedis.flushall()
 	# Reset to default time source before each test
 	gedis.set_time_source(GedisUnixTimeSource.new())
 

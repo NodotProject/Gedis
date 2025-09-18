@@ -4,13 +4,13 @@ var gedis = null
 
 func before_all():
 	gedis = Gedis.new()
-	gedis.flushdb()
+	gedis.flushall()
 
 func after_all():
 	gedis.free()
 
 func before_each():
-	gedis.flushdb()
+	gedis.flushall()
 
 func test_set_get():
 	gedis.set_value("a", "1")
@@ -129,3 +129,15 @@ func test_randomkey_dbsize():
 	assert_eq(gedis.dbsize(), 3, "dbsize should return the number of keys")
 	var key = gedis.randomkey()
 	assert_true(key in ["a", "b", "c"], "randomkey should return a key from the database")
+
+func test_del_method():
+	gedis.set_value("a", "1")
+	gedis.set_value("b", "2")
+	gedis.set_value("c", "3")
+	assert_eq(gedis.del("a"), 1, "should delete a single key")
+	assert_false(gedis.key_exists("a"), "key 'a' should not exist after deletion")
+	assert_eq(gedis.del(["b", "c"]), 2, "should delete multiple keys")
+	assert_false(gedis.key_exists("b"), "key 'b' should not exist after deletion")
+	assert_false(gedis.key_exists("c"), "key 'c' should not exist after deletion")
+	assert_eq(gedis.del("non_existent"), 0, "should return 0 for non-existent key")
+	assert_eq(gedis.del(["d", "e"]), 0, "should return 0 for non-existent keys")

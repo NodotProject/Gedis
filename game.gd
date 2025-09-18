@@ -13,7 +13,9 @@ func _ready():
 	inventory_label = $InventoryLabel
 	leaderboard_label = $LeaderboardLabel
 	powerup_label = $PowerupLabel
+	gedis.set_time_source(GedisProcessDeltaTimeSource.new())
 	gedis.set_value("score", 0)
+	add_child(gedis)
 	
 	randomize()
 	update_labels()
