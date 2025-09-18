@@ -461,7 +461,7 @@ func save(path: String, options: Dictionary = {}) -> int:
 	if dump_options.has("path"):
 		dump_options.erase("path")
 	
-	var data = _core.dump(dump_options)
+	var data = _core.dump_all(dump_options)
 	
 	var save_options = {"path": path}
 	return backend.save(data, save_options)
@@ -479,8 +479,16 @@ func load(path: String, options: Dictionary = {}) -> int:
 	if data.is_empty():
 		return FAILED
 
-	_core.restore(data)
+	_core.restore_all(data)
 	return OK
+
+## Dumps the entire dataset to a variable.
+func dump_all(options: Dictionary = {}) -> Dictionary:
+	return _core.dump_all(options)
+
+## Restores the entire dataset from a variable.
+func restore_all(data: Dictionary) -> void:
+	_core.restore_all(data)
 
 ## Restores a key from a serialized value.
 func restore(key: String, data: String, backend: String = "") -> int:
@@ -508,7 +516,7 @@ func type(key: String) -> String:
 	return _debugger_component.type(key)
 
 ## Returns a dictionary representation of the value stored at a key.
-func dump(key: String) -> Dictionary:
+func dump_key(key: String) -> Dictionary:
 	return _debugger_component.dump(key)
 
 ## Returns a snapshot of the database for keys matching a pattern.

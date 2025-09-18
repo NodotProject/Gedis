@@ -267,7 +267,7 @@ gedis.set_value("player_name", "Bob")
 gedis.set_value("level", 5)
 
 # Dump the dataset to a variable
-var data_dump = gedis.dump()
+var data_dump = gedis.dump_all()
 
 # You can now save `data_dump` to a file, send it over the network, etc.
 # For example, save it as a binary file:
@@ -281,7 +281,7 @@ var file_to_load = FileAccess.open("user://my_data.bin", FileAccess.READ)
 var loaded_dump = file_to_load.get_var()
 file_to_load.close()
 
-new_gedis.restore(loaded_dump)
+new_gedis.restore_all(loaded_dump)
 var player_name = new_gedis.get_value("player_name") # "Bob"
 ```
 ### Creating a Custom Persistence Backend

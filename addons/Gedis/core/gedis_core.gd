@@ -61,7 +61,7 @@ func flushall() -> void:
 	_psubscribers.clear()
 
 
-func dump(options: Dictionary = {}) -> Dictionary:
+func dump_all(options: Dictionary = {}) -> Dictionary:
 	var state := {
 		"store": _store.duplicate(true),
 		"hashes": _hashes.duplicate(true),
@@ -97,7 +97,7 @@ func dump(options: Dictionary = {}) -> Dictionary:
 	return state
 
 
-func restore(state: Dictionary) -> void:
+func restore_all(state: Dictionary) -> void:
 	flushall()
 
 	_store = state.get("store", {})
