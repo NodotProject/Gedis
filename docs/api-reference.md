@@ -8,7 +8,6 @@ permalink: api-reference
 | --- | --- |
 | **Keys** | |
 | `flushall()` | Deletes all keys from the database. |
-| `flushdb()` | Deletes all keys from the database. Alias for `flushall`. |
 | `type(key)` | Returns the string representation of the type of the value stored at `key`. The different types that can be returned are: `string`, `list`, `set`, `zset`, `hash` and `stream`. |
 | `rename(key, new_key)` | Renames `key` to `new_key`. |
 | `move(key, db)` | Moves `key` from the current database to the specified `db` index. |

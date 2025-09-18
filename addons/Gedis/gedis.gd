@@ -60,7 +60,8 @@ func _exit_tree() -> void:
 			_instances.remove_at(i)
 			break
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_time_source.tick(delta)
 	_expiry._purge_expired()
 
 # --- Time Source ---
@@ -432,10 +433,6 @@ func persist(key: String) -> bool:
 # Admin
 ## Deletes all keys from the database.
 func flushall() -> void:
-	_core.flushall()
-
-## Deletes all keys from the database. Alias for flushall.
-func flushdb() -> void:
 	_core.flushall()
 
 # Persistence

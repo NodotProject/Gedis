@@ -27,6 +27,8 @@ First, create an instance of Gedis in your script:
 ```gdscript
 # Create a Gedis instance
 var gedis = Gedis.new()
+# IMPORTANT: Add it to the tree
+add_child(gedis)
 ```
 
 ### Strings

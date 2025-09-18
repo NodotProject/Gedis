@@ -17,7 +17,8 @@ func after_each():
 	remove_child(g)
 	g.free()
 
-func test_expire():
+# TODO: modify this test to test all kinds of keys such as hashes, lists, sorted sets etc
+func test_expire_string():
 	g.set_value("key", "value")
 	assert_true(g.expire("key", 1), "Expire should return true for an existing key")
 
@@ -29,6 +30,54 @@ func test_expire():
 		await get_tree().create_timer(0.1).timeout
 
 	assert_false(g.key_exists("key"), "Key should not exist after expiry")
+
+
+func test_expire_hash():
+	g.hset("hash_key", "field", "value")
+	assert_true(g.expire("hash_key", 1), "Expire should return true for an existing hash key")
+
+	for i in 20:
+		if not g.key_exists("hash_key"):
+			break
+		await get_tree().create_timer(0.1).timeout
+
+	assert_false(g.key_exists("hash_key"), "Hash key should not exist after expiry")
+
+
+func test_expire_list():
+	g.rpush("list_key", ["a", "b", "c"])
+	assert_true(g.expire("list_key", 1), "Expire should return true for an existing list key")
+
+	for i in 20:
+		if not g.key_exists("list_key"):
+			break
+		await get_tree().create_timer(0.1).timeout
+
+	assert_false(g.key_exists("list_key"), "List key should not exist after expiry")
+
+
+func test_expire_set():
+	g.sadd("set_key", "member")
+	assert_true(g.expire("set_key", 1), "Expire should return true for an existing set key")
+
+	for i in 20:
+		if not g.key_exists("set_key"):
+			break
+		await get_tree().create_timer(0.1).timeout
+
+	assert_false(g.key_exists("set_key"), "Set key should not exist after expiry")
+
+
+func test_expire_sorted_set():
+	g.zadd("sorted_set_key", "member", 1)
+	assert_true(g.expire("sorted_set_key", 1), "Expire should return true for an existing sorted set key")
+
+	for i in 20:
+		if not g.key_exists("sorted_set_key"):
+			break
+		await get_tree().create_timer(0.1).timeout
+
+	assert_false(g.key_exists("sorted_set_key"), "Sorted set key should not exist after expiry")
 
 func test_ttl_with_expiry():
 	g.set_value("key", "value")
@@ -70,7 +119,6 @@ func test_setex():
 
 	assert_false(g.key_exists("mykey"), "Key should expire after the given time")
 
-
 func test_an_event_is_published_when_a_key_expires():
 	g.subscribe("gedis:keyspace:mykey", self)
 	g.setex("mykey", 1, "value")
@@ -79,7 +127,6 @@ func test_an_event_is_published_when_a_key_expires():
 	assert_eq(_received_messages.size(), 2)
 	assert_eq(_received_messages[0].message, "set")
 	assert_eq(_received_messages[1].message, "expire")
-
 
 func test_no_event_is_published_when_a_key_is_persisted():
 	g.subscribe("gedis:keyspace:mykey", self)

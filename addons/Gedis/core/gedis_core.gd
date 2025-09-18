@@ -16,6 +16,9 @@ var _gedis: Gedis
 func _init(gedis_instance: Gedis) -> void:
 	_gedis = gedis_instance
 
+func _now() -> int:
+	return _gedis.get_time_source().get_time()
+
 func _delete_all_types_for_key(key: String) -> void:
 	_store.erase(key)
 	_hashes.erase(key)
@@ -108,7 +111,7 @@ func restore_all(state: Dictionary) -> void:
 	_expiry = state.get("expiry", {})
 
 	# Discard expired keys
-	var now: float = Time.get_unix_time_from_system()
+	var now: float = _now()
 	for key in _expiry.keys():
 		if _expiry[key] < now:
 			_delete_all_types_for_key(key)
