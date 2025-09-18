@@ -32,7 +32,7 @@ func test_type():
 
 func test_dump():
 	gedis.set_value("mykey", "myvalue")
-	var dump = gedis.dump("mykey")
+	var dump = gedis.dump_key("mykey")
 	assert_true(dump.has("type"), "dump should have a type")
 	assert_eq(dump["type"], "string", "dump type should be string")
 	assert_true(dump.has("value"), "dump should have a value")
@@ -41,7 +41,7 @@ func test_dump():
 	assert_eq(dump["ttl"], -1, "dump ttl should be -1 for no expiry")
 
 	gedis.expire("mykey", 120)
-	dump = gedis.dump("mykey")
+	dump = gedis.dump_key("mykey")
 	assert_true(dump["ttl"] > 0 and dump["ttl"] <= 120, "dump ttl should be between 0 and 120")
 
 func test_snapshot():
