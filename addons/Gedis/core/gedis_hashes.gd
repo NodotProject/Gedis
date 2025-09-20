@@ -106,9 +106,13 @@ func hgetall(key: String) -> Dictionary:
 		return {}
 	return _gedis._core._hashes.get(key, {}).duplicate(true)
 
-func hexists(key: String, field: String) -> bool:
+func hexists(key: String, field = null) -> bool:
 	if _gedis._expiry._is_expired(key):
 		return false
+	
+	if field == null:
+		return _gedis._core._hashes.has(key)
+
 	var d: Dictionary = _gedis._core._hashes.get(key, {})
 	return d.has(field)
 

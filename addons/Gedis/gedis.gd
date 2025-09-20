@@ -198,7 +198,7 @@ func hgetall(key: String) -> Dictionary:
 	return _hashes.hgetall(key)
 
 ## Checks if a hash field exists.
-func hexists(key: String, field: String) -> bool:
+func hexists(key: String, field = null) -> bool:
 	return _hashes.hexists(key, field)
 
 ## Gets all the fields in a hash.

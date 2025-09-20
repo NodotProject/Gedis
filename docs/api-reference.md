@@ -35,7 +35,7 @@ permalink: api-reference
 | `hget(key, field, default)` | Gets the value of a hash field with optional default. |
 | `hgetall(key)` | Gets all the fields and values in a hash as a Dictionary. |
 | `hdel(key, fields)` | Deletes hash fields (accepts single field or Array). |
-| `hexists(key, field)` | Checks if a hash field exists. |
+| `hexists(key, field)` | Checks if a hash field exists. If `field` is omitted, it checks if the hash key exists. |
 | `hkeys(key)` | Gets all the fields in a hash. |
 | `hvals(key)` | Gets all the values in a hash. |
 | `hlen(key)` | Gets the number of fields in a hash. |
