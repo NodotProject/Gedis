@@ -30,7 +30,7 @@ func _init() -> void:
 	_instances.append(self)
 
 	# Instantiate components
-	_core = GedisCore.new()
+	_core = GedisCore.new(self)
 	_utils = GedisUtils.new()
 	_time_source = GedisUnixTimeSource.new()
 	_expiry = GedisExpiry.new(self)
@@ -60,7 +60,8 @@ func _exit_tree() -> void:
 			_instances.remove_at(i)
 			break
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_time_source.tick(delta)
 	_expiry._purge_expired()
 
 # --- Time Source ---
@@ -155,6 +156,14 @@ func randomkey() -> String:
 func dbsize() -> int:
 	return _core._get_all_keys().size()
 
+## Adds the keyspace prefix to a key
+func ks(key: String) -> String:
+	return _core.ks(key)
+	
+## Removes the keyspace prefix of a key
+func rks(key: String) -> String:
+	return _core.rks(key)
+
 # Hashes
 ## Sets the string value of a hash field.
 func hset(key: String, field: String, value) -> int:
@@ -189,7 +198,7 @@ func hgetall(key: String) -> Dictionary:
 	return _hashes.hgetall(key)
 
 ## Checks if a hash field exists.
-func hexists(key: String, field: String) -> bool:
+func hexists(key: String, field = null) -> bool:
 	return _hashes.hexists(key, field)
 
 ## Gets all the fields in a hash.
@@ -426,10 +435,6 @@ func persist(key: String) -> bool:
 func flushall() -> void:
 	_core.flushall()
 
-## Deletes all keys from the database. Alias for flushall.
-func flushdb() -> void:
-	_core.flushall()
-
 # Persistence
 ## Registers a new persistence backend.
 func register_persistence_backend(name: String, backend: GedisPersistenceBackend) -> void:
@@ -453,7 +458,7 @@ func save(path: String, options: Dictionary = {}) -> int:
 	if dump_options.has("path"):
 		dump_options.erase("path")
 	
-	var data = _core.dump(dump_options)
+	var data = _core.dump_all(dump_options)
 	
 	var save_options = {"path": path}
 	return backend.save(data, save_options)
@@ -471,8 +476,16 @@ func load(path: String, options: Dictionary = {}) -> int:
 	if data.is_empty():
 		return FAILED
 
-	_core.restore(data)
+	_core.restore_all(data)
 	return OK
+
+## Dumps the entire dataset to a variable.
+func dump_all(options: Dictionary = {}) -> Dictionary:
+	return _core.dump_all(options)
+
+## Restores the entire dataset from a variable.
+func restore_all(data: Dictionary) -> void:
+	_core.restore_all(data)
 
 ## Restores a key from a serialized value.
 func restore(key: String, data: String, backend: String = "") -> int:
@@ -500,7 +513,7 @@ func type(key: String) -> String:
 	return _debugger_component.type(key)
 
 ## Returns a dictionary representation of the value stored at a key.
-func dump(key: String) -> Dictionary:
+func dump_key(key: String) -> Dictionary:
 	return _debugger_component.dump(key)
 
 ## Returns a snapshot of the database for keys matching a pattern.

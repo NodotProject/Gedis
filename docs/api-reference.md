@@ -8,12 +8,13 @@ permalink: api-reference
 | --- | --- |
 | **Keys** | |
 | `flushall()` | Deletes all keys from the database. |
-| `flushdb()` | Deletes all keys from the database. Alias for `flushall`. |
 | `type(key)` | Returns the string representation of the type of the value stored at `key`. The different types that can be returned are: `string`, `list`, `set`, `zset`, `hash` and `stream`. |
 | `rename(key, new_key)` | Renames `key` to `new_key`. |
 | `move(key, db)` | Moves `key` from the current database to the specified `db` index. |
 | `randomkey()` | Returns a random key from the currently selected database. |
 | `dbsize()` | Returns the number of keys in the currently selected database. |
+| `ks()` | Adds the keyspace prefix to a key. |
+| `rks()` | Removes the keyspace prefix of a key. |
 | **Strings** | |
 | `set_value(key, value)` | Sets the value of a key. |
 | `get_value(key)` | Gets the value of a key. |
@@ -34,7 +35,7 @@ permalink: api-reference
 | `hget(key, field, default)` | Gets the value of a hash field with optional default. |
 | `hgetall(key)` | Gets all the fields and values in a hash as a Dictionary. |
 | `hdel(key, fields)` | Deletes hash fields (accepts single field or Array). |
-| `hexists(key, field)` | Checks if a hash field exists. |
+| `hexists(key, field)` | Checks if a hash field exists. If `field` is omitted, it checks if the hash key exists. |
 | `hkeys(key)` | Gets all the fields in a hash. |
 | `hvals(key)` | Gets all the values in a hash. |
 | `hlen(key)` | Gets the number of fields in a hash. |
