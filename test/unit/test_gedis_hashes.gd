@@ -4,13 +4,13 @@ var gedis = null
 
 func before_all():
 	gedis = Gedis.new()
-	gedis.flushdb()
+	gedis.flushall()
 
 func after_all():
 	gedis.free()
 
 func before_each():
-	gedis.flushdb()
+	gedis.flushall()
 
 func test_hincrby_field_does_not_exist():
 	gedis.hset("key1", "field1", 10)
@@ -96,3 +96,19 @@ func test_hlen():
 	gedis.hset("key1", "field2", "value2")
 	var result = gedis.hlen("key1")
 	assert_eq(result, 2)
+
+
+func test_hexists_key_exists():
+	gedis.hset("key1", "field1", "value1")
+	assert_true(gedis.hexists("key1"))
+
+func test_hexists_key_does_not_exist():
+	assert_false(gedis.hexists("key1"))
+
+func test_del_hash():
+	gedis.hset("myhash", "field1", "value1")
+	assert_true(gedis.key_exists("myhash"), "hash should exist before del")
+	var result = gedis.del("myhash")
+	assert_eq(result, 1, "del should return 1 for an existing hash")
+	assert_false(gedis.key_exists("myhash"), "hash should not exist after del")
+	assert_eq(gedis.hgetall("myhash"), {}, "hgetall on deleted hash should be empty")
