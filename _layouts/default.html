@@ -5,7 +5,7 @@
 
   <!-- google analytics -->
   {% if site.google-analytics %}
-    {% include google-analytics.html %}
+  {% include google-analytics.html %}
   {% endif %}
 
   <!-- Jekyll SEO plugin -->
@@ -19,17 +19,21 @@
   <link rel="stylesheet" href="{{ '/assets/css/main.css' | absolute_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/tailwind.css' | absolute_url }}">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <!-- Favicons and Manifest -->
+  <link rel="manifest" href="{{ '/assets/favicons/site.webmanifest' | absolute_url }}">
+  <link rel="apple-touch-icon" href="{{ '/assets/favicons/apple-touch-icon.png' | absolute_url }}">
+  <link rel="icon" href="{{ '/assets/favicons/favicon.svg' | absolute_url }}" type="image/svg+xml">
+  <link rel="icon" href="{{ '/assets/favicons/favicon.ico' | absolute_url }}" sizes="any">
 
   <!-- fontawesome -->
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
     integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
-  
-    <!-- highlight.js -->
-   <link rel="stylesheet"
-    href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github-dark-dimmed.min.css">
+
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github-dark-dimmed.min.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
   <script>hljs.highlightAll();</script>
-  
+
   <!-- MathJax -->
   <script>
     MathJax = {
@@ -40,9 +44,10 @@
   </script>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
- </head>
+</head>
 
-<body class="font-sans mx-auto max-w-prose bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
+<body
+  class="font-sans mx-auto max-w-prose bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
   <div class="pt-12 pb-4">
     {{ content }}
   </div>
@@ -60,29 +65,29 @@
 
   /* Function for opning navbar on mobile */
   function toggleNavbar(collapseID) {
-      document.getElementById(collapseID).classList.toggle("hidden");
-      document.getElementById(collapseID).classList.toggle("block");
+    document.getElementById(collapseID).classList.toggle("hidden");
+    document.getElementById(collapseID).classList.toggle("block");
+  }
+  /* Function for dropdowns */
+  function openDropdown(event, dropdownID) {
+    let element = event.target;
+    while (element.nodeName !== "A") {
+      element = element.parentNode;
     }
-    /* Function for dropdowns */
-    function openDropdown(event, dropdownID) {
-      let element = event.target;
-      while (element.nodeName !== "A") {
-        element = element.parentNode;
-      }
-      document.getElementById(dropdownID).classList.toggle("hidden");
-      document.getElementById(dropdownID).classList.toggle("block");
-    }
+    document.getElementById(dropdownID).classList.toggle("hidden");
+    document.getElementById(dropdownID).classList.toggle("block");
+  }
 
   /* Function for show/hide table of content */
   function toggleTOC() {
     var toc = document.getElementById('toc');
-        if (toc.style.display == "block"){ // if toc hidden, display it 
-            toc.style.display = "none";
-        }
-        else{ // if toc displayed, hidden it
-            toc.style.display = "block";
-        }
+    if (toc.style.display == "block") { // if toc hidden, display it 
+      toc.style.display = "none";
     }
+    else { // if toc displayed, hidden it
+      toc.style.display = "block";
+    }
+  }
 </script>
 
 </html>
