@@ -40,6 +40,10 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 - **Pub/Sub**: A powerful publish-subscribe system for real-time messaging between different parts of your game (`publish`, `subscribe`).
 - **Sorted Sets**: Ordered collections of unique strings where each member has an associated score (`zadd`, `zrem`, `zrange`, `zscore`, `zrank`).
 
+## Built with Gedis
+
+- **[GedisQueue](https://github.com/NodotProject/GedisQueue)** - A powerful and flexible job queue system for Godot, built on top of Gedis
+
 ## Debugger
 
 Gedis comes with a debugger interface!
