@@ -6,18 +6,18 @@ var _hashes: Dictionary = {}
 var _lists: Dictionary = {}
 var _sets: Dictionary = {}
 var _sorted_sets: Dictionary = {}
-var _expiry: Dictionary = {} # key -> float (unix seconds)
+var _expiry: Dictionary[String, float] = {}
 
 # Pub/Sub registries
-var _subscribers: Dictionary = {} # channel -> Array of Objects
-var _psubscribers: Dictionary = {} # pattern -> Array of Objects
+var _subscribers: Dictionary[String, Array] = {}
+var _psubscribers: Dictionary[String, Array] = {}
 var _gedis: Gedis
 
 func _init(gedis_instance: Gedis) -> void:
 	_gedis = gedis_instance
 
 func _now() -> int:
-	return _gedis.get_time_source().get_time()
+	return _gedis._time_source.get_time()
 
 func _delete_all_types_for_key(key: String) -> void:
 	_store.erase(key)
@@ -39,8 +39,8 @@ func _touch_type(key: String, type_bucket: Dictionary) -> void:
 func key_exists(key: String) -> bool:
 	return _store.has(key) or _hashes.has(key) or _lists.has(key) or _sets.has(key) or _sorted_sets.has(key)
 
-func _get_all_keys() -> Dictionary:
-	var all: Dictionary = {}
+func _get_all_keys() -> Dictionary[String, bool]:
+	var all: Dictionary[String, bool] = {}
 	for k in _store.keys():
 		all[str(k)] = true
 	for k in _hashes.keys():

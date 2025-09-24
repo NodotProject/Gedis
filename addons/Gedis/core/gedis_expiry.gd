@@ -7,7 +7,7 @@ func _init(p_gedis: Gedis):
 	_gedis = p_gedis
 
 func _now() -> int:
-	return _gedis.get_time_source().get_time()
+	return _gedis._time_source.get_time()
 
 func _is_expired(key: String) -> bool:
 	if _gedis._core._expiry.has(key) and _gedis._core._expiry[key] <= _now():
@@ -17,8 +17,9 @@ func _is_expired(key: String) -> bool:
 
 func _purge_expired() -> void:
 	var to_remove: Array = []
+	var now := _now()
 	for key in _gedis._core._expiry.keys():
-		if _gedis._core._expiry[key] <= _now():
+		if _gedis._core._expiry[key] <= now:
 			to_remove.append(key)
 	for k in to_remove:
 		_gedis.publish("gedis:keyspace:" + k, "expire")
