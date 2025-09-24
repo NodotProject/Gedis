@@ -32,7 +32,6 @@ func _init() -> void:
 	# Instantiate components
 	_core = GedisCore.new(self)
 	_utils = GedisUtils.new()
-	_time_source = GedisUnixTimeSource.new()
 	_expiry = GedisExpiry.new(self)
 	_strings = GedisStrings.new(self)
 	_hashes = GedisHashes.new(self)
@@ -41,6 +40,9 @@ func _init() -> void:
 	_sorted_sets = GedisSortedSets.new(self)
 	_pubsub = GedisPubSub.new(self)
 	_debugger_component = GedisDebugger.new(self)
+
+	_time_source = GedisUnixTimeSource.new()
+	_time_source.instance = self
 
 	_pubsub.pubsub_message.connect(_on_pubsub_message)
 	_pubsub.psub_message.connect(_on_psub_message)
@@ -62,10 +64,10 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
 	_time_source.tick(delta)
-	_expiry._purge_expired()
 
 # --- Time Source ---
 func set_time_source(p_time_source: GedisTimeSource) -> void:
+	p_time_source.instance = self
 	_time_source = p_time_source
 
 func get_time_source() -> GedisTimeSource:
@@ -429,6 +431,10 @@ func ttl(key: String) -> int:
 ## Removes the expiration from a key.
 func persist(key: String) -> bool:
 	return _expiry.persist(key)
+
+## Purges all expired keys
+func purge_expired() -> void:
+	_expiry._purge_expired()
 
 # Admin
 ## Deletes all keys from the database.
