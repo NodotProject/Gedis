@@ -8,6 +8,7 @@ func _init() -> void:
 
 func tick(delta: float) -> void:
 	current_time += int(delta * 1000)
+	instance.purge_expired()
 
 # Returns the current time as a Unix timestamp with milliseconds.
 func get_time() -> int:
