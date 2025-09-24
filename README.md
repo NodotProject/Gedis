@@ -20,6 +20,7 @@
 
 - [Overview](#overview)
 - [Features](#features)
+- [Built with Gedis](#built-with-gedis)
 - [Installation](#installation)
 - [Contribution Instructions](#contribution-instructions)
 - [License](#license)
@@ -45,6 +46,10 @@ Gedis is a high-performance, in-memory key-value datastore for Godot projects, i
 <p align="center">
     <a href="https://nodotproject.github.io/Gedis/"><img src="https://img.shields.io/badge/documentation-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </p>
+
+## Built with Gedis
+
+- **[GedisQueue](https://github.com/NodotProject/GedisQueue)** - A powerful and flexible job queue system for Godot, built on top of Gedis
 
 ## Installation
 
