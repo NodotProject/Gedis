@@ -16,15 +16,12 @@ func _is_expired(key: String) -> bool:
 	return false
 
 func _purge_expired() -> void:
-	var to_remove: Array = []
 	var now := _now()
 	var ex := _gedis._core._expiry
 	for key in ex.keys():
 		if ex[key] <= now:
-			to_remove.append(key)
-	for k in to_remove:
-		_gedis._core._delete_all_types_for_key(k)
-		_gedis.publish.call_deferred("gedis:keyspace:" + k, "expire")
+			_gedis._core._delete_all_types_for_key(key)
+			_gedis.publish.call_deferred("gedis:keyspace:" + key, "expire")
 
 # ----------------
 # Expiry commands
