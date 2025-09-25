@@ -36,7 +36,7 @@ func _purge_expired() -> void:
 		if timestamp <= now:
 			if ex.has(key) and ex[key] == timestamp:
 				_gedis._core._delete_all_types_for_key(key)
-				_gedis.publish.call_deferred("gedis:keyspace:" + key, "expire")
+				_gedis.publish("gedis:keyspace:" + key, "expire")
 			expired_count += 1
 		else:
 			break

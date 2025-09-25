@@ -385,7 +385,7 @@ func zinterstore(destination: String, keys: Array, aggregate: String = "SUM") ->
 # Pub/Sub
 ## Posts a message to a channel.
 func publish(channel: String, message) -> void:
-	_pubsub.publish(channel, message)
+	_pubsub.publish.call_deferred(channel, message)
 
 ## Subscribes to a channel.
 func subscribe(channel: String, subscriber: Object) -> void:

@@ -244,9 +244,10 @@ func test_zinterstore_publishes_del_and_set_events():
 	g.subscribe("gedis:keyspace:dest", self)
 	g.zinterstore("dest", ["zset1", "zset2"])
 	await get_tree().create_timer(0.1).timeout
-	assert_eq(_received_messages.size(), 2)
-	assert_eq(_received_messages[0].message, "del")
-	assert_eq(_received_messages[1].message, "set")
+	assert_eq(_received_messages.size(), 3)
+	assert_eq(_received_messages[0].message, "set")
+	assert_eq(_received_messages[1].message, "del")
+	assert_eq(_received_messages[2].message, "set")
 
 func test_zrem_publishes_del_event_when_sorted_set_becomes_empty():
 	g.subscribe("gedis:keyspace:myzset", self)
