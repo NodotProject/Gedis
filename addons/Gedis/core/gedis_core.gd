@@ -6,7 +6,7 @@ var _hashes: Dictionary = {}
 var _lists: Dictionary = {}
 var _sets: Dictionary = {}
 var _sorted_sets: Dictionary = {}
-var _expiry: Dictionary[String, float] = {}
+var _expiry: Dictionary = {}
 
 # Pub/Sub registries
 var _subscribers: Dictionary[String, Array] = {}
