@@ -162,7 +162,7 @@ func dbsize() -> int:
 func ks(key: String) -> String:
 	return _core.ks(key)
 	
-## Removes the keyspace prefix of a key
+## Removes the keyspace prefix from a key if present, otherwise returns the key unchanged
 func rks(key: String) -> String:
 	return _core.rks(key)
 
