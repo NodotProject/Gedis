@@ -236,6 +236,10 @@ func rpop(key: String):
 func llen(key: String) -> int:
 	return _lists.llen(key)
 
+## Checks if a list exists.
+func lexists(key: String) -> bool:
+	return _lists.lexists(key)
+
 ## Gets all elements from a list.
 func lget(key: String) -> Array:
 	return _lists.lget(key)
@@ -289,6 +293,10 @@ func sismember(key: String, member) -> bool:
 func scard(key: String) -> int:
 	return _sets.scard(key)
 
+## Checks if a set exists.
+func sexists(key: String) -> bool:
+	return _sets.sexists(key)
+
 ## Removes and returns a random member from a set.
 func spop(key: String):
 	return _sets.spop(key)
@@ -329,6 +337,14 @@ func srandmember(key: String, count: int = 1) -> Variant:
 ## Adds a member with a score to a sorted set.
 func zadd(key: String, member: String, score: int):
 	return _sorted_sets.add(key, member, score)
+
+## Checks if a sorted set exists.
+func zexists(key: String) -> bool:
+	return _sorted_sets.zexists(key)
+
+## Gets the number of members in a sorted set.
+func zcard(key: String) -> int:
+	return _sorted_sets.zcard(key)
 
 ## Removes a member from a sorted set.
 func zrem(key: String, member: String):

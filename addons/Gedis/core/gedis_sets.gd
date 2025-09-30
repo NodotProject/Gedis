@@ -50,6 +50,11 @@ func scard(key: String) -> int:
 		return 0
 	return _gedis._core._sets.get(key, {}).size()
 
+func sexists(key: String) -> bool:
+	if _gedis._expiry._is_expired(key):
+		return false
+	return _gedis._core._sets.has(key)
+
 func spop(key: String):
 	if _gedis._expiry._is_expired(key):
 		return null

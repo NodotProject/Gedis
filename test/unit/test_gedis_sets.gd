@@ -118,3 +118,10 @@ func test_srandmember():
 
 	members = g.srandmember("s", -5)
 	assert_eq(members.size(), 5)
+
+func test_sexists():
+	assert_false(g.sexists("nonexistent_set"))
+	g.sadd("test_set", "member1")
+	assert_true(g.sexists("test_set"))
+	g.srem("test_set", "member1")
+	assert_false(g.sexists("test_set"))

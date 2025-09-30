@@ -159,3 +159,10 @@ func test_lmove_destination_not_found():
 	assert_eq(gedis.lmove("source", "nonexistent", "LEFT", "LEFT"), "one")
 	assert_eq(gedis.lget("source"), ["two", "three"])
 	assert_eq(gedis.lget("nonexistent"), ["one"])
+
+func test_lexists():
+	assert_false(gedis.lexists("nonexistent_list"))
+	gedis.lpush("test_list", "item1")
+	assert_true(gedis.lexists("test_list"))
+	gedis.lpop("test_list")
+	assert_false(gedis.lexists("test_list"))
