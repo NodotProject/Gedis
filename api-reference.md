@@ -50,6 +50,7 @@ permalink: api-reference
 | `rpop(key)` | Removes and gets the last element in a list. |
 | `lmove(source, destination, from, to)` | Atomically pops an element from one end of a source list and pushes it to one end of a destination list. Directions (`from` and `to`, which can be `LEFT` or `RIGHT`) specify which side to pop from and which side to push to. Returns the moved element or `null` if the source is empty. Creates the destination list if it doesn’t exist. This command replaces the deprecated `RPOPLPUSH` command. |
 | `llen(key)` | Gets the length of a list. |
+| `lexists(key)` | Checks if a list exists. |
 | `lget(key)` | Gets all elements from a list. |
 | `lrange(key, start, stop)` | Gets a range of elements from a list. |
 | `lindex(key, index)` | Gets an element from a list by index. |
@@ -63,6 +64,7 @@ permalink: api-reference
 | `smembers(key)` | Gets all the members in a set. |
 | `sismember(key, member)` | Checks if a member is in a set. |
 | `scard(key)` | Gets the number of members in a set. |
+| `sexists(key)` | Checks if a set exists. |
 | `spop(key)` | Removes and returns a random member from a set. |
 | `smove(source, dest, member)` | Moves a member from one set to another. |
 | `sunion(keys)` | Returns the members of the set resulting from the union of all the given sets. |
@@ -74,6 +76,8 @@ permalink: api-reference
 | `srandmember(key, count)` | When called with just the `key` argument, return a random element from the set value stored at `key`. |
 | **Sorted Sets** | |
 | `zadd(key, member, score)` | Adds a member with a score to a sorted set. |
+| `zexists(key)` | Checks if a sorted set exists. |
+| `zcard(key)` | Gets the number of members in a sorted set. |
 | `zrem(key, member)` | Removes a member from a sorted set. |
 | `zrange(key, start, stop, withscores=false)` | Gets members from a sorted set within a range of indices (rank). This is not to be confused with `ZRANGEBYSCORE` which operates on scores. |
 | `zrevrange(key, start, stop, withscores=false)` | Returns the specified range of elements in the sorted set stored at `key`, with scores ordered from high to low. |
