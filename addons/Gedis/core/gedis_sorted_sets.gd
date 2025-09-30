@@ -83,6 +83,18 @@ func remove(key: String, member: String) -> int:
 			return 1
 	return 0
 
+func zexists(key: String) -> bool:
+	if _gedis._expiry._is_expired(key):
+		return false
+	return _gedis._core._sorted_sets.has(key)
+
+func zcard(key: String) -> int:
+	if _gedis._expiry._is_expired(key):
+		return 0
+	if not _gedis._core._sorted_sets.has(key):
+		return 0
+	return _gedis._core._sorted_sets[key].sorted_set.size()
+
 # Returns a range of members from the sorted set, ordered by score.
 #
 # @param start: The starting index of the range.

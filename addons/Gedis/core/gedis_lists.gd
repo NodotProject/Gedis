@@ -71,6 +71,11 @@ func llen(key: String) -> int:
 	var a: Array = _gedis._core._lists.get(key, [])
 	return a.size()
 
+func lexists(key: String) -> bool:
+	if _gedis._expiry._is_expired(key):
+		return false
+	return _gedis._core._lists.has(key)
+
 func lget(key: String) -> Array:
 	if _gedis._expiry._is_expired(key):
 		return []

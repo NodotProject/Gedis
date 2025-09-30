@@ -105,3 +105,19 @@ func test_zrevrangebyscore():
 	assert_eq(gedis.zrevrangebyscore("key", 1, 2), ["b", "a"])
 	assert_eq(gedis.zrevrangebyscore("key", 2, 3), ["c", "b"])
 	assert_eq(gedis.zrevrangebyscore("key", 1, 2, true), [["b", 2], ["a", 1]])
+
+func test_zexists_and_zcard():
+	assert_false(gedis.zexists("nonexistent_zset"))
+	assert_eq(gedis.zcard("nonexistent_zset"), 0)
+	
+	gedis.zadd("test_zset", "member1", 10)
+	assert_true(gedis.zexists("test_zset"))
+	assert_eq(gedis.zcard("test_zset"), 1)
+	
+	gedis.zadd("test_zset", "member2", 20)
+	assert_eq(gedis.zcard("test_zset"), 2)
+	
+	gedis.zrem("test_zset", "member1")
+	gedis.zrem("test_zset", "member2")
+	assert_false(gedis.zexists("test_zset"))
+	assert_eq(gedis.zcard("test_zset"), 0)
