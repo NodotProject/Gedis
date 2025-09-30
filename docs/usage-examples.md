@@ -11,6 +11,7 @@ permalink: usage-examples
 - [Lists](#lists)
 - [Sets](#sets)
 - [Sorted Sets](#sorted-sets)
+- [Existence Checks](#existence-checks)
 - [Key Expiry](#key-expiry)
 - [Time Source Abstraction](#time-source-abstraction)
 - [Keyspace Notifications](#keyspace-notifications)
@@ -52,11 +53,15 @@ gedis.hset("player:1", "name", "Bob")
 gedis.hset("player:1", "hp", 100)
 gedis.hset("player:1", "mana", 50)
 
-# Get a single field
-var player_name = gedis.hget("player:1", "name") # "Bob"
-
-# Get all fields as a Dictionary
-var player_data = gedis.hgetall("player:1") # {"name": "Bob", "hp": 100, "mana": 50}
+# Check if player data exists before accessing
+if gedis.hexists("player:1"):
+    # Get a single field
+    var player_name = gedis.hget("player:1", "name") # "Bob"
+    
+    # Get all fields as a Dictionary
+    var player_data = gedis.hgetall("player:1") # {"name": "Bob", "hp": 100, "mana": 50}
+else:
+    print("Player data not found")
 ```
 
 ### Lists
@@ -66,9 +71,12 @@ var player_data = gedis.hgetall("player:1") # {"name": "Bob", "hp": 100, "mana":
 gedis.rpush("events", "player_spawned")
 gedis.rpush("events", "enemy_appeared")
 
-# Process the first event in the queue
-var event = gedis.lpop("events") # "player_spawned"
-var queue_length = gedis.llen("events") # 1
+# Check if the queue exists before processing
+if gedis.lexists("events"):
+    var event = gedis.lpop("events") # "player_spawned"
+    var queue_length = gedis.llen("events") # 1
+else:
+    print("No events to process")
 ```
 
 ### Sets
@@ -79,11 +87,15 @@ gedis.sadd("inventory", "sword")
 gedis.sadd("inventory", "shield")
 gedis.sadd("inventory", "sword") # This will be ignored
 
-# Check if an item exists
-var has_shield = gedis.sismember("inventory", "shield") # true
-
-# Get all items
-var all_items = gedis.smembers("inventory") # ["sword", "shield"] or ["shield", "sword"]
+# Check if the inventory exists
+if gedis.sexists("inventory"):
+    # Check if an item exists
+    var has_shield = gedis.sismember("inventory", "shield") # true
+    
+    # Get all items
+    var all_items = gedis.smembers("inventory") # ["sword", "shield"] or ["shield", "sword"]
+else:
+    print("Player has no inventory yet")
 ```
 
 ### Sorted Sets
@@ -94,8 +106,67 @@ gedis.zadd("leaderboard", "Alice", 100)
 gedis.zadd("leaderboard", "Bob", 95)
 gedis.zadd("leaderboard", "Charlie", 110)
 
-# Get players with scores between 90 and 105
-var top_players = gedis.zrange("leaderboard", 90, 105) # ["Bob", "Alice"]
+# Check if leaderboard exists and get info
+if gedis.zexists("leaderboard"):
+    var player_count = gedis.zcard("leaderboard") # 3
+    print("Leaderboard has %d players" % player_count)
+    
+    # Get players with scores between 90 and 105
+    var top_players = gedis.zrange("leaderboard", 90, 105) # ["Bob", "Alice"]
+else:
+    print("No leaderboard data available yet")
+```
+
+### Existence Checks
+
+Gedis provides convenient methods to check if specific data structure types exist, making it easy to verify the presence of collections before performing operations.
+
+```gdscript
+# Check different data structure types
+var player_id = "player123"
+
+# Check if a hash (player profile) exists
+if gedis.hexists("profile:" + player_id):
+    var name = gedis.hget("profile:" + player_id, "name")
+    print("Welcome back, " + name)
+else:
+    print("Creating new player profile...")
+    gedis.hset("profile:" + player_id, "name", "NewPlayer")
+    gedis.hset("profile:" + player_id, "level", 1)
+
+# Check if a list (action history) exists
+if gedis.lexists("actions:" + player_id):
+    var recent_actions = gedis.lrange("actions:" + player_id, 0, 4)
+    print("Recent actions: ", recent_actions)
+else:
+    print("No action history found")
+
+# Check if a set (achievements) exists  
+if gedis.sexists("achievements:" + player_id):
+    var achievement_count = gedis.scard("achievements:" + player_id)
+    print("Player has %d achievements" % achievement_count)
+else:
+    print("No achievements unlocked yet")
+
+# Check if a sorted set (scores) exists
+if gedis.zexists("scores:" + player_id):
+    var score_count = gedis.zcard("scores:" + player_id)
+    var best_score = gedis.zrevrange("scores:" + player_id, 0, 0)
+    print("Player has %d scores, best: %s" % [score_count, best_score[0] if best_score.size() > 0 else "none"])
+else:
+    print("No scores recorded")
+
+# Conditional initialization example
+func ensure_player_data_structures(player_id: String):
+    # Initialize empty data structures only if they don't exist
+    if not gedis.lexists("inventory:" + player_id):
+        gedis.lpush("inventory:" + player_id, "starter_sword")
+    
+    if not gedis.sexists("friends:" + player_id):
+        gedis.sadd("friends:" + player_id, "tutorial_bot")
+    
+    if not gedis.zexists("daily_scores:" + player_id):
+        gedis.zadd("daily_scores:" + player_id, "first_game", 0)
 ```
 
 ### Key Expiry
