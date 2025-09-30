@@ -205,4 +205,8 @@ func ks(key: String) -> String:
 	return "gedis:keyspace:" + key
 	
 func rks(key: String) -> String:
-	return key.substr("gedis:keyspace:".length())
+	var prefix = "gedis:keyspace:"
+	if key.begins_with(prefix):
+		return key.substr(prefix.length())
+	else:
+		return key

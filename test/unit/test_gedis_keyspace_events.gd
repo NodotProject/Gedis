@@ -22,6 +22,27 @@ func test_adding_keyspace_prefix_to_key():
 func test_remove_keyspace_prefix_from_key():
 	assert_eq(g.rks("gedis:keyspace:test"), "test")
 
+func test_rks_does_nothing_when_prefix_not_present():
+	# Should return the original key when keyspace prefix is not present
+	assert_eq(g.rks("normal_key"), "normal_key")
+	assert_eq(g.rks("another:prefix:key"), "another:prefix:key")
+	assert_eq(g.rks("gedis:different:key"), "gedis:different:key")
+	
+func test_rks_handles_edge_cases():
+	# Should handle short keys correctly
+	assert_eq(g.rks("short"), "short")
+	assert_eq(g.rks("a"), "a")
+	
+	# Should handle empty key correctly  
+	assert_eq(g.rks(""), "")
+	
+	# Should handle keys that partially match the prefix
+	assert_eq(g.rks("gedis:key"), "gedis:key")
+	assert_eq(g.rks("gedis:keyspace"), "gedis:keyspace")
+	
+	# Should handle exact prefix (edge case)
+	assert_eq(g.rks("gedis:keyspace:"), "")
+
 func test_set_event_is_published():
 	g.subscribe("gedis:keyspace:mykey", self)
 	g.set_value("mykey", "value")
