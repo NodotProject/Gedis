@@ -6,7 +6,7 @@ permalink: installation
 
 ## From AssetLib
 
-You can install Gedis directly from the Godot Asset Library: [Gedis - Godot Redis Client](https://godotengine.org/asset-library/asset/4292)
+You can install Gedis directly from the [Godot Asset Library](https://godotengine.org/asset-library/asset/4292).
 
 Then, enable the plugin in **Project -> Project Settings -> Plugins**.
 
