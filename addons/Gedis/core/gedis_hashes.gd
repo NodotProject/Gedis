@@ -96,6 +96,7 @@ func hdel(key: String, fields) -> int:
 			removed = 1
 	if d.is_empty():
 		_gedis._core._hashes.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._hashes[key] = d

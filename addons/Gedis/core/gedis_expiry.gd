@@ -14,6 +14,32 @@ func _init(p_gedis: Gedis):
 func _now() -> int:
 	return _gedis._time_source.get_time()
 
+## Remove a key's entry from _expiry_list. Must be called BEFORE erasing from _expiry.
+func _remove_key_from_list(key: String) -> void:
+	if _gedis._core._expiry.has(key):
+		var timestamp = _gedis._core._expiry[key]
+		var entry = [timestamp, key]
+		var index = _expiry_list.bsearch(entry)
+		if index < _expiry_list.size() and _expiry_list[index] == entry:
+			_expiry_list.remove_at(index)
+
+## Add a key's entry to _expiry_list. Must be called AFTER setting _expiry[key].
+func _add_key_to_list(key: String) -> void:
+	if _gedis._core._expiry.has(key):
+		var timestamp = _gedis._core._expiry[key]
+		var entry = [timestamp, key]
+		var insertion_index = _expiry_list.bsearch(entry)
+		_expiry_list.insert(insertion_index, entry)
+
+## Rebuild _expiry_list from _expiry dictionary.
+func _rebuild_list() -> void:
+	_expiry_list.clear()
+	for key in _gedis._core._expiry:
+		var timestamp = _gedis._core._expiry[key]
+		var entry = [timestamp, key]
+		var insertion_index = _expiry_list.bsearch(entry)
+		_expiry_list.insert(insertion_index, entry)
+
 func _is_expired(key: String) -> bool:
 	if _gedis._core._expiry.has(key) and _gedis._core._expiry[key] <= _now():
 		var timestamp = _gedis._core._expiry[key]

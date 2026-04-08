@@ -28,6 +28,7 @@ func srem(key: String, member) -> int:
 	s.erase(member)
 	if s.is_empty():
 		_gedis._core._sets.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._sets[key] = s
@@ -69,6 +70,7 @@ func spop(key: String):
 	s.erase(member)
 	if s.is_empty():
 		_gedis._core._sets.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._sets[key] = s
@@ -111,10 +113,12 @@ func sinter(keys: Array) -> Array:
 		result_set[member] = true
 
 	for i in range(1, keys.size()):
-		var next_set_members = smembers(keys[i])
+		if _gedis._expiry._is_expired(keys[i]):
+			return []
+		var next_set: Dictionary = _gedis._core._sets.get(keys[i], {})
 		var current_members = result_set.keys()
 		for member in current_members:
-			if not next_set_members.has(member):
+			if not next_set.has(member):
 				result_set.erase(member)
 	
 	return result_set.keys()
@@ -149,6 +153,7 @@ func sdiff(keys: Array) -> Array:
 func sunionstore(destination: String, keys: Array) -> int:
 	var result_members = sunion(keys)
 	_gedis._core._sets.erase(destination)
+	_gedis._core._key_index.erase(destination)
 	for member in result_members:
 		sadd(destination, member)
 	return result_members.size()
@@ -161,6 +166,7 @@ func sunionstore(destination: String, keys: Array) -> int:
 func sinterstore(destination: String, keys: Array) -> int:
 	var result_members = sinter(keys)
 	_gedis._core._sets.erase(destination)
+	_gedis._core._key_index.erase(destination)
 	for member in result_members:
 		sadd(destination, member)
 	return result_members.size()
@@ -173,6 +179,7 @@ func sinterstore(destination: String, keys: Array) -> int:
 func sdiffstore(destination: String, keys: Array) -> int:
 	var result_members = sdiff(keys)
 	_gedis._core._sets.erase(destination)
+	_gedis._core._key_index.erase(destination)
 	for member in result_members:
 		sadd(destination, member)
 	return result_members.size()

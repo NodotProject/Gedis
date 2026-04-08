@@ -137,3 +137,41 @@ func test_no_event_is_published_when_a_key_is_persisted():
 	assert_eq(_received_messages.size(), 1, "Should only receive the set message")
 	assert_eq(_received_messages[0].message, "set")
 	assert_true(g.key_exists("mykey"), "Key should still exist after being persisted")
+
+func test_flushall_clears_expiry_list():
+	g.setex("a", 10, "val_a")
+	g.setex("b", 20, "val_b")
+	assert_eq(g._expiry._expiry_list.size(), 2, "Should have 2 entries before flush")
+	g.flushall()
+	assert_eq(g._expiry._expiry_list.size(), 0, "Expiry list should be empty after flushall")
+
+func test_rename_updates_expiry_list():
+	g.setex("old", 10, "value")
+	assert_eq(g._expiry._expiry_list.size(), 1)
+	var old_key_in_list = g._expiry._expiry_list[0][1]
+	assert_eq(old_key_in_list, "old")
+
+	g.rename("old", "new")
+	assert_eq(g._expiry._expiry_list.size(), 1, "Should still have 1 entry after rename")
+	var new_key_in_list = g._expiry._expiry_list[0][1]
+	assert_eq(new_key_in_list, "new", "Expiry list should reference the new key name")
+	assert_true(g.ttl("new") > 0, "New key should have a TTL")
+
+func test_move_updates_expiry_list():
+	g.setex("src", 10, "value")
+	assert_eq(g._expiry._expiry_list.size(), 1)
+
+	g.move("src", "dst")
+	assert_eq(g._expiry._expiry_list.size(), 1, "Should still have 1 entry after move")
+	assert_eq(g._expiry._expiry_list[0][1], "dst", "Expiry list should reference the moved key")
+	assert_true(g.ttl("dst") > 0, "Moved key should have a TTL")
+
+func test_restore_all_rebuilds_expiry_list():
+	g.setex("k1", 10, "v1")
+	g.setex("k2", 20, "v2")
+	var state = g.dump_all()
+	g.flushall()
+	assert_eq(g._expiry._expiry_list.size(), 0)
+
+	g._core.restore_all(state)
+	assert_eq(g._expiry._expiry_list.size(), 2, "Expiry list should be rebuilt after restore_all")

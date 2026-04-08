@@ -36,15 +36,15 @@ func lpop(key: String):
 		return null
 	if not _gedis._core._lists.has(key):
 		return null
-	var a: Array = _gedis._core._lists[key].duplicate()
+	var a: Array = _gedis._core._lists[key]
 	if a.is_empty():
 		return null
 	var v = a.pop_front()
 	if a.is_empty():
 		_gedis._core._lists.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
-		_gedis._core._lists[key] = a
 		_gedis.publish("gedis:keyspace:" + key, "set")
 	return v
 
@@ -53,15 +53,15 @@ func rpop(key: String):
 		return null
 	if not _gedis._core._lists.has(key):
 		return null
-	var a: Array = _gedis._core._lists[key].duplicate()
+	var a: Array = _gedis._core._lists[key]
 	if a.is_empty():
 		return null
 	var v = a.pop_back()
 	if a.is_empty():
 		_gedis._core._lists.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
-		_gedis._core._lists[key] = a
 		_gedis.publish("gedis:keyspace:" + key, "set")
 	return v
 
@@ -119,14 +119,13 @@ func lset(key: String, index: int, value) -> bool:
 		return false
 	if not _gedis._core._lists.has(key):
 		return false
-	var a: Array = _gedis._core._lists[key].duplicate()
+	var a: Array = _gedis._core._lists[key]
 	var n = a.size()
 	if index < 0:
 		index = n + index
 	if index < 0 or index >= n:
 		return false
 	a[index] = value
-	_gedis._core._lists[key] = a
 	_gedis.publish("gedis:keyspace:" + key, "set")
 	return true
 
@@ -136,7 +135,7 @@ func lrem(key: String, count: int, value) -> int:
 		return 0
 	if not _gedis._core._lists.has(key):
 		return 0
-	var a: Array = _gedis._core._lists[key].duplicate()
+	var a: Array = _gedis._core._lists[key]
 	var removed = 0
 	if count == 0:
 		# remove all
@@ -169,6 +168,7 @@ func lrem(key: String, count: int, value) -> int:
 		a = out2
 	if a.is_empty():
 		_gedis._core._lists.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._lists[key] = a
@@ -210,6 +210,7 @@ func lmove(source: String, destination: String, from: String, to: String):
 
 	if source_list.is_empty():
 		_gedis._core._lists.erase(source)
+		_gedis._core._key_index.erase(source)
 		_gedis.publish("gedis:keyspace:" + source, "del")
 	else:
 		_gedis._core._lists[source] = source_list
@@ -232,7 +233,7 @@ func ltrim(key: String, start: int, stop: int) -> bool:
 	if not _gedis._core._lists.has(key):
 		return false
 
-	var a: Array = _gedis._core._lists[key].duplicate()
+	var a: Array = _gedis._core._lists[key]
 	var n = a.size()
 
 	if start < 0:
@@ -245,13 +246,14 @@ func ltrim(key: String, start: int, stop: int) -> bool:
 
 	if start > stop:
 		_gedis._core._lists.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 		return true
 
 	var trimmed_list: Array = []
 	for i in range(start, stop + 1):
 		trimmed_list.append(a[i])
-	
+
 	_gedis._core._lists[key] = trimmed_list
 	_gedis.publish("gedis:keyspace:" + key, "set")
 	return true
@@ -269,7 +271,7 @@ func linsert(key: String, position: String, pivot: Variant, value: Variant) -> i
 	if not _gedis._core._lists.has(key):
 		return 0
 
-	var a: Array = _gedis._core._lists[key].duplicate()
+	var a: Array = _gedis._core._lists[key]
 	var n = a.size()
 	var index = -1
 
@@ -277,7 +279,7 @@ func linsert(key: String, position: String, pivot: Variant, value: Variant) -> i
 		if a[i] == pivot:
 			index = i
 			break
-	
+
 	if index == -1:
 		return -1
 
@@ -287,7 +289,5 @@ func linsert(key: String, position: String, pivot: Variant, value: Variant) -> i
 		a.insert(index + 1, value)
 	else:
 		return 0
-	
-	_gedis._core._lists[key] = a
 	_gedis.publish("gedis:keyspace:" + key, "set")
 	return a.size()

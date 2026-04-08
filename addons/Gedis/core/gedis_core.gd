@@ -8,6 +8,10 @@ var _sets: Dictionary = {}
 var _sorted_sets: Dictionary = {}
 var _expiry: Dictionary = {}
 
+# Unified key→bucket index for O(1) lookups
+# Maps key -> the Dictionary bucket it belongs to
+var _key_index: Dictionary = {}
+
 # Pub/Sub registries
 var _subscribers: Dictionary[String, Array] = {}
 var _psubscribers: Dictionary[String, Array] = {}
@@ -20,36 +24,27 @@ func _now() -> int:
 	return _gedis._time_source.get_time()
 
 func _delete_all_types_for_key(key: String) -> void:
-	_store.erase(key)
-	_hashes.erase(key)
-	_lists.erase(key)
-	_sets.erase(key)
-	_sorted_sets.erase(key)
+	if _key_index.has(key):
+		var bucket: Dictionary = _key_index[key]
+		bucket.erase(key)
+		_key_index.erase(key)
 	_expiry.erase(key)
 
 func _touch_type(key: String, type_bucket: Dictionary) -> void:
 	# When a key is used for a new type, remove it from other types.
-	if not type_bucket.has(key):
-		_store.erase(key)
-		_hashes.erase(key)
-		_lists.erase(key)
-		_sets.erase(key)
-		_sorted_sets.erase(key)
+	if _key_index.has(key):
+		var existing_bucket: Dictionary = _key_index[key]
+		if existing_bucket == type_bucket:
+			return  # Key already in correct bucket
+		existing_bucket.erase(key)
+	_key_index[key] = type_bucket
 
 func key_exists(key: String) -> bool:
-	return _store.has(key) or _hashes.has(key) or _lists.has(key) or _sets.has(key) or _sorted_sets.has(key)
+	return _key_index.has(key)
 
 func _get_all_keys() -> Dictionary[String, bool]:
 	var all: Dictionary[String, bool] = {}
-	for k in _store.keys():
-		all[str(k)] = true
-	for k in _hashes.keys():
-		all[str(k)] = true
-	for k in _lists.keys():
-		all[str(k)] = true
-	for k in _sets.keys():
-		all[str(k)] = true
-	for k in _sorted_sets.keys():
+	for k in _key_index:
 		all[str(k)] = true
 	return all
 
@@ -60,8 +55,11 @@ func flushall() -> void:
 	_sets.clear()
 	_sorted_sets.clear()
 	_expiry.clear()
+	_key_index.clear()
 	_subscribers.clear()
 	_psubscribers.clear()
+	_gedis._pubsub._pattern_regex.clear()
+	_gedis._expiry._expiry_list.clear()
 
 
 func dump_all(options: Dictionary = {}) -> Dictionary:
@@ -110,30 +108,55 @@ func restore_all(state: Dictionary) -> void:
 	_sorted_sets = state.get("sorted_sets", {})
 	_expiry = state.get("expiry", {})
 
+	# Rebuild key index
+	_rebuild_key_index()
+
 	# Discard expired keys
 	var now: float = _now()
 	for key in _expiry.keys():
 		if _expiry[key] < now:
 			_delete_all_types_for_key(key)
 
+	_gedis._expiry._rebuild_list()
+
+func _rebuild_key_index() -> void:
+	_key_index.clear()
+	for k in _store:
+		_key_index[k] = _store
+	for k in _hashes:
+		_key_index[k] = _hashes
+	for k in _lists:
+		_key_index[k] = _lists
+	for k in _sets:
+		_key_index[k] = _sets
+	for k in _sorted_sets:
+		_key_index[k] = _sorted_sets
+
 func restore_key(key: String, data: Dictionary) -> void:
+	_gedis._expiry._remove_key_from_list(key)
 	_delete_all_types_for_key(key)
 	var value = data["value"]
 	var type = data["type"]
 
 	if type == "string":
 		_store[key] = value
+		_key_index[key] = _store
 	elif type == "hash":
 		_hashes[key] = value
+		_key_index[key] = _hashes
 	elif type == "list":
 		_lists[key] = value
+		_key_index[key] = _lists
 	elif type == "set":
 		_sets[key] = value
+		_key_index[key] = _sets
 	elif type == "sorted_set":
 		_sorted_sets[key] = value
-	
+		_key_index[key] = _sorted_sets
+
 	if data.has("expiry"):
 		_expiry[key] = data["expiry"]
+		_gedis._expiry._add_key_to_list(key)
 		
 func rename(key: String, newkey: String) -> int:
 	if not key_exists(key):
@@ -142,28 +165,15 @@ func rename(key: String, newkey: String) -> int:
 	if key_exists(newkey):
 		return 0
 
-	var value
-	if _store.has(key):
-		value = _store[key]
-		_store[newkey] = value
-	elif _hashes.has(key):
-		value = _hashes[key]
-		_hashes[newkey] = value
-	elif _lists.has(key):
-		value = _lists[key]
-		_lists[newkey] = value
-	elif _sets.has(key):
-		value = _sets[key]
-		_sets[newkey] = value
-	elif _sorted_sets.has(key):
-		value = _sorted_sets[key]
-		_sorted_sets[newkey] = value
-	else:
-		return ERR_DOES_NOT_EXIST
+	var bucket: Dictionary = _key_index[key]
+	bucket[newkey] = bucket[key]
+	_key_index[newkey] = bucket
 
 	if _expiry.has(key):
+		_gedis._expiry._remove_key_from_list(key)
 		var expiry_time = _expiry[key]
 		_expiry[newkey] = expiry_time
+		_gedis._expiry._add_key_to_list(newkey)
 
 	_delete_all_types_for_key(key)
 	return 1
@@ -175,28 +185,15 @@ func move(key: String, newkey: String) -> int:
 	if key_exists(newkey):
 		_delete_all_types_for_key(newkey)
 
-	var value
-	if _store.has(key):
-		value = _store[key]
-		_store[newkey] = value
-	elif _hashes.has(key):
-		value = _hashes[key]
-		_hashes[newkey] = value
-	elif _lists.has(key):
-		value = _lists[key]
-		_lists[newkey] = value
-	elif _sets.has(key):
-		value = _sets[key]
-		_sets[newkey] = value
-	elif _sorted_sets.has(key):
-		value = _sorted_sets[key]
-		_sorted_sets[newkey] = value
-	else:
-		return ERR_DOES_NOT_EXIST
+	var bucket: Dictionary = _key_index[key]
+	bucket[newkey] = bucket[key]
+	_key_index[newkey] = bucket
 
 	if _expiry.has(key):
+		_gedis._expiry._remove_key_from_list(key)
 		var expiry_time = _expiry[key]
 		_expiry[newkey] = expiry_time
+		_gedis._expiry._add_key_to_list(newkey)
 
 	_delete_all_types_for_key(key)
 	return 1

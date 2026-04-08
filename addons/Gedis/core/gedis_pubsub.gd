@@ -2,6 +2,8 @@ extends RefCounted
 class_name GedisPubSub
 
 var _gedis: Gedis
+# Pre-compiled regex for each pattern subscription
+var _pattern_regex: Dictionary = {}
 
 signal pubsub_message(channel, message)
 signal psub_message(pattern, channel, message)
@@ -33,8 +35,10 @@ func publish(channel: String, message) -> void:
 		pubsub_message.emit(channel, message)
 	# Pattern subscribers (back-compat + Gedis-level)
 	for pattern in _gedis._core._psubscribers.keys():
-		# Use simple glob matching: convert to RegEx
-		var rx = _gedis._utils._glob_to_regex(pattern)
+		var rx: RegEx = _pattern_regex.get(pattern)
+		if rx == null:
+			rx = _gedis._utils._glob_to_regex(pattern)
+			_pattern_regex[pattern] = rx
 		if rx.search(channel) != null:
 			for subscriber in _gedis._core._psubscribers[pattern]:
 				if is_instance_valid(subscriber):
@@ -74,6 +78,9 @@ func psubscribe(pattern: String, subscriber: Object) -> void:
 			return
 	arr.append(subscriber)
 	_gedis._core._psubscribers[pattern] = arr
+	# Pre-compile and cache the regex for this pattern
+	if not _pattern_regex.has(pattern):
+		_pattern_regex[pattern] = _gedis._utils._glob_to_regex(pattern)
 	subscribed.emit(pattern, subscriber)
 
 func punsubscribe(pattern: String, subscriber: Object) -> void:
@@ -87,6 +94,7 @@ func punsubscribe(pattern: String, subscriber: Object) -> void:
 			break
 	if arr.is_empty():
 		_gedis._core._psubscribers.erase(pattern)
+		_pattern_regex.erase(pattern)
 	else:
 		_gedis._core._psubscribers[pattern] = arr
 

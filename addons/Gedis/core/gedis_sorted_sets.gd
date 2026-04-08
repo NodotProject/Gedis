@@ -24,6 +24,18 @@ func _init(gedis: Gedis):
 #
 # @param member: The member to add or update.
 # @param score: The score associated with the member.
+func _bsearch_score(sorted_set: Array, score: int) -> int:
+	# Binary search for the first position where sorted_set[pos][0] >= score
+	var lo := 0
+	var hi := sorted_set.size()
+	while lo < hi:
+		var mid := (lo + hi) >> 1
+		if sorted_set[mid][0] < score:
+			lo = mid + 1
+		else:
+			hi = mid
+	return lo
+
 func add(key: String, member: String, score: int) -> int:
 	_gedis._core._touch_type(key, _gedis._core._sorted_sets)
 	var data: Dictionary = _gedis._core._sorted_sets.get(key, {
@@ -33,23 +45,20 @@ func add(key: String, member: String, score: int) -> int:
 
 	var new_member = not data.member_scores.has(member)
 	if not new_member:
-		remove(key, member)
-		data = _gedis._core._sorted_sets.get(key, {
-			"sorted_set": [],
-			"member_scores": {}
-		})
+		# Remove existing entry from sorted_set using old score for fast lookup
+		var old_score = data.member_scores[member]
+		var idx := _bsearch_score(data.sorted_set, old_score)
+		while idx < data.sorted_set.size() and data.sorted_set[idx][0] == old_score:
+			if data.sorted_set[idx][1] == member:
+				data.sorted_set.remove_at(idx)
+				break
+			idx += 1
 
 	data.member_scores[member] = score
 	var entry = [score, member]
-	var inserted: bool = false
-	for i in range(data.sorted_set.size()):
-		if score < data.sorted_set[i][0]:
-			data.sorted_set.insert(i, entry)
-			inserted = true
-			break
-	if not inserted:
-		data.sorted_set.append(entry)
-	
+	var insertion_index := _bsearch_score(data.sorted_set, score)
+	data.sorted_set.insert(insertion_index, entry)
+
 	_gedis._core._sorted_sets[key] = data
 	if new_member:
 		_gedis.publish("gedis:keyspace:" + key, "set")
@@ -72,15 +81,18 @@ func remove(key: String, member: String) -> int:
 	var score = data.member_scores[member]
 	data.member_scores.erase(member)
 
-	for i in range(data.sorted_set.size()):
-		if data.sorted_set[i][0] == score and data.sorted_set[i][1] == member:
-			data.sorted_set.remove_at(i)
+	var idx := _bsearch_score(data.sorted_set, score)
+	while idx < data.sorted_set.size() and data.sorted_set[idx][0] == score:
+		if data.sorted_set[idx][1] == member:
+			data.sorted_set.remove_at(idx)
 			if data.sorted_set.is_empty():
 				_gedis._core._sorted_sets.erase(key)
+				_gedis._core._key_index.erase(key)
 				_gedis.publish("gedis:keyspace:" + key, "del")
 			else:
 				_gedis._core._sorted_sets[key] = data
 			return 1
+		idx += 1
 	return 0
 
 func zexists(key: String) -> bool:
@@ -121,10 +133,6 @@ func _zrange(key: String, start, stop, withscores: bool, reverse: bool) -> Array
 
 	var data: Dictionary = _gedis._core._sorted_sets[key]
 	var sorted_set: Array = data.sorted_set
-	if reverse:
-		sorted_set = sorted_set.duplicate()
-		sorted_set.reverse()
-
 	var set_len: int = sorted_set.size()
 
 	var start_index = start
@@ -145,14 +153,22 @@ func _zrange(key: String, start, stop, withscores: bool, reverse: bool) -> Array
 		return []
 
 	var result: Array = []
-	for i in range(start_index, stop_index + 1):
-		var entry = sorted_set[i]
-		var score = entry[0]
-		var member = entry[1]
-		if withscores:
-			result.append([member, score])
-		else:
-			result.append(member)
+	if reverse:
+		# Iterate backwards: logical index i maps to actual index (set_len - 1 - i)
+		for i in range(start_index, stop_index + 1):
+			var actual_idx = set_len - 1 - i
+			var entry = sorted_set[actual_idx]
+			if withscores:
+				result.append([entry[1], entry[0]])
+			else:
+				result.append(entry[1])
+	else:
+		for i in range(start_index, stop_index + 1):
+			var entry = sorted_set[i]
+			if withscores:
+				result.append([entry[1], entry[0]])
+			else:
+				result.append(entry[1])
 	return result
 
 # Returns a range of members from the sorted set, ordered by score.
@@ -169,15 +185,19 @@ func zrangebyscore(key: String, min_score, max_score, withscores: bool = false) 
 		return []
 
 	var data: Dictionary = _gedis._core._sorted_sets[key]
+	var sorted_set: Array = data.sorted_set
 	var result: Array = []
-	for entry in data.sorted_set:
-		var score = entry[0]
-		var member = entry[1]
-		if score >= min_score and score <= max_score:
-			if withscores:
-				result.append([member, score])
-			else:
-				result.append(member)
+	# Binary search to find start of range
+	var idx := _bsearch_score(sorted_set, min_score)
+	while idx < sorted_set.size():
+		var score = sorted_set[idx][0]
+		if score > max_score:
+			break
+		if withscores:
+			result.append([sorted_set[idx][1], score])
+		else:
+			result.append(sorted_set[idx][1])
+		idx += 1
 	return result
 
 # Returns a range of members from the sorted set, ordered by score in reverse.
@@ -217,6 +237,7 @@ func pop_ready(key: String, now: int) -> Array:
 	
 	if data.sorted_set.is_empty():
 		_gedis._core._sorted_sets.erase(key)
+		_gedis._core._key_index.erase(key)
 		_gedis.publish("gedis:keyspace:" + key, "del")
 	else:
 		_gedis._core._sorted_sets[key] = data
@@ -257,9 +278,12 @@ func zrank(key: String, member: String) -> Variant:
 	if not data.member_scores.has(member):
 		return null
 
-	for i in range(data.sorted_set.size()):
-		if data.sorted_set[i][1] == member:
-			return i
+	var score = data.member_scores[member]
+	var idx := _bsearch_score(data.sorted_set, score)
+	while idx < data.sorted_set.size() and data.sorted_set[idx][0] == score:
+		if data.sorted_set[idx][1] == member:
+			return idx
+		idx += 1
 	return null
 
 
@@ -279,9 +303,12 @@ func zrevrank(key: String, member: String) -> Variant:
 	if not data.member_scores.has(member):
 		return null
 
-	for i in range(data.sorted_set.size() - 1, -1, -1):
-		if data.sorted_set[i][1] == member:
-			return data.sorted_set.size() - 1 - i
+	var score = data.member_scores[member]
+	var idx := _bsearch_score(data.sorted_set, score)
+	while idx < data.sorted_set.size() and data.sorted_set[idx][0] == score:
+		if data.sorted_set[idx][1] == member:
+			return data.sorted_set.size() - 1 - idx
+		idx += 1
 	return null
 
 
@@ -298,11 +325,15 @@ func zcount(key: String, min_score, max_score) -> int:
 		return 0
 
 	var data: Dictionary = _gedis._core._sorted_sets[key]
+	var sorted_set: Array = data.sorted_set
 	var count: int = 0
-	for entry in data.sorted_set:
-		var score = entry[0]
-		if score >= min_score and score <= max_score:
-			count += 1
+	# Binary search to find start of range
+	var idx := _bsearch_score(sorted_set, min_score)
+	while idx < sorted_set.size():
+		if sorted_set[idx][0] > max_score:
+			break
+		count += 1
+		idx += 1
 	return count
 
 
@@ -368,19 +399,19 @@ func zinterstore(destination: String, keys: Array, aggregate: String = "SUM") ->
 	if keys.is_empty():
 		return 0
 
-	var member_sets: Array = []
+	var member_dicts: Array = []
 	for key in keys:
 		if not _gedis._core._sorted_sets.has(key):
 			return 0
 		var data: Dictionary = _gedis._core._sorted_sets[key]
-		member_sets.append(data.member_scores.keys())
+		member_dicts.append(data.member_scores)
 
-	var intersection = member_sets[0]
-	for i in range(1, member_sets.size()):
-		var next_set = member_sets[i]
+	var intersection: Array = member_dicts[0].keys()
+	for i in range(1, member_dicts.size()):
+		var next_dict: Dictionary = member_dicts[i]
 		var current_intersection: Array = []
 		for member in intersection:
-			if member in next_set:
+			if next_dict.has(member):
 				current_intersection.append(member)
 		intersection = current_intersection
 
