@@ -12,6 +12,15 @@ func after_all():
 func before_each():
 	gedis.flushall()
 
+func test_inactive_debugger_does_not_register_capture():
+	var debugger = Engine.get_singleton("EngineDebugger")
+	if debugger == null or debugger.is_active():
+		pending("Requires a run without an active debugger")
+		return
+
+	assert_false(Gedis._debugger_registered, "inactive debugger should not be marked as registered")
+	assert_false(debugger.has_capture("gedis"), "inactive debugger should not register a capture")
+
 func test_type():
 	gedis.set_value("string_key", "hello")
 	assert_eq(gedis.type("string_key"), "string", "type should be string")
