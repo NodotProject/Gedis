@@ -26,9 +26,10 @@ static func _ensure_debugger_is_registered():
 	if not Gedis._debugger_registered:
 		if Engine.has_singleton("EngineDebugger"):
 			var debugger = Engine.get_singleton("EngineDebugger")
+			if not debugger or not debugger.is_active():
+				return
 			debugger.register_message_capture("gedis", Callable(Gedis, "_on_debugger_message"))
-			if debugger.is_active():
-				debugger.send_message("gedis:ping", [])
+			debugger.send_message("gedis:ping", [])
 			Gedis._debugger_registered = true
 
 static func _on_debugger_message(message: String, data: Array) -> bool:
